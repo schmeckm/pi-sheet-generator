@@ -2,6 +2,7 @@ import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { get, patch, post } from '@/composables/useApi';
 import { setLocale } from '@/i18n';
+import { useFeaturesStore } from '@/stores/features';
 
 export const useAuthStore = defineStore('auth', () => {
   const token = ref(localStorage.getItem('token') || null);
@@ -59,6 +60,7 @@ export const useAuthStore = defineStore('auth', () => {
     profileSynced.value = false;
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    useFeaturesStore().reset();
   }
 
   return {

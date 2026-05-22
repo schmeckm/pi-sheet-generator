@@ -480,6 +480,10 @@ export default {
     loadFailed: 'Einstellungen konnten nicht geladen werden',
     lastSync: 'Letzter Sync',
     syncDone: 'Sync: {created} neu, {updated} aktualisiert',
+    plantExplorerTitle: 'Werk-Explorer',
+    plantExplorerEnable: 'Werk-Explorer aktivieren',
+    plantExplorerOnHint: 'Navigation und API für Werke, PI Sheets und Equipment sind sichtbar.',
+    plantExplorerOffHint: 'Werk-Explorer ist ausgeblendet; direkte URLs leiten um.',
   },
   equipmentPage: {
     title: 'Equipment & Waagen',

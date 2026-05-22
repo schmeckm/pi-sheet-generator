@@ -74,10 +74,7 @@ const auth = useAuthStore();
 const router = useRouter();
 
 const navLinks = computed(() => {
-  const links = [
-    { to: '/chat', label: t('common.chat') },
-    { to: '/plant-explorer', label: t('nav.plantExplorer') },
-  ];
+  const links = [{ to: '/chat', label: t('common.chat') }];
   if (auth.isAdmin) links.push({ to: '/admin', label: t('common.admin') });
   return links;
 });

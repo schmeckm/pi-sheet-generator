@@ -1,9 +1,22 @@
 const express = require('express');
 const plantExplorer = require('../services/plant-explorer.service');
+const settingsService = require('../services/settings.service');
 const { authMiddleware } = require('../middleware/auth');
 
 const router = express.Router();
 router.use(authMiddleware);
+
+async function requirePlantExplorer(_req, res, next) {
+  try {
+    const enabled = await settingsService.isFeatureEnabled('plant_explorer_enabled');
+    if (!enabled) return res.status(404).json({ error: 'Plant Explorer is disabled' });
+    next();
+  } catch (err) {
+    next(err);
+  }
+}
+
+router.use(requirePlantExplorer);
 
 router.get('/', async (req, res, next) => {
   try {

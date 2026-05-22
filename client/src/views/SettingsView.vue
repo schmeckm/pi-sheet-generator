@@ -79,6 +79,25 @@
         </p>
       </section>
 
+      <section class="sap-tile p-6">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h2 class="text-lg font-semibold">{{ t('settings.plantExplorerTitle') }}</h2>
+            <p class="mt-1 text-sm text-[var(--sapContentLabelColor)]">
+              {{
+                form.plant_explorer_enabled
+                  ? t('settings.plantExplorerOnHint')
+                  : t('settings.plantExplorerOffHint')
+              }}
+            </p>
+          </div>
+          <label class="flex items-center gap-3">
+            <span class="text-sm font-medium">{{ t('settings.plantExplorerEnable') }}</span>
+            <input v-model="form.plant_explorer_enabled" type="checkbox" class="h-5 w-5" />
+          </label>
+        </div>
+      </section>
+
       <button type="button" class="sap-btn sap-btn--emphasized" @click="saveAll">{{ t('settings.save') }}</button>
     </div>
   </div>
@@ -90,10 +109,12 @@ import { useI18n } from 'vue-i18n';
 import { get, put, post } from '@/composables/useApi';
 import { useToast } from '@/composables/useToast';
 import { useAuthStore } from '@/stores/auth';
+import { useFeaturesStore } from '@/stores/features';
 
 const { t } = useI18n();
 const toast = useToast();
 const auth = useAuthStore();
+const features = useFeaturesStore();
 
 const preferredLocale = ref('de');
 
@@ -105,6 +126,7 @@ const testOk = ref(false);
 const sapStatus = ref(null);
 
 const form = ref({
+  plant_explorer_enabled: false,
   sap_integration_enabled: false,
   sap_mcp_url: 'http://localhost:7001/sse',
   sap_connection_type: 'mock',
@@ -132,6 +154,7 @@ async function load() {
     await auth.ensureProfile();
     loadLocaleFromUser();
     const all = await get('/settings');
+    form.value.plant_explorer_enabled = all.plant_explorer_enabled === 'true';
     form.value.sap_integration_enabled = all.sap_integration_enabled === 'true';
     form.value.sap_mcp_url = all.sap_mcp_url || form.value.sap_mcp_url;
     form.value.sap_connection_type = all.sap_connection_type || 'mock';
@@ -148,6 +171,7 @@ async function load() {
 async function saveAll() {
   try {
     const entries = Object.entries({
+      plant_explorer_enabled: form.value.plant_explorer_enabled,
       sap_integration_enabled: form.value.sap_integration_enabled,
       sap_mcp_url: form.value.sap_mcp_url,
       sap_connection_type: form.value.sap_connection_type,
@@ -158,6 +182,7 @@ async function saveAll() {
       await put(`/settings/${key}`, { value });
     }
     toast.success(t('settings.saved'));
+    await features.reload();
     await load();
   } catch (e) {
     toast.error(e.response?.data?.error || e.message);

@@ -1,5 +1,8 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
+import { useFeaturesStore } from '@/stores/features';
+
+const PLANT_EXPLORER_ROUTE_NAMES = new Set(['plant-explorer', 'admin-plant-explorer']);
 
 const routes = [
   { path: '/', redirect: '/chat' },
@@ -122,6 +125,17 @@ router.beforeEach(async (to) => {
   }
   if (to.meta.requiresAdmin && !auth.isAdmin) {
     return { name: 'chat' };
+  }
+  if (auth.isAuthenticated && PLANT_EXPLORER_ROUTE_NAMES.has(to.name)) {
+    const features = useFeaturesStore();
+    try {
+      await features.ensureLoaded();
+    } catch {
+      return { name: 'chat' };
+    }
+    if (!features.plantExplorerEnabled) {
+      return auth.isAdmin ? { name: 'admin' } : { name: 'chat' };
+    }
   }
   return true;
 });

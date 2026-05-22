@@ -480,6 +480,10 @@ export default {
     loadFailed: 'Could not load settings',
     lastSync: 'Last sync',
     syncDone: 'Sync: {created} created, {updated} updated',
+    plantExplorerTitle: 'Plant explorer',
+    plantExplorerEnable: 'Enable plant explorer',
+    plantExplorerOnHint: 'Navigation and API for plants, PI sheets, and equipment are visible.',
+    plantExplorerOffHint: 'Plant explorer is hidden; direct URLs redirect away.',
   },
   equipmentPage: {
     title: 'Equipment & Scales',
