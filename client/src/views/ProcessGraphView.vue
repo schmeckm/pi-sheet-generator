@@ -56,6 +56,59 @@
       </form>
     </div>
 
+    <div v-if="suggestions.length" class="sap-tile mb-6 overflow-x-auto">
+      <h2 class="mb-2 p-4 pb-0 text-sm font-semibold">
+        {{ t('graph.suggestionsTitle') }}
+        <span class="ml-2 rounded bg-amber-100 px-2 py-0.5 text-xs text-amber-900">
+          {{ suggestions.length }}
+        </span>
+      </h2>
+      <p class="px-4 pb-2 text-xs text-[var(--sapContentLabelColor)]">{{ t('graph.suggestionsHint') }}</p>
+      <table class="w-full min-w-[800px] text-left text-sm">
+        <thead>
+          <tr class="border-b text-[var(--sapContentLabelColor)]">
+            <th class="p-3">{{ t('graph.colSource') }}</th>
+            <th class="p-3">{{ t('graph.colType') }}</th>
+            <th class="p-3">{{ t('graph.colFrom') }}</th>
+            <th class="p-3">{{ t('graph.colTo') }}</th>
+            <th class="p-3" />
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            v-for="s in suggestions"
+            :key="s.id"
+            class="border-b border-[var(--sapNeutralBorderColor)]"
+          >
+            <td class="p-3 text-xs">
+              {{ s.document?.title || s.document?.filename || '—' }}
+            </td>
+            <td class="p-3">{{ t(`graph.edgeTypes.${s.edge_type}`, s.edge_type) }}</td>
+            <td class="p-3 font-mono text-xs">{{ s.from_ref }}</td>
+            <td class="p-3 font-mono text-xs">{{ s.to_ref }}</td>
+            <td class="p-3 text-right whitespace-nowrap">
+              <button
+                type="button"
+                class="sap-btn sap-btn--emphasized !text-sm"
+                @click="approveSuggestion(s)"
+              >
+                {{ t('graph.approveSuggestion') }}
+              </button>
+              <button
+                type="button"
+                class="sap-btn sap-btn--transparent !text-sm"
+                @click="rejectSuggestion(s)"
+              >
+                {{ t('graph.rejectSuggestion') }}
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 v-if="!loading" class="mb-2 text-sm font-semibold">{{ t('graph.confirmedEdges') }}</h2>
+
     <div v-if="loading" class="text-[var(--sapContentLabelColor)]">{{ t('common.loading') }}</div>
 
     <div v-else-if="!edges.length" class="sap-tile p-8 text-center text-sm text-[var(--sapContentLabelColor)]">
@@ -115,6 +168,7 @@ const edgeTypes = ['FOLLOWS', 'USES_EQUIPMENT', 'REQUIRES', 'APPLIES_TO', 'MAPS_
 
 const processFilter = ref('Verpackung');
 const edges = ref([]);
+const suggestions = ref([]);
 const chain = ref([]);
 const loading = ref(true);
 const saving = ref(false);
@@ -130,7 +184,14 @@ async function load() {
   loading.value = true;
   try {
     const params = processFilter.value ? { process_type: processFilter.value } : {};
-    edges.value = await get('/graph/edges', { params });
+    const sugParams = { status: 'pending' };
+    if (processFilter.value) sugParams.process_type = processFilter.value;
+    const [edgeRows, sugRows] = await Promise.all([
+      get('/graph/edges', { params }),
+      get('/graph/suggestions', { params: sugParams }),
+    ]);
+    edges.value = edgeRows;
+    suggestions.value = sugRows;
     if (processFilter.value) {
       const ctx = await get('/graph/context', { params: { process_type: processFilter.value } });
       chain.value = ctx.chain || [];
@@ -176,6 +237,26 @@ async function removeEdge(row) {
   try {
     await del(`/graph/edges/${row.id}`);
     toast.success(t('graph.deleteSuccess'));
+    await load();
+  } catch (err) {
+    toast.error(err.response?.data?.error || t('lifecycle.actionFailed'));
+  }
+}
+
+async function approveSuggestion(row) {
+  try {
+    await post(`/graph/suggestions/${row.id}/approve`);
+    toast.success(t('graph.suggestionApproved'));
+    await load();
+  } catch (err) {
+    toast.error(err.response?.data?.error || t('lifecycle.actionFailed'));
+  }
+}
+
+async function rejectSuggestion(row) {
+  try {
+    await post(`/graph/suggestions/${row.id}/reject`);
+    toast.success(t('graph.suggestionRejected'));
     await load();
   } catch (err) {
     toast.error(err.response?.data?.error || t('lifecycle.actionFailed'));

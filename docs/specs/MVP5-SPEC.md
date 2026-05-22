@@ -46,6 +46,17 @@ LLM-Tools im Q&A-Modus:
 
 PI-Sheet-Speicherung: automatische **Graph-Warnungen** bei abweichender Schrittfolge.
 
-## 5.2+ (Roadmap)
+## 5.2 (implementiert)
 
-GraphRAG aus Wissensbasis, SAP-Sync, Graph-Explorer mit Lineage.
+Nach **Wissensbasis-Upload** (mit `process_type`):
+
+- Heuristik + optional LLM-Extraktion → `graph_edge_suggestions` (status `pending`)
+- Admin **Prozessgraph** → Vorschläge übernehmen / ablehnen
+
+## 5.5 (implementiert)
+
+Bei **Freigabe** (`approve`): `pi_sheets.graph_snapshot` mit Kette + Anforderungen zum Freigabezeitpunkt. Anzeige in der PI-Vorschau.
+
+## 5.4+ (Roadmap)
+
+SAP-Sync in den Graph, erweiterter Graph-Explorer.

@@ -68,6 +68,16 @@
         <p v-if="sheet.order_number || sheet.batch_number" class="mt-1 text-xs text-gray-600">
           {{ t('preview.batchMeta', { order: sheet.order_number || '—', batch: sheet.batch_number || '—' }) }}
         </p>
+        <div
+          v-if="sheet.graph_snapshot?.chain?.length"
+          class="mt-3 rounded border border-green-200 bg-green-50 p-3 text-xs text-green-900"
+        >
+          <p class="font-semibold">{{ t('preview.graphSnapshotTitle') }}</p>
+          <p class="mt-1 font-mono">{{ sheet.graph_snapshot.chain.join(' → ') }}</p>
+          <p v-if="sheet.graph_snapshot.captured_at" class="mt-1 text-green-800">
+            {{ t('preview.graphSnapshotAt', { date: formatDate(sheet.graph_snapshot.captured_at) }) }}
+          </p>
+        </div>
         <p v-if="viewMode === 'print'" class="mt-3 text-sm">
           {{ t('preview.printFields') }}
         </p>
