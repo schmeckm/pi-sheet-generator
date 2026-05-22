@@ -1,6 +1,6 @@
 /**
  * Runnable seed: node seeders/seed-xsteps.js
- * Seeds 2 users, default PromptConfig, 17 XSteps (9 Verpackung + 4 Abfüllung + 4 Granulation).
+ * Seeds 2 users, default PromptConfig, 24 XSteps (11 Verpackung + 4 EWM/HU + 4 Abfüllung + 5 Granulation).
  */
 require('dotenv').config({ path: require('path').resolve(__dirname, '../../.env') });
 
@@ -176,6 +176,131 @@ const SAMPLE_XSTEPS = [
     signature_required: true,
     sort_order: 9,
   },
+  // —— Verpackung EWM / Handling Unit (4) ——
+  {
+    xstep_id: 'XS-VP-EWM-001',
+    name: 'HU packen (EWM)',
+    category: 'Warenbewegung',
+    process_type: 'Verpackung',
+    description:
+      'Verpackungsmaterialien in eine Handling Unit packen gemäß Packvorschrift (SAP EWM).',
+    instruction_template:
+      'Packen Sie die bereitgestellten Materialien in eine HU gemäß Packvorschrift. Erfassen Sie SSCC und HU-Nummer nach Systemrückmeldung.',
+    params: [
+      { name: 'Packvorschrift', type: 'input', required: true },
+      { name: 'Material-Nr.', type: 'input', required: true },
+      { name: 'Charge', type: 'input', required: true },
+      { name: 'Menge', type: 'input', unit: 'Stk', required: true },
+      { name: 'HU-Nummer', type: 'input', required: true },
+      { name: 'SSCC', type: 'input' },
+      { name: 'Packen bestätigt', type: 'checkbox', required: true },
+    ],
+    sap_transaction: '/SCWM/PACK',
+    sort_order: 10,
+  },
+  {
+    xstep_id: 'XS-VP-EWM-002',
+    name: 'HU zum Arbeitsplatz (EWM)',
+    category: 'Warenbewegung',
+    process_type: 'Verpackung',
+    description: 'HU per Lageraufgabe zum Verpackungsarbeitsplatz bereitstellen.',
+    instruction_template:
+      'Scannen Sie die HU und bestätigen Sie die Lageraufgabe zum Ziel-Lagerplatz am Verpackungsarbeitsplatz.',
+    params: [
+      { name: 'HU-Nummer', type: 'input', required: true },
+      { name: 'SSCC', type: 'input' },
+      { name: 'Lageraufgabe', type: 'input', required: true },
+      { name: 'Ziel-Lagerplatz', type: 'input', required: true },
+      { name: 'Scan bestätigt', type: 'checkbox', required: true },
+    ],
+    sap_transaction: '/SCWM/PRDI',
+    sort_order: 11,
+  },
+  {
+    xstep_id: 'XS-VP-EWM-003',
+    name: 'HU-Umlagerung buchen (311 EWM)',
+    category: 'Warenbewegung',
+    process_type: 'Verpackung',
+    description: 'Umlagerung der HU mit Bewegungsart 311 in SAP EWM.',
+    instruction_template:
+      'Buchen Sie die HU-Umlagerung mit Bewegungsart 311. Quell- und Ziel-HU bzw. Lagerplätze prüfen.',
+    params: [
+      { name: 'HU-Nummer', type: 'input', required: true },
+      { name: 'Bewegungsart', type: 'display', default_value: '311' },
+      { name: 'Lagerort Ab', type: 'input', required: true },
+      { name: 'Lagerort Zu', type: 'input', required: true },
+      { name: 'Menge', type: 'input', required: true },
+      { name: 'Buchung bestätigt', type: 'checkbox', required: true },
+    ],
+    sap_transaction: '/SCWM/MIGO',
+    movement_type: '311',
+    sort_order: 12,
+  },
+  {
+    xstep_id: 'XS-VP-EWM-004',
+    name: 'HU-Verbrauch buchen (261 EWM)',
+    category: 'Warenbewegung',
+    process_type: 'Verpackung',
+    description: 'Materialverbrauch aus HU mit Bewegungsart 261 in SAP EWM.',
+    instruction_template:
+      'Buchen Sie den Verbrauch der HU-Inhalte mit Bewegungsart 261. HU ggf. entpacken oder als verbraucht kennzeichnen.',
+    params: [
+      { name: 'HU-Nummer', type: 'input', required: true },
+      { name: 'Material', type: 'input', required: true },
+      { name: 'Menge', type: 'input', required: true },
+      { name: 'Bewegungsart', type: 'display', default_value: '261' },
+      { name: 'Kostenstelle', type: 'input' },
+      { name: 'Verbrauch bestätigt', type: 'checkbox', required: true },
+    ],
+    sap_transaction: '/SCWM/MIGO',
+    movement_type: '261',
+    sort_order: 13,
+  },
+  {
+    xstep_id: 'XS-VP-010',
+    name: 'Material Reconciliation',
+    category: 'Qualität',
+    process_type: 'Verpackung',
+    description: 'Abgleich von Stückliste, Entnahmen, Verbrauch und Restmengen vor Chargenabschluss.',
+    instruction_template:
+      'Führen Sie den Materialabgleich durch: Soll vs. entnommen vs. verbraucht vs. zurück/vernichtet. Dokumentieren Sie Abweichungen und klären Sie diese vor Freigabe.',
+    params: [
+      { name: 'Charge', type: 'input', required: true },
+      { name: 'Sollmenge gesamt', type: 'input', unit: 'Stk', required: true },
+      { name: 'Entnommen', type: 'input', unit: 'Stk', required: true },
+      { name: 'Verbraucht', type: 'input', unit: 'Stk', required: true },
+      { name: 'Zurück', type: 'input', unit: 'Stk' },
+      { name: 'Vernichtet', type: 'input', unit: 'Stk' },
+      { name: 'Differenz', type: 'input', unit: 'Stk', required: true },
+      { name: 'Abweichung dokumentiert', type: 'checkbox', required: true },
+      { name: 'Freigabe Produktion', type: 'checkbox', required: true },
+      { name: 'Freigabe QA', type: 'checkbox', required: true },
+    ],
+    gmp_relevant: true,
+    signature_required: true,
+    sort_order: 14,
+  },
+  {
+    xstep_id: 'XS-VP-011',
+    name: 'Batch Record Review',
+    category: 'Qualität',
+    process_type: 'Verpackung',
+    description: 'QA-Review des ausgeführten Chargenprotokolls / Batch Records vor Abschluss.',
+    instruction_template:
+      'Prüfen Sie das vollständige Chargenprotokoll inkl. aller Schritte, Messwerte und Unterschriften. Dokumentieren Sie Abweichungen und erteilen Sie die QA-Freigabe oder lehnen Sie mit Begründung ab.',
+    params: [
+      { name: 'Charge', type: 'input', required: true },
+      { name: 'BR-Referenz', type: 'input', required: true },
+      { name: 'Vollständigkeit geprüft', type: 'checkbox', required: true },
+      { name: 'Abweichungen vorhanden', type: 'checkbox' },
+      { name: 'Review-Kommentar', type: 'input' },
+      { name: 'QA-Freigabe erteilt', type: 'checkbox', required: true },
+      { name: 'Visum QA', type: 'input', required: true },
+    ],
+    gmp_relevant: true,
+    signature_required: true,
+    sort_order: 15,
+  },
   // —— Abfüllung (4) ——
   {
     xstep_id: 'XS-AF-001',
@@ -242,7 +367,7 @@ const SAMPLE_XSTEPS = [
     sap_transaction: 'CO11N',
     sort_order: 4,
   },
-  // —— Granulation (4) ——
+  // —— Granulation (5) ——
   {
     xstep_id: 'XS-GR-001',
     name: 'Rohstoff-Einwaage',
@@ -310,6 +435,37 @@ const SAMPLE_XSTEPS = [
     sort_order: 3,
   },
   {
+    xstep_id: 'XS-GR-005',
+    name: 'Temperaturüberwachung (IPC)',
+    category: 'Qualität',
+    process_type: 'Granulation',
+    description: 'In-Prozess-Überwachung der Prozesstemperatur am Granulator.',
+    instruction_template:
+      'Überwachen Sie die Prozesstemperatur gegen Sollwert und Toleranz. Bei Abweichung Prozess stoppen und Abweichung dokumentieren.',
+    params: [
+      { name: 'Solltemperatur', type: 'display', unit: '°C', default_value: '60' },
+      { name: 'Toleranz', type: 'display', unit: '°C', default_value: '2' },
+      {
+        name: 'Prozesstemperatur',
+        type: 'temperature',
+        required: true,
+        equipment_config: {
+          equipment_id: 'T-GR-01',
+          target_field: 'Solltemperatur',
+          tolerance_field: 'Toleranz',
+          requires_stable: true,
+          min_stability_ms: 3000,
+        },
+      },
+      { name: 'Messwert dokumentiert', type: 'input', unit: '°C' },
+      { name: 'Ergebnis', type: 'input', required: true },
+      { name: 'Sensor-ID', type: 'display', default_value: 'T-GR-01' },
+    ],
+    gmp_relevant: true,
+    signature_required: true,
+    sort_order: 4,
+  },
+  {
     xstep_id: 'XS-GR-004',
     name: 'Rückmeldung Granulation',
     category: 'Rückmeldung',
@@ -322,7 +478,7 @@ const SAMPLE_XSTEPS = [
       { name: 'Ausbeute', type: 'input', unit: 'kg', required: true },
     ],
     sap_transaction: 'CO11N',
-    sort_order: 4,
+    sort_order: 5,
   },
 ];
 

@@ -69,8 +69,15 @@
       <aside
         class="flex h-full w-full max-w-lg flex-col border-l bg-[var(--sapGroupContentBackground)] shadow-xl"
       >
-        <div class="sap-object-header flex items-center justify-between !py-3">
-          <h2 class="text-sm font-semibold">{{ localizeText(detail.title) }}</h2>
+        <div class="sap-object-header flex items-center justify-between gap-2 !py-3">
+          <h2 class="min-w-0 flex-1 truncate text-sm font-semibold">{{ localizeText(detail.title) }}</h2>
+          <button
+            type="button"
+            class="sap-btn sap-btn--emphasized !text-sm"
+            @click="openInChat(detail.id)"
+          >
+            {{ t('plantExplorer.openInChat') }}
+          </button>
           <button type="button" class="sap-btn sap-btn--ghost !p-2" @click="detail = null">✕</button>
         </div>
         <PISheetWorkflow :sheet="detail" @updated="onDetailUpdated" />
@@ -87,6 +94,9 @@ import { ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { get } from '@/composables/useApi';
+import { useOpenPiSheet } from '@/composables/useOpenPiSheet';
+
+const { openInChat } = useOpenPiSheet();
 import PISheetStatusBadge from '@/components/pisheet/PISheetStatusBadge.vue';
 import PISheetWorkflow from '@/components/pisheet/PISheetWorkflow.vue';
 import PISheetPreview from '@/components/pisheet/PISheetPreview.vue';

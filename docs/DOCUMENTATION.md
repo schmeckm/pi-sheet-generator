@@ -4,6 +4,8 @@ LLM-gestützter **Process Instruction (PI) Sheet** Generator für die pharmazeut
 
 ---
 
+**English:** [DOCUMENTATION.en.md](./DOCUMENTATION.en.md)
+
 ## Inhaltsverzeichnis
 
 1. [Überblick](#überblick)
@@ -133,44 +135,53 @@ Nur für Rolle **ADMIN** (Tab „Admin“ in der Shell).
 
 | Modul | Funktion |
 |-------|----------|
-| **Repository** | XStep-Upload, Liste, Löschen |
-| **Digitalisieren** | PDF/Word → strukturierte XSteps |
+| **Dashboard** | Kennzahlen und Übersicht |
+| **PI Sheets** | Freigabe-Warteschlange (GMP) |
+| **Audit** | Änderungsprotokoll |
+| **Prozessgraph** | XStep-Beziehungen, KI-Vorschläge |
+| **Repository** | XStep-Upload, Liste, Bearbeiten |
+| **Upload** | Multi-Format-Import mit Mapping |
 | **Knowledge** | Wissensbasis, Embeddings |
 | **Equipment** | Geräte/Waagen, Verbindungstest, Namespace-Suche |
-| **Prompt Config** | System-Prompt, Versionen, Diff, API-Test |
-| **PI Sheets** | Freigabe-Warteschlange (GMP) |
 | **Einstellungen** | Systemeinstellungen (API-Keys, MCP, …) |
-| **Audit** | Änderungsprotokoll |
+| **Prompt Config** | System-Prompt, Versionen, Diff, API-Test |
+| **Hilfe & Architektur** | In-App-Hilfe (folgt UI-Sprache DE/EN) |
 
 ---
 
 ## Architektur
 
 ```mermaid
-flowchart LR
-  subgraph client [Vue Client]
-    Chat[ChatView]
-    Admin[Admin Views]
-    Preview[PISheetPreview]
+flowchart TB
+  subgraph ui [Vue 3 Client]
+    Chat[PI Assistent + Vorschau]
+    Admin[Admin-Module]
+    Dig[Digitalisieren]
   end
   subgraph api [Express API]
-    ChatAPI["/api/chat/*"]
-    PiAPI["/api/pi-sheets/*"]
-    EquipAPI["/api/equipment/*"]
+    LLM[llm.service - Claude]
+    RAG[embedding + knowledge RAG]
+    Imp[import · template · audit]
+    Equ[equipment gateway]
+    Graph[graph · settings]
   end
-  subgraph data [Data]
+  subgraph ext [External]
+    Claude[Anthropic API]
+    MCP[SAP MCP optional]
     PG[(PostgreSQL + pgvector)]
   end
-  subgraph external [External]
-    Claude[Anthropic Claude]
-    MCP[SAP MCP Server]
-  end
-  Chat --> ChatAPI
+  Chat --> api
   Admin --> api
-  ChatAPI --> Claude
-  ChatAPI --> MCP
+  Dig --> api
+  LLM --> Claude
+  Equ --> MCP
   api --> PG
+  RAG --> PG
 ```
+
+**In-App (DE/EN):** Admin → **Hilfe & Architektur** — folgt der UI-Sprache (Profil/Shell). Quelle: [`client/src/content/architectureHelp.js`](../client/src/content/architectureHelp.js).
+
+**Englische Dokumentation:** [DOCUMENTATION.en.md](./DOCUMENTATION.en.md)
 
 **Wichtige Client-Pfade**
 
@@ -180,6 +191,7 @@ flowchart LR
 | `client/src/composables/useNewChat.js` | Neues Gespräch + Bestätigung |
 | `client/src/stores/chat.js` | Nachrichten, Generierung, Verlauf |
 | `client/src/components/sap/SapShell.vue` | Shell-Leiste (Neues Gespräch, Verlauf) |
+| `client/src/views/AdminHelpView.vue` | Hilfe & Architektur (i18n) |
 
 ---
 
@@ -285,4 +297,4 @@ Bei Problemen mit der UI nach Updates: Client-Image neu bauen (siehe [Chat & Ass
 
 ---
 
-*Stand: MVP 4 — inkl. „Neues Gespräch“, Equipment Q&A, GMP-Workflow.*
+*Stand: MVP 4 — inkl. „Neues Gespräch“, Equipment Q&A, GMP-Workflow. Hilfe & Architektur in der App: DE/EN über UI-Sprache.*

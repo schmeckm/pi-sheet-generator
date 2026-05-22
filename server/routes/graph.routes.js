@@ -21,6 +21,31 @@ router.get('/context', async (req, res, next) => {
   }
 });
 
+router.get('/explorer', async (req, res, next) => {
+  try {
+    const processType = req.query.process_type;
+    if (!processType) {
+      return res.status(400).json({ error: 'process_type query parameter required' });
+    }
+    const data = await graphService.getExplorer(processType);
+    res.json(data);
+  } catch (err) {
+    if (err.statusCode) return res.status(err.statusCode).json({ error: err.message });
+    next(err);
+  }
+});
+
+router.post('/sync-sap', roles('admin'), async (req, res, next) => {
+  try {
+    const processType = req.body?.process_type || req.query.process_type || null;
+    const report = await graphService.syncSapFromXSteps(processType, req.user.id);
+    res.json(report);
+  } catch (err) {
+    if (err.statusCode) return res.status(err.statusCode).json({ error: err.message });
+    next(err);
+  }
+});
+
 router.get('/edges', async (req, res, next) => {
   try {
     const edges = await graphService.listEdges({

@@ -46,6 +46,18 @@ const routes = [
     meta: { requiresAuth: true, requiresAdmin: true, layout: 'admin' },
   },
   {
+    path: '/admin/plant-explorer',
+    name: 'admin-plant-explorer',
+    component: () => import('@/views/PlantExplorerView.vue'),
+    meta: { requiresAuth: true, requiresAdmin: true, layout: 'admin' },
+  },
+  {
+    path: '/plant-explorer',
+    name: 'plant-explorer',
+    component: () => import('@/views/PlantExplorerView.vue'),
+    meta: { requiresAuth: true, layout: 'default' },
+  },
+  {
     path: '/admin/repository',
     name: 'admin-repository',
     component: () => import('@/views/RepositoryView.vue'),

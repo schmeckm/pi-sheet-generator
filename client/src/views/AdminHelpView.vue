@@ -35,50 +35,31 @@
         >
           <h2 class="mb-4 text-lg font-semibold">{{ section.title }}</h2>
 
-          <p
-            v-for="(p, i) in section.paragraphs"
-            :key="`p-${i}`"
-            class="mb-3 text-sm leading-relaxed text-[var(--sapTextColor)]"
-          >
-            {{ p }}
-          </p>
+          <HelpZoomableMedia
+            v-if="section.image"
+            type="image"
+            :src="section.image"
+            :alt="sectionImageAlt(section)"
+            :caption="sectionImageCaption(section)"
+            :initial-scale="1.15"
+          />
 
-          <pre
-            v-if="section.diagram"
-            class="overflow-x-auto rounded-lg border border-[var(--sapNeutralBorderColor)] bg-slate-50 p-4 font-mono text-xs leading-snug text-slate-800"
-          >{{ section.diagram }}</pre>
+          <template v-if="section.bilingual">
+            <div
+              v-for="lang in bilingualLangs"
+              :key="`${section.id}-${lang}`"
+              class="mb-8 last:mb-0"
+            >
+              <h3
+                class="mb-3 border-b border-[var(--sapNeutralBorderColor)] pb-2 text-xs font-semibold uppercase tracking-wide text-[var(--sapContentLabelColor)]"
+              >
+                {{ lang === 'de' ? t('help.langDe') : t('help.langEn') }}
+              </h3>
+              <HelpSectionBlock :block="section.locales[lang]" />
+            </div>
+          </template>
 
-          <ol v-if="section.steps" class="list-decimal space-y-2 pl-5 text-sm">
-            <li v-for="(step, i) in section.steps" :key="`s-${i}`">{{ step }}</li>
-          </ol>
-
-          <ul v-if="section.list" class="space-y-3 text-sm">
-            <li v-for="(item, i) in section.list" :key="`l-${i}`">
-              <strong class="text-[var(--sapBrandColor)]">{{ item.label }}</strong>
-              <span class="text-[var(--sapTextColor)]"> — {{ item.text }}</span>
-            </li>
-          </ul>
-
-          <ul v-if="section.paths" class="mt-3 space-y-1 font-mono text-xs text-slate-600">
-            <li v-for="(path, i) in section.paths" :key="`path-${i}`">{{ path }}</li>
-          </ul>
-
-          <div v-if="section.table" class="mt-3 overflow-x-auto">
-            <table class="min-w-full text-left text-sm">
-              <thead class="sr-only">
-                <tr>
-                  <th scope="col">Endpoint</th>
-                  <th scope="col">Description</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y">
-                <tr v-for="(row, i) in section.table" :key="`t-${i}`">
-                  <td class="py-2 pr-4 font-mono text-xs text-[var(--sapBrandColor)]">{{ row[0] }}</td>
-                  <td class="py-2 text-[var(--sapTextColor)]">{{ row[1] }}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+          <HelpSectionBlock v-else :block="section" />
         </section>
       </div>
     </div>
@@ -89,12 +70,26 @@
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { getArchitectureHelp } from '@/content/architectureHelp';
+import HelpSectionBlock from '@/components/help/HelpSectionBlock.vue';
+import HelpZoomableMedia from '@/components/help/HelpZoomableMedia.vue';
 
-const { locale } = useI18n();
+const { t, locale } = useI18n();
+
+const bilingualLangs = ['de', 'en'];
 
 const content = computed(() => getArchitectureHelp(locale.value));
 
 function scrollTo(id) {
   document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function sectionImageAlt(section) {
+  if (locale.value === 'en' && section.imageAltEn) return section.imageAltEn;
+  return section.imageAltDe || section.imageAlt || '';
+}
+
+function sectionImageCaption(section) {
+  if (locale.value === 'en' && section.imageCaptionEn) return section.imageCaptionEn;
+  return section.imageCaptionDe || section.imageCaption || '';
 }
 </script>

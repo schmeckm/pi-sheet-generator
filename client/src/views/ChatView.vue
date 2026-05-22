@@ -88,7 +88,8 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue';
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { useAuthStore } from '@/stores/auth';
 import { useChatStore } from '@/stores/chat';
@@ -104,6 +105,8 @@ import ChatHistorySidebar from '@/components/chat/ChatHistorySidebar.vue';
 import PISheetPreview from '@/components/pisheet/PISheetPreview.vue';
 
 const { t } = useI18n();
+const route = useRoute();
+const router = useRouter();
 const auth = useAuthStore();
 const chat = useChatStore();
 const shell = useShellStore();
@@ -120,11 +123,28 @@ function checkMobile() {
   isMobile.value = window.innerWidth < 1024;
 }
 
-onMounted(() => {
+async function openSheetFromQuery() {
+  const id = route.query.piSheet;
+  if (!id || typeof id !== 'string') return;
+  try {
+    await chat.loadPiSheet(id);
+    shell.chatPreviewOpen = true;
+    const query = { ...route.query };
+    delete query.piSheet;
+    router.replace({ name: 'chat', query });
+  } catch {
+    toast.error(t('chat.loadSheetFailed'));
+  }
+}
+
+onMounted(async () => {
   chat.loadHistory();
   checkMobile();
   window.addEventListener('resize', checkMobile);
+  await openSheetFromQuery();
 });
+
+watch(() => route.query.piSheet, () => openSheetFromQuery());
 
 onUnmounted(() => {
   window.removeEventListener('resize', checkMobile);

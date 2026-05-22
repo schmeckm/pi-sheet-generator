@@ -42,6 +42,19 @@ const DEFAULTS = [
     value: '',
     description: 'JSON report of last sync',
   },
+  {
+    key: 'production_plants',
+    value: JSON.stringify([
+      { code: 'CH01', name: 'Basel' },
+      { code: 'CH02', name: 'Stein' },
+    ]),
+    description: 'JSON array of plants (Werke): { code, name }',
+  },
+  {
+    key: 'default_plant',
+    value: 'CH01',
+    description: 'Default plant code for new PI Sheets',
+  },
 ];
 
 async function seedSettings() {

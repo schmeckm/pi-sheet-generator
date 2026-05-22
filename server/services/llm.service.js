@@ -352,9 +352,12 @@ function validatePiSheet(parsed) {
 
 async function savePiSheet(parsed, userPrompt, userId, locale = 'de') {
   const warnings = await graphService.warningsForPiSheet(parsed, locale);
+  const defaultPlant =
+    (await settingsService.get('default_plant').catch(() => null)) || 'CH01';
   const piSheet = await PISheet.create({
     title: parsed.title,
     process_type: parsed.process_type || null,
+    plant: parsed.plant || defaultPlant,
     description: parsed.description || null,
     user_prompt: userPrompt,
     llm_response: parsed,

@@ -44,11 +44,15 @@ Gilt bei Fragen zu **Waagen, Geräten, Messwerten, Online-Status, OPC UA, UNS, M
 1. **Reihenfolge:** logische Prozessfolge (Vorbereitung → Durchführung → IPC/Qualität → Dokumentation → Abschluss).
 2. **GMP-Pflichten** einplanen, wo fachlich üblich: Linienclearance, In-Prozess-Kontrollen (IPC), Chargen-/Materialbezug, Dokumentation, Qualitätsschritte mit Signaturhinweis.
 3. **Repository zuerst:** vorhandene \`xstep_id\` verwenden; neue Schritte mit \`is_suggestion: true\` und sinnvoller ID (z. B. \`NEW-001\`).
-4. **Parameter:** nur felder, die der Operator wirklich braucht; Typen: \`input\`, \`display\`, \`checkbox\`, \`scale\`.
+4. **Parameter:** nur felder, die der Operator wirklich braucht; Typen: \`input\`, \`display\`, \`checkbox\`, \`scale\`, \`temperature\`.
 5. **Waagen-Schritte:** \`type: "scale"\` mit \`equipment_config\` nur für **bekannte** \`equipment_id\` aus dem Kontext; sonst Hinweis in \`warnings\`, keine erfundenen IDs.
-6. **Qualität vor Vollständigkeit:** lieber weniger, korrekte Schritte als generische Fülltexte.
+6. **Temperatur-Schritte:** \`type: "temperature"\` mit \`equipment_config\` (z. B. \`T-GR-01\`) für Live-IPC; Soll/Toleranz über \`target_field\` / \`tolerance_field\`.
+7. **GMP-Abschluss:** Material Reconciliation (\`XS-VP-010\`) und Batch Record Review (\`XS-VP-011\`) vor Chargenprotokoll-Abschluss einplanen, wenn der Prozess es erfordert.
+8. **Qualität vor Vollständigkeit:** lieber weniger, korrekte Schritte als generische Fülltexte.
 
 **Kategorien:** Warenbewegung | Rückmeldung | Qualität | Prozess | Dokumentation
+
+**SAP EWM / Handling Unit:** Für HU-geführte Lager (z. B. \`XS-VP-EWM-001\` … \`004\`) HU-Nummer, SSCC und Lageraufgaben als Parameter nutzen; \`/SCWM/*\`-Transaktionen aus dem Repository übernehmen. Klassische MIGO-Schritte (\`XS-VP-003\`, \`XS-VP-008\`) nur bei reinem MM/ohne HU-Pflicht.
 
 ---
 
@@ -69,7 +73,7 @@ Gilt bei Fragen zu **Waagen, Geräten, Messwerten, Online-Status, OPC UA, UNS, M
       "params": [
         {
           "name": "Parametername",
-          "type": "input|display|checkbox|scale",
+          "type": "input|display|checkbox|scale|temperature",
           "unit": "Einheit oder leer",
           "required": true
         },

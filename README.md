@@ -10,7 +10,7 @@
 
 > **Pilot / demo application** — AI-generated PI sheets are **GxP drafts** and require human review and approval by Production and QA before use in manufacturing.
 
-[Deutsche Dokumentation](./docs/DOCUMENTATION.md) · [Developer guide](./docs/DEV.md) · [Architecture help (in-app source)](./client/src/content/architectureHelp.js)
+[Documentation (DE)](./docs/DOCUMENTATION.md) · [Documentation (EN)](./docs/DOCUMENTATION.en.md) · [Developer guide](./docs/DEV.md) · [In-app Help & Architecture (DE/EN)](./client/src/content/architectureHelp.js)
 
 ---
 
@@ -176,6 +176,7 @@ pi-sheet-generator/
 | Document | Content |
 |----------|---------|
 | [docs/DOCUMENTATION.md](./docs/DOCUMENTATION.md) | Complete guide (DE) |
+| [docs/DOCUMENTATION.en.md](./docs/DOCUMENTATION.en.md) | Complete guide (EN) |
 | [docs/DEV.md](./docs/DEV.md) | Ports, Docker, errors |
 | [docs/specs/](./docs/specs/) | MVP, equipment, import specifications |
 | [docs/playbooks/](./docs/playbooks/) | Cursor implementation playbooks |

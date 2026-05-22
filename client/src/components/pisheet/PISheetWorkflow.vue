@@ -6,6 +6,22 @@
     <PISheetLifecycleStepper :status="sheet.status" />
     <div class="mb-2 flex flex-wrap items-center gap-2">
       <PISheetStatusBadge :status="sheet.status" />
+      <label v-if="canEditMeta" class="flex items-center gap-1 text-xs">
+        {{ t('preview.plant') }}
+        <select
+          v-model="plantCode"
+          class="sap-input !py-0.5 !text-sm"
+          :disabled="savingPlant"
+          @change="savePlant"
+        >
+          <option v-for="p in plants" :key="p.code" :value="p.code">
+            {{ p.code }} — {{ p.name }}
+          </option>
+        </select>
+      </label>
+      <span v-else-if="sheet.plant" class="text-xs text-[var(--sapContentLabelColor)]">
+        {{ t('preview.plant') }}: <span class="font-mono font-medium">{{ sheet.plant }}</span>
+      </span>
       <span v-if="readOnly" class="text-xs text-[var(--sapContentLabelColor)]">
         {{ t('lifecycle.readOnly') }}
       </span>
@@ -87,10 +103,10 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useAuthStore } from '@/stores/auth';
-import { post } from '@/composables/useApi';
+import { get, post, patch } from '@/composables/useApi';
 import { useToast } from '@/composables/useToast';
 import { useConfirm } from '@/composables/useConfirm';
 import PISheetStatusBadge from './PISheetStatusBadge.vue';
@@ -108,19 +124,32 @@ const toast = useToast();
 const confirm = useConfirm();
 
 const busy = ref(false);
+const savingPlant = ref(false);
 const comment = ref('');
 const orderNumber = ref('');
 const batchNumber = ref('');
+const plantCode = ref('CH01');
+const plants = ref([{ code: 'CH01', name: 'Basel' }]);
 
 watch(
   () => props.sheet,
   (s) => {
     orderNumber.value = s?.order_number || '';
     batchNumber.value = s?.batch_number || '';
+    plantCode.value = s?.plant || 'CH01';
     if (s?.status !== 'draft') comment.value = '';
   },
   { immediate: true }
 );
+
+onMounted(async () => {
+  try {
+    const res = await get('/plants');
+    if (res.plants?.length) plants.value = res.plants;
+  } catch {
+    /* keep default */
+  }
+});
 
 const status = computed(() => {
   const s = props.sheet?.status || 'draft';
@@ -136,6 +165,26 @@ const canSubmit = computed(() => {
 
 const canReview = computed(() => auth.isAdmin && status.value === 'in_review');
 const canArchive = computed(() => auth.isAdmin && status.value === 'approved');
+
+const canEditMeta = computed(() => {
+  if (status.value !== 'draft' || !props.sheet?.id) return false;
+  return auth.isAdmin || props.sheet.created_by === auth.user?.id;
+});
+
+async function savePlant() {
+  if (!props.sheet?.id || !canEditMeta.value) return;
+  savingPlant.value = true;
+  try {
+    const updated = await patch(`/templates/${props.sheet.id}`, { plant: plantCode.value });
+    emit('updated', updated);
+    toast.success(t('preview.plantSaved'));
+  } catch (err) {
+    plantCode.value = props.sheet.plant || 'CH01';
+    toast.error(err.response?.data?.error || t('lifecycle.actionFailed'));
+  } finally {
+    savingPlant.value = false;
+  }
+}
 
 function formatDate(d) {
   const loc = locale.value === 'en' ? 'en-GB' : 'de-DE';

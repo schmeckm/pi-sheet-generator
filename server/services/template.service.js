@@ -54,6 +54,38 @@ async function updateStatus(id, status, userId, userRole) {
   return findById(id, userId, userRole);
 }
 
+async function updateSheetMeta(id, data, userId, userRole) {
+  const sheet = await findById(id, userId, userRole);
+  if (!sheet) return null;
+  if (sheet.status !== 'draft') {
+    const err = new Error('Only draft PI Sheets can be edited');
+    err.statusCode = 400;
+    throw err;
+  }
+  if (userRole !== 'admin' && sheet.created_by !== userId) {
+    const err = new Error('Forbidden');
+    err.statusCode = 403;
+    throw err;
+  }
+
+  const updates = {};
+  if (data.plant !== undefined) updates.plant = data.plant || 'CH01';
+  if (data.order_number !== undefined) updates.order_number = data.order_number || null;
+  if (data.batch_number !== undefined) updates.batch_number = data.batch_number || null;
+
+  if (!Object.keys(updates).length) return sheet;
+
+  await sheet.update(updates);
+  await logAudit({
+    userId,
+    action: 'pi_sheet_updated',
+    entityType: 'pi_sheet',
+    entityId: sheet.id,
+    details: updates,
+  });
+  return findById(id, userId, userRole);
+}
+
 async function deleteSheet(id, userId, userRole) {
   const sheet = await findById(id, userId, userRole);
   if (!sheet || sheet.status !== 'draft') {
@@ -238,4 +270,4 @@ async function generatePDF(id, userId, userRole) {
   return finished;
 }
 
-module.exports = { findAll, findById, updateStatus, deleteSheet, generatePDF };
+module.exports = { findAll, findById, updateStatus, updateSheetMeta, deleteSheet, generatePDF };

@@ -57,6 +57,19 @@ Nach **Wissensbasis-Upload** (mit `process_type`):
 
 Bei **Freigabe** (`approve`): `pi_sheets.graph_snapshot` mit Kette + Anforderungen zum Freigabezeitpunkt. Anzeige in der PI-Vorschau.
 
+## 5.4 (implementiert)
+
+### SAP-Sync aus XSteps
+
+- `POST /api/graph/sync-sap` (Body/Query: `process_type` optional)
+- Legt `MAPS_TO_SAP`-Kanten an: XStep → `sap_transaction` (+ optional `movement_type` in `to_ref` und Metadata)
+- Admin **Prozessgraph** → Button **SAP aus XSteps**
+
+### Graph-Explorer
+
+- `GET /api/graph/explorer?process_type=` — Gruppen nach Kantentyp, Mermaid-Vorschau, XStep-Knoten
+- UI: Mermaid-Block + Filter nach Kantentyp
+
 ## 5.4+ (Roadmap)
 
-SAP-Sync in den Graph, erweiterter Graph-Explorer.
+SAP-MCP-Auftragskanten, interaktiver Graph-Viewer (nicht nur Mermaid-Text).

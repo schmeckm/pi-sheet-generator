@@ -1,6 +1,6 @@
 <template>
   <table class="mt-2 w-full text-sm" :class="printMode ? 'print-table' : ''">
-    <thead v-if="!hasScaleParam">
+    <thead v-if="!hasLiveEquipmentParam">
       <tr class="border-b text-left text-xs text-gray-500">
         <th class="py-1">{{ t('preview.paramName') }}</th>
         <th class="py-1">{{ t('preview.paramValue') }}</th>
@@ -9,7 +9,7 @@
     </thead>
     <tbody>
       <template v-for="(p, i) in params" :key="i">
-        <tr v-if="p.type !== 'scale'" class="border-b border-gray-100">
+        <tr v-if="p.type !== 'scale' && p.type !== 'temperature'" class="border-b border-gray-100">
           <td class="py-2 pr-2">{{ p.name }}</td>
           <td class="py-2">
             <span v-if="inputsLocked" class="print-line">{{ displayValue(p) }}</span>
@@ -32,7 +32,7 @@
           </td>
           <td class="text-center">{{ p.required ? '●' : '○' }}</td>
         </tr>
-        <tr v-else class="border-b border-gray-100">
+        <tr v-else-if="p.type === 'scale'" class="border-b border-gray-100">
           <td colspan="3" class="py-2">
             <p class="mb-1 text-xs font-semibold text-[var(--sapTextColor)]">
               {{ p.name }}
@@ -57,6 +57,26 @@
             />
           </td>
         </tr>
+        <tr v-else-if="p.type === 'temperature'" class="border-b border-gray-100">
+          <td colspan="3" class="py-2">
+            <p class="mb-1 text-xs font-semibold text-[var(--sapTextColor)]">
+              {{ p.name }}
+              <span v-if="p.required" class="text-[var(--sapErrorColor)]">*</span>
+            </p>
+            <TemperatureWidget
+              compact
+              :equipment-id="p.equipment_config.equipment_id"
+              :target-temperature="tempTarget(p)"
+              :tolerance-abs="tempToleranceAbs(p)"
+              :requires-stable="p.equipment_config.requires_stable !== false"
+              :min-stability-ms="p.equipment_config.min_stability_ms || 3000"
+              :read-only="inputsLocked"
+              :print-mode="printMode"
+              :existing-record="p.temperature_record"
+              @temperature-confirmed="onTemperatureConfirmed(p, $event)"
+            />
+          </td>
+        </tr>
       </template>
     </tbody>
   </table>
@@ -66,6 +86,7 @@
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import ScaleWidget from '@/components/equipment/ScaleWidget.vue';
+import TemperatureWidget from '@/components/equipment/TemperatureWidget.vue';
 import {
   getStepParamValue,
   getMaterialInfo,
@@ -84,7 +105,9 @@ const emit = defineEmits(['param-updated']);
 const { t } = useI18n();
 
 const inputsLocked = computed(() => props.printMode || props.readOnly);
-const hasScaleParam = computed(() => props.params.some((p) => p.type === 'scale'));
+const hasLiveEquipmentParam = computed(() =>
+  props.params.some((p) => p.type === 'scale' || p.type === 'temperature')
+);
 const materialInfo = computed(() => (props.step ? getMaterialInfo(props.step) : null));
 
 function displayValue(p) {
@@ -102,6 +125,30 @@ function scaleTolerancePct(p) {
   const field = p.equipment_config?.tolerance_field;
   if (field && props.step) return parseTolerancePercent(props.step, field, 1);
   return Number(p.equipment_config?.tolerance_percent) || 1;
+}
+
+function tempTarget(p) {
+  const field = p.equipment_config?.target_field;
+  const fromStep = field && props.step ? getStepParamValue(props.step, field) : null;
+  if (fromStep != null) return Number(fromStep);
+  return Number(p.equipment_config?.target_temperature) || 60;
+}
+
+function tempToleranceAbs(p) {
+  const field = p.equipment_config?.tolerance_field;
+  const fromStep = field && props.step ? getStepParamValue(props.step, field) : null;
+  if (fromStep != null) return Number(fromStep);
+  return Number(p.equipment_config?.tolerance_abs) || 2;
+}
+
+function onTemperatureConfirmed(param, event) {
+  param.temperature_record = event.record;
+  param.value = `${event.temperature} °C`;
+  const doc = props.step?.params?.find((x) => /messwert dokumentiert/i.test(x.name));
+  if (doc) doc.value = String(event.temperature);
+  const sensor = props.step?.params?.find((x) => /sensor/i.test(x.name));
+  if (sensor) sensor.value = param.equipment_config.equipment_id;
+  emit('param-updated', { step: props.step, param, event });
 }
 
 function onWeighingConfirmed(param, event) {

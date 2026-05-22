@@ -26,6 +26,11 @@ module.exports = (sequelize) => {
         type: DataTypes.STRING(255),
         allowNull: true,
       },
+      plant: {
+        type: DataTypes.STRING(20),
+        allowNull: false,
+        defaultValue: 'CH01',
+      },
       connection_type: {
         type: DataTypes.STRING(50),
         allowNull: false,

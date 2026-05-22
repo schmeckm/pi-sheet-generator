@@ -1,0 +1,33 @@
+/** High-contrast Mermaid config for readable diagrams on any shell background. */
+export const mermaidInitConfig = {
+  startOnLoad: false,
+  securityLevel: 'loose',
+  theme: 'base',
+  themeVariables: {
+    darkMode: false,
+    background: '#ffffff',
+    mainBkg: '#ffffff',
+    primaryColor: '#ffffff',
+    primaryTextColor: '#0f172a',
+    primaryBorderColor: '#334155',
+    secondaryColor: '#dbeafe',
+    secondaryTextColor: '#0c2340',
+    secondaryBorderColor: '#0070f2',
+    tertiaryColor: '#d1fae5',
+    tertiaryTextColor: '#064e3b',
+    tertiaryBorderColor: '#059669',
+    lineColor: '#334155',
+    textColor: '#0f172a',
+    nodeTextColor: '#0f172a',
+    titleColor: '#131e29',
+    edgeLabelBackground: '#ffffff',
+    clusterBkg: '#f5f6f7',
+    clusterBorder: '#94a3b8',
+    defaultLinkColor: '#334155',
+  },
+  flowchart: {
+    htmlLabels: true,
+    curve: 'basis',
+    useMaxWidth: false,
+  },
+};

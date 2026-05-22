@@ -2,8 +2,10 @@
 
 | Dokument | Inhalt |
 |----------|--------|
-| **[DOCUMENTATION.md](./DOCUMENTATION.md)** | Vollständiges Handbuch (Setup, Chat, Architektur, GitHub) |
+| **[DOCUMENTATION.md](./DOCUMENTATION.md)** | Vollständiges Handbuch (DE) |
+| **[DOCUMENTATION.en.md](./DOCUMENTATION.en.md)** | Full guide (EN) |
 | **[DEV.md](./DEV.md)** | Entwickler-Referenz (Ports, Docker, Fehlerbehebung) |
+| **[../client/src/content/architectureHelp.js](../client/src/content/architectureHelp.js)** | In-App Hilfe & Architektur (DE/EN, UI-Sprache) |
 | **[../.github/REPOSITORY_SETTINGS.md](../.github/REPOSITORY_SETTINGS.md)** | GitHub-Beschreibung, Topics, Labels (Checkliste) |
 | **[DEPLOY-PORTAINER.md](./DEPLOY-PORTAINER.md)** | GitHub Actions → Docker Hub → Portainer Stack |
 

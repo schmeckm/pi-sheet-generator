@@ -56,6 +56,8 @@ const piMeta = [
   { key: 'filling', icon: '💧' },
   { key: 'granulation', icon: '⚗️' },
   { key: 'gmpFull', icon: '✓' },
+  { key: 'packagingGmpClose', icon: '📋' },
+  { key: 'granulationTemp', icon: '🌡️' },
 ];
 
 const equipmentMeta = [

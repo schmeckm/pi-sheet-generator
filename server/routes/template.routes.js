@@ -54,6 +54,31 @@ router.get('/:id', async (req, res, next) => {
   }
 });
 
+const metaSchema = Joi.object({
+  plant: Joi.string().max(20),
+  order_number: Joi.string().max(50).allow('', null),
+  batch_number: Joi.string().max(50).allow('', null),
+});
+
+router.patch('/:id', async (req, res, next) => {
+  try {
+    const { error, value } = metaSchema.validate(req.body);
+    if (error) return res.status(400).json({ error: error.details[0].message });
+
+    const sheet = await templateService.updateSheetMeta(
+      req.params.id,
+      value,
+      req.user.id,
+      req.user.role
+    );
+    if (!sheet) return res.status(404).json({ error: 'PI Sheet not found' });
+    res.json(sheet);
+  } catch (err) {
+    if (err.statusCode) return res.status(err.statusCode).json({ error: err.message });
+    next(err);
+  }
+});
+
 const workflowSchema = Joi.object({
   comment: Joi.string().max(2000).allow('', null),
   batch_number: Joi.string().max(50).allow('', null),

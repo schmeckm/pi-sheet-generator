@@ -17,6 +17,11 @@ module.exports = (sequelize) => {
         type: DataTypes.STRING(100),
         allowNull: true,
       },
+      plant: {
+        type: DataTypes.STRING(20),
+        allowNull: false,
+        defaultValue: 'CH01',
+      },
       description: {
         type: DataTypes.TEXT,
         allowNull: true,

@@ -70,7 +70,7 @@ Data sources for PI Sheets:
 Decide yourself: repository for validated templates; SAP tools for current order and master data. Combine both sources in the final JSON response.`,
     equipmentContextAppend: `
 
-Configured production equipment (scales, sensors) is provided as JSON in the user prompt. For weighing steps (type "scale"), use only equipment_id values from that list — do not invent IDs. If no suitable scale exists, add a warning instead of a wrong reference.`,
+Configured production equipment (scales, temperature sensors) is provided as JSON in the user prompt. For weighing steps (type "scale") or temperature steps (type "temperature"), use only equipment_id values from that list — do not invent IDs. If no suitable device exists, add a warning instead of a wrong reference.`,
     labels: {
       processGraph: 'Process knowledge graph',
       xsteps: 'Available XSteps from the repository',

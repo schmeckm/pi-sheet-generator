@@ -10,6 +10,7 @@
     "start": "node index.js",
     "db:sync": "node scripts/db-sync.js",
     "db:seed": "node seeders/seed-xsteps.js",
+    "db:seed-graph": "node seeders/seed-graph.js",
     "db:seed-settings": "node seeders/seed-settings.js",
     "db:seed-equipment": "node seeders/seed-equipment.js",
     "db:reset": "node scripts/db-reset.js",
