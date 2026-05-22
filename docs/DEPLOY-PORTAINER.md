@@ -108,9 +108,40 @@ Wenn die Meldung **trotzdem** erscheint, läuft noch eine **alte Compose-Version
 
 4. **Containers → db → Logs:**  
    - `Permission denied` → Volume/Rechte auf NAS  
-   - `No space left` → Speicher freigeben  
+   - **`No space left on device`** / `could not create directory .../pg_wal` → **Festplatte auf dem Docker-Host voll** — siehe Abschnitt unten  
    - `exec format error` → falscher CPU-Typ (ARM vs. amd64) — Host-Architektur prüfen  
 5. Nach Deploy **2–3 Minuten warten** — API kann erst nach DB-Init healthy werden.
+
+### `No space left on device` (PostgreSQL / db)
+
+Die Datenbank braucht beim ersten Start freien Speicher (typisch **≥ 2–5 GB** auf dem Docker-Volume-Pfad).
+
+**Auf dem Host (SSH oder Terminal am NAS/Server):**
+
+```bash
+df -h
+docker system df
+```
+
+**Speicher freigeben:**
+
+```bash
+# Ungenutzte Images, gestoppte Container, Build-Cache (Vorsicht: entfernt unbenutztes)
+docker system prune -a
+
+# Nur wenn pi-sheet-Stack schon entfernt wurde — sonst DB-Daten weg:
+docker volume prune
+```
+
+In **Portainer:** **Images** → unbenutzte Images löschen · **Volumes** → alte Test-Volumes löschen.
+
+Danach:
+
+1. Stack `pi-sheet-generator` entfernen (**mit** Volume `pgdata`, falls kaputt/leer)
+2. Prüfen: `df -h` zeigt wieder freien Platz auf der Partition, wo Docker Daten speichert
+3. Stack neu deployen
+
+**Synology/QNAP:** Speicherplatz in der Verwaltung prüfen; Docker-Volume oft auf Volume mit wenig Rest — Docker nach größerem Volume verschieben oder Dateien löschen.
 
 ### Weitere Probleme
 
