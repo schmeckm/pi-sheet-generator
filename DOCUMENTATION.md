@@ -240,11 +240,32 @@ Vorlagen: `.env.example` (lokal), `.env.docker.example` (Compose).
 
 ## GitHub
 
+### Repository klonen (nach dem Push)
+
 ```bash
 git clone https://github.com/<IHR-USER>/pi-sheet-generator.git
 cd pi-sheet-generator
 cp .env.docker.example .env
 docker compose --profile full up -d --build
+```
+
+### Erstes Push (einmalig auf diesem Rechner)
+
+Lokal ist bereits ein Commit auf `master` vorbereitet. GitHub CLI muss angemeldet sein:
+
+```powershell
+gh auth login
+# GitHub.com → HTTPS → Login im Browser
+
+gh repo create pi-sheet-generator --public --source=. --remote=origin --push `
+  --description "LLM-powered PI Sheet Generator for pharmaceutical manufacturing"
+```
+
+**Alternativ** (Repo auf github.com manuell anlegen, dann):
+
+```powershell
+git remote add origin https://github.com/<IHR-USER>/pi-sheet-generator.git
+git push -u origin master
 ```
 
 Bei Problemen mit der UI nach Updates: Client-Image neu bauen (siehe [Chat & Assistent](#nach-code-änderungen-am-ui-docker)).
