@@ -90,6 +90,19 @@ flowchart TB
 
 ---
 
+## Deploy (CI/CD → Docker Hub → Portainer)
+
+On every push to `main`, GitHub Actions builds and publishes:
+
+- `schmeckm/pi-sheet-generator-api:latest`
+- `schmeckm/pi-sheet-generator-client:latest`
+
+**Setup:** Add GitHub secrets `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN`, then use [deploy/portainer-stack.yml](./deploy/portainer-stack.yml) in Portainer.
+
+Full guide: **[docs/DEPLOY-PORTAINER.md](./docs/DEPLOY-PORTAINER.md)**
+
+---
+
 ## Quick start
 
 ### Docker (demo / test)

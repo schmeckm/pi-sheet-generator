@@ -33,6 +33,17 @@ After push, sync labels (requires `gh auth login`):
 
 Or create labels manually from [.github/labels.yml](./labels.yml).
 
+## GitHub Actions (Docker Hub)
+
+Repository → **Settings → Secrets and variables → Actions**:
+
+| Secret | Description |
+|--------|-------------|
+| `DOCKERHUB_USERNAME` | Docker Hub user (e.g. `schmeckm`) |
+| `DOCKERHUB_TOKEN` | Hub access token (read/write) |
+
+Workflow [.github/workflows/docker-publish.yml](./workflows/docker-publish.yml) runs on push to `main`.
+
 ## Security
 
 - [ ] **Private vulnerability reporting** enabled (see [SECURITY.md](../SECURITY.md))

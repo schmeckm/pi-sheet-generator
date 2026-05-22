@@ -5,6 +5,7 @@
 | **[DOCUMENTATION.md](./DOCUMENTATION.md)** | Vollständiges Handbuch (Setup, Chat, Architektur, GitHub) |
 | **[DEV.md](./DEV.md)** | Entwickler-Referenz (Ports, Docker, Fehlerbehebung) |
 | **[../.github/REPOSITORY_SETTINGS.md](../.github/REPOSITORY_SETTINGS.md)** | GitHub-Beschreibung, Topics, Labels (Checkliste) |
+| **[DEPLOY-PORTAINER.md](./DEPLOY-PORTAINER.md)** | GitHub Actions → Docker Hub → Portainer Stack |
 
 ## Spezifikationen (`specs/`)
 

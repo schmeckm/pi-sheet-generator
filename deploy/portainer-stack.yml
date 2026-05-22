@@ -1,0 +1,75 @@
+# Portainer Stack — PI Sheet Generator (images from Docker Hub)
+#
+# 1. GitHub Actions pushes images on every push to main (see .github/workflows/docker-publish.yml)
+# 2. In Portainer: Stacks → Add stack → Web editor → paste this file
+# 3. Add environment variables (see deploy/.env.portainer.example) under "Environment variables" or env_file
+#
+# Images (replace DOCKERHUB_USER if not schmeckm):
+#   schmeckm/pi-sheet-generator-api:latest
+#   schmeckm/pi-sheet-generator-client:latest
+
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-pisheet}
+      POSTGRES_USER: ${POSTGRES_USER:-pisheet}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-pisheet} -d ${POSTGRES_DB:-pisheet}']
+      interval: 5s
+      timeout: 5s
+      retries: 8
+    restart: unless-stopped
+    networks:
+      - pisheet
+
+  api:
+    image: ${DOCKERHUB_USER:-schmeckm}/pi-sheet-generator-api:${IMAGE_TAG:-latest}
+    environment:
+      NODE_ENV: production
+      PORT: 7000
+      DATABASE_URL: postgres://${POSTGRES_USER:-pisheet}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-pisheet}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:?Set ANTHROPIC_API_KEY}
+      EMBEDDING_API_KEY: ${EMBEDDING_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-text-embedding-3-small}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:7004}
+      SAP_MCP_ENABLED: ${SAP_MCP_ENABLED:-false}
+      SAP_MCP_URL: ${SAP_MCP_URL:-}
+      SAP_MCP_AUTH_TOKEN: ${SAP_MCP_AUTH_TOKEN:-}
+      AUTO_SEED: ${AUTO_SEED:-true}
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD', 'wget', '-qO-', 'http://127.0.0.1:7000/api/health']
+      interval: 15s
+      timeout: 5s
+      start_period: 60s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - pisheet
+
+  client:
+    image: ${DOCKERHUB_USER:-schmeckm}/pi-sheet-generator-client:${IMAGE_TAG:-latest}
+    ports:
+      - '${CLIENT_PORT:-7004}:80'
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - pisheet
+
+volumes:
+  pgdata:
+
+networks:
+  pisheet:
+    driver: bridge
