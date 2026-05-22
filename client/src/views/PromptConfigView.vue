@@ -4,6 +4,12 @@
       <div>
         <h1 class="text-xl font-bold">{{ t('admin.promptsTitle') }}</h1>
         <p class="text-sm text-[var(--sapContentLabelColor)]">{{ t('promptConfig.subtitle') }}</p>
+        <p
+          v-if="!auth.isAdmin"
+          class="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-950"
+        >
+          {{ t('promptConfig.editorRoleHint') }}
+        </p>
       </div>
       <button type="button" class="sap-btn sap-btn--emphasized" @click="openCreateDialog">
         {{ t('promptConfig.new') }}
@@ -80,7 +86,7 @@
           </div>
           <div class="flex flex-wrap gap-2">
             <button
-              v-if="!active.is_active"
+              v-if="!active.is_active && auth.isAdmin"
               type="button"
               class="sap-btn sap-btn--transparent"
               @click="activate"
@@ -119,6 +125,7 @@
         <div class="flex min-h-0 flex-1 flex-col overflow-hidden p-4">
           <PromptEditor
             v-show="panel === 'editor'"
+            :key="active.id"
             v-model="editPrompt"
             class="min-h-0 flex-1"
             :dirty="isDirty"
@@ -208,9 +215,17 @@
 
       <section
         v-else
-        class="sap-tile flex flex-col items-center justify-center p-12 text-center text-[var(--sapContentLabelColor)]"
+        class="sap-tile flex flex-col items-center justify-center gap-3 p-12 text-center text-[var(--sapContentLabelColor)]"
       >
-        <p class="text-sm">{{ t('promptConfig.selectHint') }}</p>
+        <p class="text-sm">{{ loadError ? t('promptConfig.loadFailed') : t('promptConfig.selectHint') }}</p>
+        <button
+          v-if="loadError"
+          type="button"
+          class="sap-btn sap-btn--emphasized"
+          @click="load"
+        >
+          {{ t('promptConfig.retry') }}
+        </button>
       </section>
     </div>
 
@@ -241,16 +256,19 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { get, post, put } from '@/composables/useApi';
+import { useAuthStore } from '@/stores/auth';
 import { useToast } from '@/composables/useToast';
 import { useConfirm } from '@/composables/useConfirm';
 import SkeletonBlock from '@/components/shared/SkeletonBlock.vue';
 import PromptEditor from '@/components/admin/PromptEditor.vue';
 
 const { t, locale } = useI18n();
+const auth = useAuthStore();
 const toast = useToast();
 const confirm = useConfirm();
 
 const prompts = ref([]);
+const loadError = ref('');
 const loading = ref(true);
 const saving = ref(false);
 const active = ref(null);
@@ -308,14 +326,23 @@ function excerpt(text) {
 
 async function load() {
   loading.value = true;
+  loadError.value = '';
   try {
-    prompts.value = await get('/admin/prompts');
-    if (!active.value && prompts.value.length) {
-      select(prompts.value.find((p) => p.is_active) || prompts.value[0]);
-    } else if (active.value) {
-      const fresh = prompts.value.find((p) => p.id === active.value.id);
-      if (fresh) select(fresh);
+    const data = await get('/admin/prompts');
+    prompts.value = Array.isArray(data) ? data : [];
+    if (!prompts.value.length) {
+      loadError.value = t('promptConfig.emptyList');
+      active.value = null;
+      return;
     }
+    const pick =
+      prompts.value.find((p) => p.id === active.value?.id) ||
+      prompts.value.find((p) => p.is_active) ||
+      prompts.value[0];
+    await select(pick, { skipDirtyCheck: true });
+  } catch (e) {
+    loadError.value = e.response?.data?.error || e.message || t('promptConfig.loadFailed');
+    toast.error(loadError.value);
   } finally {
     loading.value = false;
   }
@@ -329,8 +356,20 @@ async function loadHistory(id) {
   }
 }
 
-async function select(p) {
-  if (isDirty.value) {
+async function ensurePromptText(p) {
+  const text = p?.system_prompt;
+  if (text && String(text).trim().length > 0) return text;
+  try {
+    const data = await get('/admin/prompts/default-template');
+    toast.warning(t('promptConfig.emptyLoadedDefault'));
+    return data.system_prompt || '';
+  } catch {
+    return '';
+  }
+}
+
+async function select(p, opts = {}) {
+  if (!opts.skipDirtyCheck && isDirty.value) {
     const ok = await confirm.confirm({
       title: t('promptConfig.unsaved'),
       message: t('promptConfig.discardConfirm'),
@@ -340,8 +379,9 @@ async function select(p) {
     if (!ok) return;
   }
   active.value = p;
-  editPrompt.value = p.system_prompt || '';
-  savedPrompt.value = editPrompt.value;
+  const text = await ensurePromptText(p);
+  editPrompt.value = text;
+  savedPrompt.value = text;
   testResult.value = '';
   panel.value = 'editor';
   loadHistory(p.id);

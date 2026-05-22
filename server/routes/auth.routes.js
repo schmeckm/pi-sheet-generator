@@ -20,7 +20,7 @@ const registerSchema = Joi.object({
   email: emailRule.required(),
   password: Joi.string().min(6).required(),
   name: Joi.string().min(1).required(),
-  role: Joi.string().valid('admin', 'operator').default('operator'),
+  role: Joi.string().valid('admin', 'operator', 'prompt_editor').default('operator'),
   preferred_locale: Joi.string().valid('de', 'en').default('de'),
 });
 

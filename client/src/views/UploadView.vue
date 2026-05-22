@@ -19,7 +19,7 @@
     <div v-if="step === 1" class="sap-tile p-8 text-center">
       <div
         class="rounded-xl border-2 border-dashed p-12"
-        :class="dragOver ? 'border-[var(--sapBrandColor)] bg-blue-50' : 'border-gray-300'"
+        :class="dragOver ? 'border-[var(--sapBrandColor)] bg-[var(--sapHighlightColor)]' : 'border-gray-300'"
         @dragover.prevent="dragOver = true"
         @dragleave.prevent="dragOver = false"
         @drop.prevent="onDrop"

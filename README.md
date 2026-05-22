@@ -124,6 +124,7 @@ docker compose --profile full up -d --build
 | Role | Email | Password |
 |------|-------|----------|
 | Admin | `admin@pisheet.local` | `admin123` |
+| Prompt editor | `prompt@pisheet.local` | `prompt123` |
 | Operator | `operator@pisheet.local` | `operator123` |
 
 ### Local development (hot reload)

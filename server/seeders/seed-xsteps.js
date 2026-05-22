@@ -14,6 +14,8 @@ const ADMIN_EMAIL = 'admin@pisheet.local';
 const ADMIN_PASSWORD = 'admin123';
 const OPERATOR_EMAIL = 'operator@pisheet.local';
 const OPERATOR_PASSWORD = 'operator123';
+const PROMPT_EDITOR_EMAIL = 'prompt@pisheet.local';
+const PROMPT_EDITOR_PASSWORD = 'prompt123';
 
 const SAMPLE_XSTEPS = [
   // —— Verpackung (9) ——
@@ -510,7 +512,24 @@ async function seedUsers() {
   });
   await operator.update({ password_hash: operatorHash, name: 'Operator', role: 'operator' });
 
-  console.log(`Users: ${ADMIN_EMAIL}, ${OPERATOR_EMAIL}`);
+  const promptEditorHash = await bcrypt.hash(PROMPT_EDITOR_PASSWORD, 10);
+  const [promptEditor] = await User.findOrCreate({
+    where: { email: PROMPT_EDITOR_EMAIL },
+    defaults: {
+      email: PROMPT_EDITOR_EMAIL,
+      password_hash: promptEditorHash,
+      name: 'Prompt Editor',
+      role: 'prompt_editor',
+      preferred_locale: 'de',
+    },
+  });
+  await promptEditor.update({
+    password_hash: promptEditorHash,
+    name: 'Prompt Editor',
+    role: 'prompt_editor',
+  });
+
+  console.log(`Users: ${ADMIN_EMAIL}, ${OPERATOR_EMAIL}, ${PROMPT_EDITOR_EMAIL}`);
   return admin;
 }
 
@@ -525,7 +544,10 @@ async function seedPromptConfig(adminId) {
     },
   });
 
-  if (!created) {
+  const existing = await PromptConfig.findOne({ where: { name: 'default' } });
+  const needsContent =
+    !existing?.system_prompt || String(existing.system_prompt).trim().length < 200;
+  if (!created || needsContent) {
     await PromptConfig.update(
       { system_prompt: DEFAULT_SYSTEM_PROMPT, is_active: true, created_by: adminId },
       { where: { name: 'default' } }

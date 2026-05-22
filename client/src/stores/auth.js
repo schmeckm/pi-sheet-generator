@@ -11,6 +11,8 @@ export const useAuthStore = defineStore('auth', () => {
 
   const isAuthenticated = computed(() => Boolean(token.value));
   const isAdmin = computed(() => user.value?.role === 'admin');
+  const isPromptEditor = computed(() => user.value?.role === 'prompt_editor');
+  const canManagePrompts = computed(() => isAdmin.value || isPromptEditor.value);
 
   function applyUserLocale(u) {
     const loc = u?.preferred_locale;
@@ -68,6 +70,8 @@ export const useAuthStore = defineStore('auth', () => {
     user,
     isAuthenticated,
     isAdmin,
+    isPromptEditor,
+    canManagePrompts,
     setSession,
     loadFromStorage,
     applyUserLocale,

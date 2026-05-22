@@ -12,6 +12,7 @@ export default {
     digitalize: '📷 Digitize',
     roleAdmin: 'admin',
     roleOperator: 'operator',
+    rolePromptEditor: 'prompt_editor',
     cancel: 'Cancel',
     confirm: 'Confirm',
     menu: 'Menu',
@@ -19,6 +20,8 @@ export default {
   shell: {
     adminArea: 'Administration',
     adminSubtitle: 'SAP BTP · XStep Repository',
+    promptArea: 'Prompt management',
+    promptSubtitle: 'Edit and test the system prompt',
     backToCopilot: 'Back to PI Assistant',
   },
   login: {
@@ -27,6 +30,7 @@ export default {
     demoTitle: 'Demo accounts',
     demoAdmin: "admin{'@'}pisheet.local · admin123",
     demoOperator: "operator{'@'}pisheet.local · operator123",
+    demoPromptEditor: "prompt{'@'}pisheet.local · prompt123",
     gmpNotice: 'GxP: AI-generated PI sheets are drafts and require approval.',
     email: 'Email',
     password: 'Password',
@@ -77,10 +81,17 @@ export default {
     previewSubtitle: 'Digital & Print · Draft',
     building: 'Building PI Sheet…',
     answering: 'Fetching answer…',
+    showMorePrompts: 'More suggestions',
+    hideMorePrompts: 'Hide suggestions',
   },
   welcome: {
     greeting: 'Hello{name} — how can I help?',
     greetingName: ', {name}',
+    jouleGreeting: 'Hello{name}. How can I guide you?',
+    jouleGreetingName: ' {name}',
+    jouleGreetingHi: 'Hi {name},',
+    jouleGreetingHiGuest: 'Hi,',
+    jouleGreetingLead: 'How can I help you?',
     description:
       'I create Process Instruction Sheets from your XStep repository — including goods movements, confirmations, in-process controls, and GMP steps in logical order.',
     caps: {
@@ -141,6 +152,7 @@ export default {
     toolsRunning: 'Tools: {tools}',
     placeholder:
       'Describe your process… e.g. “PI Sheet for packaging with confirmations and goods movements”',
+    placeholderJoule: 'How can I help you?',
     minChars: 'At least 10 characters',
     charCount: '{count} / 2000',
     gmpDisclaimer: 'AI-generated drafts — always approve through Production and QA (GMP).',
@@ -375,6 +387,13 @@ export default {
   },
   promptConfig: {
     subtitle: 'Controls PI sheet generation in chat',
+    editorRoleHint:
+      'You can edit, test, and create prompt configurations. Only an administrator can activate a version for live chat.',
+    loadFailed: 'Could not load prompt configurations.',
+    emptyList: 'No configuration in the database — run npm run db:seed.',
+    retry: 'Retry',
+    emptyLoadedDefault:
+      'The saved prompt was empty — default template loaded. Please review and save.',
     new: 'New configuration',
     create: 'Create',
     created: 'Configuration created',

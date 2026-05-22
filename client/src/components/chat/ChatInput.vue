@@ -1,34 +1,37 @@
 <template>
-  <div class="shrink-0 border-t border-[var(--sapNeutralBorderColor)] bg-[var(--sapBackgroundColor)] px-4 py-4">
-    <form class="sap-joule-composer mx-auto flex max-w-3xl flex-col" @submit.prevent="submit">
+  <div class="sap-joule-composer-bar chat-input-area">
+    <form class="sap-joule-composer-inline" @submit.prevent="submit">
       <textarea
         ref="textareaRef"
         v-model="text"
         rows="1"
-        class="sap-textarea max-h-40 min-h-[52px] resize-none !border-0 !shadow-none focus:!ring-0"
-        :placeholder="t('chat.placeholder')"
+        class="sap-textarea resize-none !border-0 !shadow-none focus:!ring-0"
+        :placeholder="t('chat.placeholderJoule')"
         :disabled="disabled"
         maxlength="2000"
         @keydown.enter.exact.prevent="submit"
         @input="autoResize"
       />
-      <div
-        class="flex items-center justify-between gap-2 border-t border-[var(--sapNeutralBorderColor)] px-3 py-2"
+      <button
+        type="submit"
+        class="sap-joule-send"
+        :disabled="disabled || text.trim().length < 10"
+        :title="t('common.send')"
       >
-        <p class="text-[10px] text-[var(--sapContentLabelColor)]">
-          <span v-if="text.length < 10">{{ t('chat.minChars') }}</span>
-          <span v-else>{{ t('chat.charCount', { count: text.length }) }}</span>
-        </p>
-        <button
-          type="submit"
-          class="sap-btn sap-btn--emphasized !text-sm"
-          :disabled="disabled || text.trim().length < 10"
-        >
-          {{ t('common.send') }}
-        </button>
-      </div>
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2.5"
+            d="M5 10l7-7m0 0l7 7m-7-7v18"
+          />
+        </svg>
+      </button>
     </form>
-    <p class="sap-message-strip mx-auto mt-2 max-w-3xl text-center">{{ t('chat.gmpDisclaimer') }}</p>
+    <p class="mx-auto mt-2 max-w-md text-center text-[10px] text-[var(--sapContentLabelColor)]">
+      <span v-if="text.length > 0 && text.length < 10">{{ t('chat.minChars') }}</span>
+      <span v-else>{{ t('chat.gmpDisclaimer') }}</span>
+    </p>
   </div>
 </template>
 
@@ -47,7 +50,7 @@ function autoResize() {
   const el = textareaRef.value;
   if (!el) return;
   el.style.height = 'auto';
-  el.style.height = `${Math.min(el.scrollHeight, 160)}px`;
+  el.style.height = `${Math.min(el.scrollHeight, 120)}px`;
 }
 
 function submit() {

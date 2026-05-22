@@ -17,11 +17,21 @@
         @new-chat="onNewChat"
       />
 
-      <section class="flex min-w-0 flex-1 flex-col">
-        <div ref="scrollEl" class="flex-1 overflow-y-auto">
-          <div class="mx-auto w-full max-w-3xl px-4 pt-4">
-            <ChatWelcome v-if="showWelcome" :user-name="auth.user?.name?.split(' ')[0]" />
+      <section class="sap-joule-copilot">
+        <JouleCopilotHeader
+          :history-open="shell.chatHistoryOpen"
+          @new-chat="onNewChat"
+          @toggle-history="shell.toggleChatHistory()"
+        />
 
+        <div ref="scrollEl" class="sap-joule-copilot__body">
+          <ChatWelcome
+            v-if="showWelcome"
+            :user-name="auth.user?.name?.split(' ')[0]"
+            @quick-prompt="onQuickPrompt"
+          />
+
+          <div v-if="!showWelcome" class="sap-joule-thread">
             <template v-for="(m, i) in chat.messages" :key="i">
               <ChatMessage
                 v-if="!(chat.isGenerating && i === chat.messages.length - 1 && m.streaming)"
@@ -37,8 +47,6 @@
               :active-tools="chat.activeTools"
             />
           </div>
-
-          <QuickPrompts v-if="showQuickPrompts" class="mt-2" @select="onQuickPrompt" />
         </div>
 
         <ChatInput ref="chatInputRef" :disabled="chat.isGenerating" @send="onSend" />
@@ -72,7 +80,7 @@
             v-if="chat.isGenerating && chat.requestMode === 'pi_sheet' && !chat.currentPiSheet"
             class="absolute inset-0 flex flex-col items-center justify-center gap-3 p-8"
           >
-            <div class="sap-joule-orb h-12 w-12 animate-pulse rounded-full opacity-80" />
+            <AssistantRobot size="md" orb animated class="opacity-80" />
             <p class="text-sm text-[var(--sapContentLabelColor)]">{{ t('joule.building') }}</p>
           </div>
           <PISheetPreview
@@ -100,9 +108,10 @@ import ChatWelcome from '@/components/chat/ChatWelcome.vue';
 import ChatMessage from '@/components/chat/ChatMessage.vue';
 import ChatInput from '@/components/chat/ChatInput.vue';
 import ChatThinking from '@/components/chat/ChatThinking.vue';
-import QuickPrompts from '@/components/chat/QuickPrompts.vue';
+import JouleCopilotHeader from '@/components/chat/JouleCopilotHeader.vue';
 import ChatHistorySidebar from '@/components/chat/ChatHistorySidebar.vue';
 import PISheetPreview from '@/components/pisheet/PISheetPreview.vue';
+import AssistantRobot from '@/components/chat/AssistantRobot.vue';
 
 const { t } = useI18n();
 const route = useRoute();
@@ -117,7 +126,6 @@ const chatInputRef = ref(null);
 const isMobile = ref(false);
 
 const showWelcome = computed(() => chat.messages.length === 0 && !chat.isGenerating);
-const showQuickPrompts = computed(() => chat.messages.length === 0 && !chat.isGenerating);
 
 function checkMobile() {
   isMobile.value = window.innerWidth < 1024;

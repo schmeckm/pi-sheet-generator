@@ -12,6 +12,7 @@ export default {
     digitalize: '📷 Digitalisieren',
     roleAdmin: 'admin',
     roleOperator: 'operator',
+    rolePromptEditor: 'prompt_editor',
     cancel: 'Abbrechen',
     confirm: 'Bestätigen',
     menu: 'Menü',
@@ -19,6 +20,8 @@ export default {
   shell: {
     adminArea: 'Administration',
     adminSubtitle: 'SAP BTP · XStep Repository',
+    promptArea: 'Prompt-Verwaltung',
+    promptSubtitle: 'System-Prompt bearbeiten und testen',
     backToCopilot: 'Zum PI Assistenten',
   },
   login: {
@@ -27,6 +30,7 @@ export default {
     demoTitle: 'Demo-Zugangsdaten',
     demoAdmin: "admin{'@'}pisheet.local · admin123",
     demoOperator: "operator{'@'}pisheet.local · operator123",
+    demoPromptEditor: "prompt{'@'}pisheet.local · prompt123",
     gmpNotice: 'GxP: KI-generierte PI Sheets sind Entwürfe und erfordern Freigabe.',
     email: 'E-Mail',
     password: 'Passwort',
@@ -77,10 +81,17 @@ export default {
     previewSubtitle: 'Digital & Druck · Entwurf',
     building: 'PI Sheet wird aufgebaut…',
     answering: 'Antwort wird ermittelt…',
+    showMorePrompts: 'Weitere Vorschläge',
+    hideMorePrompts: 'Vorschläge ausblenden',
   },
   welcome: {
     greeting: 'Hallo{name} — wie kann ich helfen?',
     greetingName: ', {name}',
+    jouleGreeting: 'Hallo{name}. Wie kann ich Sie begleiten?',
+    jouleGreetingName: ' {name}',
+    jouleGreetingHi: 'Hallo {name},',
+    jouleGreetingHiGuest: 'Hallo,',
+    jouleGreetingLead: 'Wie kann ich helfen?',
     description:
       'Ich erstelle Process Instruction Sheets aus Ihrem XStep-Repository — mit Warenbewegungen, Rückmeldungen, IPC und GMP-Schritten in logischer Reihenfolge.',
     caps: {
@@ -141,6 +152,7 @@ export default {
     toolsRunning: 'Tools: {tools}',
     placeholder:
       'Beschreiben Sie Ihren Prozess… z. B. „PI Sheet für Verpackung mit Rückmeldungen und Warenbewegungen“',
+    placeholderJoule: 'Wie kann ich helfen?',
     minChars: 'Mindestens 10 Zeichen',
     charCount: '{count} / 2000',
     gmpDisclaimer: 'KI-generierte Entwürfe — immer durch Produktion und QA freigeben (GMP).',
@@ -375,6 +387,13 @@ export default {
   },
   promptConfig: {
     subtitle: 'Steuert PI-Sheet-Generierung im Chat',
+    editorRoleHint:
+      'Sie können Prompts bearbeiten, testen und neue Konfigurationen anlegen. Nur ein Administrator kann eine Version für den Live-Chat aktivieren.',
+    loadFailed: 'Prompt-Konfigurationen konnten nicht geladen werden.',
+    emptyList: 'Keine Konfiguration in der Datenbank — bitte npm run db:seed ausführen.',
+    retry: 'Erneut laden',
+    emptyLoadedDefault:
+      'Der gespeicherte Prompt war leer — Standard-Vorlage wurde geladen. Bitte prüfen und speichern.',
     new: 'Neue Konfiguration',
     create: 'Anlegen',
     created: 'Konfiguration angelegt',

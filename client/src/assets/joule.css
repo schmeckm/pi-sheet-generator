@@ -1,4 +1,20 @@
-/* Joule copilot animations — colors via sap-theme.css */
+/* Joule copilot animations & accents */
+.sap-joule-copilot .joule-thinking-dot {
+  background-color: var(--sapJoulePrimary) !important;
+  animation: joule-pulse 1.4s ease-in-out infinite;
+}
+
+.sap-joule-copilot .joule-stream-cursor::after {
+  content: '';
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  margin-left: 2px;
+  background: var(--sapJoulePrimary);
+  vertical-align: text-bottom;
+  animation: joule-blink 1s step-end infinite;
+}
+
 .joule-thinking-dot {
   animation: joule-pulse 1.4s ease-in-out infinite;
 }
@@ -32,7 +48,4 @@
   }
 }
 
-.joule-suggestion:hover {
-  border-color: var(--sapBrandColor);
-  box-shadow: var(--sapContent_Shadow1);
-}
+/* Legacy .joule-suggestion — quick prompts use .joule-suggestion-card in sap-theme.css */

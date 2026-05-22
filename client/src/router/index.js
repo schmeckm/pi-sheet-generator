@@ -76,7 +76,7 @@ const routes = [
     path: '/admin/prompts',
     name: 'admin-prompts',
     component: () => import('@/views/PromptConfigView.vue'),
-    meta: { requiresAuth: true, requiresAdmin: true, layout: 'admin' },
+    meta: { requiresAuth: true, requiresPromptAccess: true, layout: 'admin' },
   },
   {
     path: '/admin/knowledge',
@@ -124,6 +124,12 @@ router.beforeEach(async (to) => {
     return { name: 'login', query: { redirect: to.fullPath } };
   }
   if (to.meta.requiresAdmin && !auth.isAdmin) {
+    if (auth.canManagePrompts && to.name !== 'admin-prompts') {
+      return { name: 'admin-prompts' };
+    }
+    return { name: 'chat' };
+  }
+  if (to.meta.requiresPromptAccess && !auth.canManagePrompts) {
     return { name: 'chat' };
   }
   if (auth.isAuthenticated && PLANT_EXPLORER_ROUTE_NAMES.has(to.name)) {

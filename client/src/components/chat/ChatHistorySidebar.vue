@@ -1,6 +1,6 @@
 <template>
   <aside
-    class="flex w-[var(--sapSideNavWidth)] shrink-0 flex-col border-r border-[var(--sapNeutralBorderColor)] bg-[var(--sapGroupContentBackground)]"
+    class="sap-joule-copilot-history flex w-[var(--sapSideNavWidth)] shrink-0 flex-col border-r border-[var(--sapNeutralBorderColor)] bg-[var(--sapGroupContentBackground)]"
     :class="mobile ? 'absolute inset-y-0 left-0 z-30 shadow-lg' : ''"
   >
     <div class="sap-object-header flex items-center justify-between !py-3">
@@ -15,8 +15,8 @@
         v-for="item in items"
         :key="item.id"
         type="button"
-        class="mb-1 w-full rounded-lg px-3 py-2.5 text-left transition hover:bg-[var(--sapHighlightColor)]"
-        :class="activeId === item.id ? 'bg-[var(--sapHighlightColor)] ring-1 ring-[var(--sapBrandColor)]' : ''"
+        class="mb-1 w-full rounded-lg px-3 py-2.5 text-left transition hover:bg-[var(--sapJouleHighlight)]"
+        :class="activeId === item.id ? 'sap-joule-history-item--active' : ''"
         @click="$emit('select', item.id)"
       >
         <p class="truncate text-sm font-semibold">{{ localizeText(item.title) }}</p>

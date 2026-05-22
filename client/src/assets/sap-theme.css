@@ -3,7 +3,33 @@
  * Values aligned with @sap-theming/theming-base-content Horizon palette.
  */
 :root {
-  --sapBrandColor: #0070f2;
+  /* SAP Joule palette (Horizon / BTP) — app-wide brand, not chat-only */
+  --sapJoulePrimary: #5d36ff;
+  --sapJoulePrimaryDark: #470ced;
+  --sapJoulePrimaryHover: #4a2bdb;
+  --sapJouleViolet: #7858ff;
+  --sapJouleMagenta: #9333ea;
+  --sapJoulePink: #c084fc;
+  --sapJouleHighlight: #f0ebff;
+  --sapJouleHighlightStrong: #e5dcff;
+  --sapJouleSend: var(--sapJoulePrimary);
+  --sapJouleSendHover: var(--sapJoulePrimaryDark);
+  --sapJouleGradient: linear-gradient(145deg, #5d36ff 0%, #7c3aed 50%, #9333ea 100%);
+  --sapJouleHeaderBg: linear-gradient(135deg, #5d36ff 0%, #7c3aed 45%, #9333ea 100%);
+  --sapJouleWelcomeCardGradient: linear-gradient(
+    145deg,
+    #9b6dff 0%,
+    #7c3aed 32%,
+    #6d28d9 58%,
+    #5b21b6 100%
+  );
+  --sapJouleUserBubble: linear-gradient(145deg, #7858ff 0%, #5d36ff 100%);
+  --sapJouleAssistantBubble: #ebebeb;
+  --sapJouleAssistantText: #32363a;
+  --sapJoulePillText: #5d36ff;
+  --sapJouleComposerBg: #ffffff;
+  --sapJouleComposerBorder: #d9d9d9;
+  --sapBrandColor: var(--sapJoulePrimary);
   --sapBrandTextColor: #ffffff;
   --sapShellColor: #ffffff;
   --sapShellBorderColor: #d9d9d9;
@@ -11,15 +37,15 @@
   --sapBackgroundColor: #f5f6f7;
   --sapGroupContentBackground: #ffffff;
   --sapTileBackground: #ffffff;
-  --sapContentFocusColor: #0070f2;
+  --sapContentFocusColor: var(--sapJoulePrimary);
   --sapContentLabelColor: #556b82;
   --sapTextColor: #131e29;
   --sapNeutralBorderColor: #d9d9d9;
   --sapErrorColor: #e90b0b;
   --sapWarningColor: #dd6100;
   --sapSuccessColor: #256f3a;
-  --sapHighlightColor: #ebf8ff;
-  --sapSelectedColor: #0064d9;
+  --sapHighlightColor: var(--sapJouleHighlight);
+  --sapSelectedColor: var(--sapJoulePrimaryDark);
   --sapContent_Shadow0: 0 0 0.125rem 0 rgba(85, 107, 130, 0.2);
   --sapContent_Shadow1: 0 0.125rem 0.5rem 0 rgba(85, 107, 130, 0.15);
   --sapContent_BorderRadius: 0.5rem;
@@ -29,7 +55,6 @@
   --sapFontHeaderSize: 1rem;
   --sapShell_Height: 2.75rem;
   --sapSideNavWidth: 16rem;
-  --sapJouleGradient: linear-gradient(135deg, #5d36ff 0%, #0070f2 45%, #00a4e4 100%);
 }
 
 html {
@@ -203,25 +228,39 @@ html {
 }
 
 .sap-btn--emphasized {
-  background: var(--sapBrandColor);
+  background-color: var(--sapJoulePrimary);
   color: var(--sapBrandTextColor);
-  border-color: var(--sapBrandColor);
+  border-color: var(--sapJoulePrimary);
 }
 
 .sap-btn--emphasized:hover:not(:disabled) {
-  background: #0064d9;
-  border-color: #0064d9;
+  background-color: var(--sapJoulePrimaryDark);
+  border-color: var(--sapJoulePrimaryDark);
+}
+
+.sap-shell .sap-btn.sap-btn--emphasized,
+.sap-login-page .sap-btn.sap-btn--emphasized {
+  background-color: var(--sapJoulePrimary) !important;
+  border-color: var(--sapJoulePrimary) !important;
+  color: #fff !important;
+}
+
+.sap-shell .sap-btn.sap-btn--emphasized:hover:not(:disabled),
+.sap-login-page .sap-btn.sap-btn--emphasized:hover:not(:disabled) {
+  background-color: var(--sapJoulePrimaryDark) !important;
+  border-color: var(--sapJoulePrimaryDark) !important;
 }
 
 .sap-btn--transparent {
   background: transparent;
-  color: var(--sapSelectedColor);
+  color: var(--sapJoulePrimaryDark);
   border-color: var(--sapNeutralBorderColor);
 }
 
 .sap-btn--transparent:hover:not(:disabled) {
-  background: var(--sapHighlightColor);
-  border-color: var(--sapBrandColor);
+  background-color: var(--sapJouleHighlight);
+  border-color: var(--sapJoulePrimary);
+  color: var(--sapJoulePrimaryDark);
 }
 
 .sap-btn--ghost {
@@ -285,9 +324,394 @@ html {
   margin-bottom: 0.25rem;
 }
 
-/* Joule copilot panel */
+/* Joule copilot surfaces — reinforce brand tokens (also set globally in :root) */
+.sap-joule-panel,
+.sap-joule-copilot,
+.sap-joule-copilot-history,
+.sap-shell--joule,
+.sap-login-page {
+  --sapBrandColor: var(--sapJoulePrimary);
+  --sapHighlightColor: var(--sapJouleHighlight);
+  --sapSelectedColor: var(--sapJoulePrimaryDark);
+  --sapContentFocusColor: var(--sapJoulePrimary);
+}
+
 .sap-joule-panel {
   background: var(--sapBackgroundColor);
+}
+
+.sap-joule-panel .sap-btn--emphasized:hover:not(:disabled),
+.sap-shell--joule .sap-btn--emphasized:hover:not(:disabled) {
+  background: var(--sapJoulePrimaryDark);
+  border-color: var(--sapJoulePrimaryDark);
+}
+
+.sap-shell--joule .sap-shell-bar__logo {
+  background: var(--sapJouleGradient);
+}
+
+.sap-shell--joule .sap-lang-switch button.active {
+  background: var(--sapJoulePrimary);
+}
+
+.sap-joule-copilot {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1;
+  min-width: 0;
+  background: #fff;
+  border-right: 1px solid var(--sapNeutralBorderColor);
+}
+
+.sap-joule-copilot__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  padding: 0.625rem 1rem;
+  background: var(--sapJouleHeaderBg);
+  color: #fff;
+}
+
+.sap-joule-copilot__title {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.sap-joule-copilot__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.sap-joule-copilot__icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border: none;
+  border-radius: 0.375rem;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.9);
+  cursor: pointer;
+}
+
+.sap-joule-copilot__icon-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.sap-joule-copilot__icon-btn--active {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.sap-joule-copilot__body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  background: #fff;
+}
+
+.sap-joule-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1.25rem 1rem 1rem;
+  background: #fff;
+}
+
+.sap-joule-welcome-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 20rem;
+  min-height: 16.5rem;
+  padding: 1.5rem 1.25rem 1.25rem;
+  overflow: hidden;
+  color: #fff;
+  background: var(--sapJouleWelcomeCardGradient);
+  border-radius: 1.125rem;
+  box-shadow: 0 8px 24px rgba(93, 54, 255, 0.28);
+}
+
+.sap-joule-welcome-card__icon {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  min-height: 9rem;
+  padding-top: 0.25rem;
+}
+
+.sap-joule-hero__robot {
+  filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.22));
+}
+
+.sap-joule-welcome-card__text {
+  text-align: left;
+}
+
+.sap-joule-welcome-card__hi {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 500;
+  line-height: 1.3;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+}
+
+.sap-joule-welcome-card__lead {
+  margin: 0.25rem 0 0;
+  font-size: 1.375rem;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+}
+
+.sap-joule-hero__prompts {
+  width: 100%;
+  max-width: 42rem;
+  margin-top: 1.25rem;
+  padding: 0 0.5rem 0.5rem;
+}
+
+/* Quick prompts — neutral Fiori tiles, unified accent */
+.joule-quick-prompts {
+  width: 100%;
+}
+
+.joule-quick-prompts__heading {
+  margin: 0 0 0.625rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-align: center;
+  color: var(--sapContentLabelColor);
+}
+
+.joule-quick-prompts__heading--spaced {
+  margin-top: 1.25rem;
+}
+
+.joule-quick-prompts__grid {
+  display: grid;
+  gap: 0.5rem;
+}
+
+@media (min-width: 640px) {
+  .joule-quick-prompts__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.joule-suggestion-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.75rem 0.875rem;
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+  color: var(--sapTextColor);
+  background: var(--sapTileBackground);
+  border: 1px solid var(--sapNeutralBorderColor);
+  border-radius: var(--sapContent_BorderRadius);
+  box-shadow: none;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.joule-suggestion-card:hover {
+  border-color: #a9b4be;
+  background: var(--sapBackgroundColor);
+  box-shadow: var(--sapContent_Shadow0);
+}
+
+.joule-suggestion-card:focus-visible {
+  outline: none;
+  border-color: var(--sapJoulePrimary);
+  box-shadow: 0 0 0 1px var(--sapJoulePrimary);
+}
+
+.joule-suggestion-card__icon {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: var(--sapContent_BorderRadius);
+  color: var(--sapJoulePrimaryDark);
+  background: var(--sapJouleHighlight);
+  border: 1px solid rgba(93, 54, 255, 0.12);
+}
+
+.joule-suggestion-card__svg {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+.joule-suggestion-card__body {
+  min-width: 0;
+  flex: 1;
+}
+
+.joule-suggestion-card__title {
+  display: block;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--sapTextColor);
+}
+
+.joule-suggestion-card__text {
+  display: block;
+  margin-top: 0.125rem;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: var(--sapContentLabelColor);
+}
+
+.sap-joule-pill {
+  padding: 0.4375rem 0.875rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--sapJoulePillText);
+  background: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  border-radius: 9999px;
+  box-shadow: 0 1px 3px rgba(93, 54, 255, 0.12);
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s, color 0.15s;
+}
+
+.sap-joule-pill:hover {
+  color: var(--sapJoulePrimaryDark);
+  border-color: var(--sapJoulePink);
+  box-shadow: 0 2px 6px rgba(93, 54, 255, 0.2);
+}
+
+.sap-joule-thread {
+  padding: 1rem 1rem 0.5rem;
+  max-width: 28rem;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.sap-joule-bubble {
+  max-width: 85%;
+  padding: 0.625rem 0.875rem;
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
+.sap-joule-bubble--user {
+  margin-left: auto;
+  color: #fff;
+  background: var(--sapJouleUserBubble);
+  border-radius: 1rem 1rem 0.25rem 1rem;
+}
+
+.sap-joule-bubble--assistant {
+  margin-right: auto;
+  color: var(--sapJouleAssistantText);
+  background: var(--sapJouleAssistantBubble);
+  border-radius: 1rem 1rem 1rem 0.25rem;
+}
+
+.sap-joule-accent {
+  color: var(--sapJoulePrimary);
+}
+
+.sap-joule-accent-bg {
+  background-color: var(--sapJoulePrimary);
+}
+
+.sap-joule-highlight-bg {
+  background-color: var(--sapJouleHighlight);
+}
+
+.sap-joule-history-item--active {
+  background: var(--sapJouleHighlight) !important;
+  box-shadow: inset 0 0 0 1px var(--sapJoulePrimary);
+}
+
+.sap-joule-composer-bar {
+  flex-shrink: 0;
+  padding: 0.75rem 1rem 1rem;
+  background: #fff;
+  border-top: 1px solid var(--sapNeutralBorderColor);
+}
+
+.sap-joule-composer-inline {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.5rem;
+  max-width: 28rem;
+  margin: 0 auto;
+  padding: 0.375rem 0.375rem 0.375rem 0.875rem;
+  background: var(--sapJouleComposerBg);
+  border: 1px solid var(--sapJouleComposerBorder);
+  border-radius: 9999px;
+  box-shadow: var(--sapContent_Shadow0);
+}
+
+.sap-joule-composer-inline:focus-within {
+  border-color: var(--sapJoulePrimary);
+  box-shadow: 0 0 0 1px var(--sapJoulePrimary), var(--sapContent_Shadow0);
+}
+
+.sap-joule-composer-inline .sap-textarea {
+  flex: 1;
+  min-height: 2.25rem !important;
+  padding: 0.5rem 0 !important;
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.sap-joule-send {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: none;
+  border-radius: 50%;
+  background: var(--sapJouleSend);
+  color: #fff;
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(93, 54, 255, 0.4);
+}
+
+.sap-joule-send:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.sap-joule-send:not(:disabled):hover {
+  background: var(--sapJouleSendHover);
+}
+
+.sap-shell--joule .sap-shell-bar__actions .sap-btn--transparent.sap-joule-shell-btn--active,
+.sap-shell--joule .sap-shell-bar__actions .sap-joule-shell-action:hover {
+  border-color: var(--sapJoulePrimary) !important;
+  background: var(--sapJouleHighlight) !important;
+  color: var(--sapJoulePrimary) !important;
+}
+
+.sap-shell--joule .sap-shell-bar .sap-btn--ghost.router-link-active {
+  background: var(--sapJouleHighlight) !important;
+  color: var(--sapJoulePrimary) !important;
 }
 
 .sap-joule-orb {
@@ -303,8 +727,8 @@ html {
 }
 
 .sap-joule-composer:focus-within {
-  border-color: var(--sapBrandColor);
-  box-shadow: 0 0 0 1px var(--sapBrandColor), var(--sapContent_Shadow1);
+  border-color: var(--sapJoulePrimary);
+  box-shadow: 0 0 0 1px var(--sapJoulePrimary), var(--sapContent_Shadow1);
 }
 
 .sap-message-strip {
@@ -336,10 +760,20 @@ html {
 }
 
 .sap-lang-switch button.active {
-  background: var(--sapBrandColor);
+  background-color: var(--sapJoulePrimary);
   color: #fff;
 }
 
 .sap-lang-switch button:not(.active):hover {
   background: var(--sapHighlightColor);
+}
+
+/* Login page (rendered outside SapShell) */
+.sap-login-page .sap-btn--emphasized:hover:not(:disabled) {
+  background: var(--sapJoulePrimaryDark);
+  border-color: var(--sapJoulePrimaryDark);
+}
+
+.sap-login-page .sap-shell-bar__logo {
+  background: var(--sapJouleGradient);
 }

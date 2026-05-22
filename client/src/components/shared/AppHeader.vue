@@ -23,6 +23,14 @@
         >
           {{ t('common.admin') }}
         </router-link>
+        <router-link
+          v-else-if="auth.canManagePrompts"
+          to="/admin/prompts"
+          class="text-sm hover:text-gray-300"
+          active-class="text-white font-medium"
+        >
+          {{ t('nav.promptConfig') }}
+        </router-link>
       </nav>
     </div>
     <div v-if="auth.isAuthenticated" class="flex items-center gap-3 text-sm">
@@ -30,7 +38,7 @@
       <span>{{ auth.user?.name }}</span>
       <span
         class="rounded-full px-2 py-0.5 text-xs"
-        :class="auth.isAdmin ? 'bg-amber-600' : 'bg-slate-600'"
+        :class="auth.isAdmin ? 'bg-amber-600' : auth.isPromptEditor ? 'bg-sky-700' : 'bg-slate-600'"
       >
         {{ auth.user?.role }}
       </span>

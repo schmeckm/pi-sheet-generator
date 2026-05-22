@@ -227,6 +227,13 @@ const snippetKey = ref('');
 const copied = ref(false);
 const editorView = ref('edit');
 
+watch(
+  () => props.modelValue,
+  (v, prev) => {
+    if (!prev && v) editorView.value = 'edit';
+  }
+);
+
 const viewOptions = computed(() => [
   { id: 'edit', label: t('promptConfig.viewEdit') },
   { id: 'preview', label: t('promptConfig.viewPreview') },

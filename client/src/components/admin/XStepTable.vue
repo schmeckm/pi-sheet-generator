@@ -42,7 +42,7 @@
           </td>
           <td class="p-3">{{ x.version }}</td>
           <td class="p-3">
-            <button type="button" class="text-blue-600 hover:underline" @click="$emit('edit', x)">
+            <button type="button" class="text-[var(--sapBrandColor)] hover:underline" @click="$emit('edit', x)">
               {{ t('repository.edit') }}
             </button>
             <button type="button" class="ml-2 text-red-600 hover:underline" @click="$emit('delete', x)">
@@ -164,7 +164,7 @@ function onPageSize(val) {
 function categoryClass(cat) {
   const map = {
     Warenbewegung: 'bg-green-600',
-    Rückmeldung: 'bg-blue-600',
+    Rückmeldung: 'bg-[var(--sapBrandColor)]',
     Prozess: 'bg-orange-500',
     Qualität: 'bg-pink-600',
     Dokumentation: 'bg-purple-600',

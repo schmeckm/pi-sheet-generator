@@ -18,7 +18,7 @@
 
     <div
       class="mt-6 flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-300 bg-white p-8 transition-colors"
-      :class="dragOver ? 'border-blue-500 bg-blue-50' : ''"
+      :class="dragOver ? 'border-[var(--sapBrandColor)] bg-[var(--sapHighlightColor)]' : ''"
       @dragover.prevent="dragOver = true"
       @dragleave.prevent="dragOver = false"
       @drop.prevent="onDrop"
@@ -34,7 +34,7 @@
       <p class="mt-1 text-xs text-slate-400">{{ t('knowledge.uploadFormats') }}</p>
       <button
         type="button"
-        class="mt-4 rounded-lg bg-slate-900 px-4 py-2 text-sm text-white hover:bg-slate-800 disabled:opacity-50"
+        class="sap-btn sap-btn--emphasized mt-4"
         :disabled="uploading"
         @click="fileInput?.click()"
       >
@@ -42,7 +42,7 @@
       </button>
       <div v-if="uploading" class="mt-3 w-full max-w-md">
         <div class="h-2 overflow-hidden rounded-full bg-slate-200">
-          <div class="h-full animate-pulse rounded-full bg-blue-600" style="width: 60%" />
+          <div class="h-full animate-pulse rounded-full bg-[var(--sapBrandColor)]" style="width: 60%" />
         </div>
       </div>
     </div>

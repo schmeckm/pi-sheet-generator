@@ -1,6 +1,6 @@
 <template>
   <nav class="sap-side-nav" aria-label="Admin navigation">
-    <p class="sap-side-nav__group-title">{{ t('shell.adminArea') }}</p>
+    <p class="sap-side-nav__group-title">{{ navGroupTitle }}</p>
     <router-link
       v-for="item in items"
       :key="item.to"
@@ -25,10 +25,16 @@ import { computed, h, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useShellStore } from '@/stores/shell';
 import { useFeaturesStore } from '@/stores/features';
+import { useAuthStore } from '@/stores/auth';
 
 const { t } = useI18n();
 const shell = useShellStore();
 const features = useFeaturesStore();
+const auth = useAuthStore();
+
+const navGroupTitle = computed(() =>
+  auth.isAdmin ? t('shell.adminArea') : t('shell.promptArea')
+);
 
 onMounted(() => {
   features.ensureLoaded().catch(() => {});
@@ -46,7 +52,19 @@ const icon = (paths) => ({
     ]),
 });
 
+const promptOnlyNav = () => [
+  {
+    to: '/admin/prompts',
+    label: t('nav.promptConfig'),
+    icon: icon('M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z'),
+  },
+];
+
 const items = computed(() => {
+  if (!auth.isAdmin) {
+    return promptOnlyNav();
+  }
+
   const nav = [
   {
     to: '/admin',

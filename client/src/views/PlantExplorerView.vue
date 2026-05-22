@@ -121,7 +121,7 @@
               <span v-if="m.description" class="ml-2 text-xs font-normal text-[var(--sapContentLabelColor)]">
                 {{ m.description }}
               </span>
-              <span v-if="m.source === 'sap_bom'" class="ml-2 rounded bg-blue-100 px-1.5 text-xs text-blue-800">SAP</span>
+              <span v-if="m.source === 'sap_bom'" class="ml-2 rounded bg-[var(--sapJouleHighlight)] px-1.5 text-xs text-[var(--sapJoulePrimaryDark)]">SAP</span>
               <span class="text-xs text-[var(--sapContentLabelColor)]">
                 ({{ m.occurrences?.length || 0 }} {{ t('plantExplorer.inPiSheets') }})
               </span>

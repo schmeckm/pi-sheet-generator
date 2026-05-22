@@ -31,7 +31,9 @@
           :class="
             auth.isAdmin
               ? 'bg-[#fff3b8] text-[#5d3800]'
-              : 'bg-[var(--sapHighlightColor)] text-[var(--sapSelectedColor)]'
+              : auth.isPromptEditor
+                ? 'bg-[var(--sapJouleHighlight)] text-[var(--sapJoulePrimaryDark)]'
+                : 'bg-[var(--sapHighlightColor)] text-[var(--sapSelectedColor)]'
           "
         >
           {{ auth.user?.role }}
@@ -76,6 +78,7 @@ const router = useRouter();
 const navLinks = computed(() => {
   const links = [{ to: '/chat', label: t('common.chat') }];
   if (auth.isAdmin) links.push({ to: '/admin', label: t('common.admin') });
+  else if (auth.canManagePrompts) links.push({ to: '/admin/prompts', label: t('nav.promptConfig') });
   return links;
 });
 

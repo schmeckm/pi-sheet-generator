@@ -1,5 +1,5 @@
 <template>
-  <div class="sap-shell">
+  <div class="sap-shell sap-shell--joule">
     <SapShellBar
       :title="shellTitle"
       :subtitle="shellSubtitle"
@@ -17,7 +17,7 @@
       <template v-if="isChat" #actions>
         <button
           type="button"
-          class="sap-btn sap-btn--transparent !text-xs"
+          class="sap-btn sap-btn--transparent sap-joule-shell-action !text-xs"
           :title="t('joule.newChat')"
           @click="startNewChat"
         >
@@ -25,8 +25,8 @@
         </button>
         <button
           type="button"
-          class="sap-btn sap-btn--transparent !text-xs"
-          :class="shell.chatHistoryOpen ? '!border-[var(--sapBrandColor)] !bg-[var(--sapHighlightColor)]' : ''"
+          class="sap-btn sap-btn--transparent sap-joule-shell-action !text-xs"
+          :class="shell.chatHistoryOpen ? 'sap-joule-shell-btn--active !border' : ''"
           @click="shell.toggleChatHistory()"
         >
           {{ t('joule.history') }}
@@ -75,10 +75,12 @@ import { useI18n } from 'vue-i18n';
 import SapShellBar from './SapShellBar.vue';
 import SapSideNavigation from './SapSideNavigation.vue';
 import { useShellStore } from '@/stores/shell';
+import { useAuthStore } from '@/stores/auth';
 import { useNewChat } from '@/composables/useNewChat';
 
 const { t } = useI18n();
 const shell = useShellStore();
+const auth = useAuthStore();
 const { startNewChat } = useNewChat();
 const route = useRoute();
 
@@ -93,7 +95,9 @@ const shellTitle = computed(() => {
 
 const shellSubtitle = computed(() => {
   if (isChat.value) return t('joule.subtitle');
-  if (isAdminLayout.value) return t('shell.adminSubtitle');
+  if (isAdminLayout.value) {
+    return auth.isAdmin ? t('shell.adminSubtitle') : t('shell.promptSubtitle');
+  }
   return '';
 });
 

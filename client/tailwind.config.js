@@ -5,15 +5,16 @@ export default {
     extend: {
       colors: {
         joule: {
-          primary: '#0070F2',
-          'primary-hover': '#0057D2',
+          primary: '#5D36FF',
+          'primary-hover': '#470CED',
           shell: '#F5F6F7',
           surface: '#FFFFFF',
           border: '#D9D9D9',
           text: '#32363A',
           'text-secondary': '#6A6D70',
-          accent: '#5D36FF',
-          'accent-end': '#0070F2',
+          highlight: '#F0EBFF',
+          accent: '#7C3AED',
+          'accent-end': '#9333EA',
         },
         category: {
           warenbewegung: '#4CAF50',

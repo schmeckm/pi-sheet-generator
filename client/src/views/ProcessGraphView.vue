@@ -439,8 +439,8 @@ onMounted(load);
 
 .graph-mermaid :deep(.sapNode rect),
 .graph-mermaid :deep(.sapNode polygon) {
-  fill: #dbeafe !important;
-  stroke: #0070f2 !important;
+  fill: #f0ebff !important;
+  stroke: #5d36ff !important;
 }
 
 .graph-mermaid :deep(.equipNode rect),

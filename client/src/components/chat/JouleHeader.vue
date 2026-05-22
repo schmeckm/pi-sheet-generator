@@ -3,13 +3,7 @@
     class="flex h-14 shrink-0 items-center justify-between border-b border-joule-border bg-joule-surface px-4 shadow-sm"
   >
     <div class="flex items-center gap-3">
-      <div class="joule-orb flex h-9 w-9 items-center justify-center rounded-full">
-        <svg class="h-5 w-5 text-white" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-          <path
-            d="M12 3l1.5 4.5h4.7l-3.8 2.8 1.5 4.5L12 12l-3.9 2.8 1.5-4.5L5.8 7.5h4.7L12 3z"
-          />
-        </svg>
-      </div>
+      <AssistantRobot size="sm" orb />
       <div>
         <h1 class="text-sm font-semibold text-joule-text">{{ t('joule.title') }}</h1>
         <p class="text-xs text-joule-text-secondary">{{ t('joule.subtitle') }}</p>
@@ -21,7 +15,7 @@
       <button
         type="button"
         class="rounded-lg border border-joule-border px-3 py-1.5 text-xs font-medium text-joule-text-secondary transition hover:border-joule-primary hover:text-joule-primary"
-        :class="showHistory ? 'border-joule-primary bg-blue-50 text-joule-primary' : ''"
+        :class="showHistory ? 'border-joule-primary bg-joule-highlight text-joule-primary' : ''"
         @click="$emit('toggle-history')"
       >
         {{ t('joule.history') }}
@@ -37,7 +31,7 @@
       <span class="hidden text-sm text-joule-text sm:inline">{{ auth.user?.name }}</span>
       <span
         class="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
-        :class="auth.isAdmin ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800'"
+        :class="auth.isAdmin ? 'bg-amber-100 text-amber-800' : 'bg-joule-highlight text-joule-primary-hover'"
       >
         {{ auth.user?.role }}
       </span>
@@ -65,6 +59,7 @@ import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { useAuthStore } from '@/stores/auth';
 import LanguageSwitcher from '@/components/shared/LanguageSwitcher.vue';
+import AssistantRobot from '@/components/chat/AssistantRobot.vue';
 
 defineProps({
   showHistory: { type: Boolean, default: false },

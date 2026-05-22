@@ -32,7 +32,7 @@ const badgeClass = computed(() => {
   if (props.isFallback) return 'bg-amber-100 text-amber-900';
   const map = {
     simulation: 'bg-amber-100 text-amber-800',
-    opcua: 'bg-blue-100 text-blue-800',
+    opcua: 'bg-[var(--sapJouleHighlight)] text-[var(--sapJoulePrimaryDark)]',
     mqtt: 'bg-purple-100 text-purple-800',
     uns_sparkplug: 'bg-teal-100 text-teal-800',
   };

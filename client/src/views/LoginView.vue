@@ -1,5 +1,5 @@
 <template>
-  <div class="flex min-h-screen flex-col bg-[var(--sapBackgroundColor)]">
+  <div class="sap-login-page sap-shell--joule flex min-h-screen flex-col bg-[var(--sapBackgroundColor)]">
     <header class="sap-shell-bar !shadow-none">
       <div class="sap-shell-bar__brand">
         <div class="sap-shell-bar__logo">SAP</div>
@@ -14,13 +14,7 @@
     <div class="flex flex-1 items-center justify-center p-6">
       <form class="sap-tile w-full max-w-md p-8" @submit.prevent="submit">
         <div class="mb-6 text-center">
-          <div class="sap-joule-orb mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full">
-            <svg class="h-7 w-7 text-white" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-              <path
-                d="M12 2a1 1 0 011 .894l1.618 8.088 7.088 1.618a1 1 0 01.416 1.789l-5.5 4.5 1.618 7.088a1 1 0 01-1.53.894l-6.5-5.5-6.5 5.5a1 1 0 01-1.53-.894l1.618-7.088-5.5-4.5a1 1 0 01.416-1.789l7.088-1.618L11 2.894A1 1 0 0112 2z"
-              />
-            </svg>
-          </div>
+          <AssistantRobot class="mx-auto mb-4" size="md" orb />
           <h1 class="text-xl font-bold text-[var(--sapTextColor)]">{{ t('login.signInTitle') }}</h1>
           <div
             class="mt-4 rounded border border-[var(--sapGroupContentBorderColor)] bg-[var(--sapGroupContentBackground)] px-4 py-3 text-left text-sm"
@@ -35,6 +29,10 @@
               <li>
                 <span class="font-medium text-[var(--sapTextColor)]">{{ t('common.roleOperator') }}:</span>
                 {{ t('login.demoOperator') }}
+              </li>
+              <li>
+                <span class="font-medium text-[var(--sapTextColor)]">{{ t('common.rolePromptEditor') }}:</span>
+                {{ t('login.demoPromptEditor') }}
               </li>
             </ul>
           </div>
@@ -75,6 +73,7 @@ import { useI18n } from 'vue-i18n';
 import { useAuthStore } from '@/stores/auth';
 import { get } from '@/composables/useApi';
 import LanguageSwitcher from '@/components/shared/LanguageSwitcher.vue';
+import AssistantRobot from '@/components/chat/AssistantRobot.vue';
 
 const { t } = useI18n();
 const email = ref('admin@pisheet.local');
@@ -117,8 +116,8 @@ async function submit() {
   error.value = '';
   loading.value = true;
   try {
-    const user = await auth.login(email.value.trim(), password.value);
-    const redirect = route.query.redirect || (user.role === 'admin' ? '/admin' : '/chat');
+    await auth.login(email.value.trim(), password.value);
+    const redirect = route.query.redirect || '/chat';
     router.push(redirect);
   } catch (e) {
     error.value = resolveLoginError(e);
