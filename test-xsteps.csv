@@ -1,0 +1,9 @@
+xstep_id,name,category,process_type,description,sap_transaction,movement_type,gmp_relevant
+XS-TAB-001,Tablettierung starten,Prozess,Tablettierung,Starten Sie die Tablettenpresse und dokumentieren Sie die Maschinenparameter.,,,false
+XS-TAB-002,IPC Härteprüfung,Qualität,Tablettierung,Prüfen Sie die Tablettenhärte gemäß Prüfanweisung.,,,true
+XS-TAB-003,IPC Zerfallstest,Qualität,Tablettierung,Führen Sie den Zerfallstest gemäß Arzneibuch durch.,,,true
+XS-TAB-004,Rückmeldung Tablettierung,Rückmeldung,Tablettierung,Melden Sie den Tablettierauftrag zurück.,CO11N,,false
+XS-TAB-005,Metalldetektor-Check,Qualität,Tablettierung,Prüfen Sie die Funktionsfähigkeit des Metalldetektors.,,,true
+XS-COA-001,Coating-Lösung ansetzen,Prozess,Coating,Setzen Sie die Coating-Lösung gemäß Rezeptur an.,,,false
+XS-COA-002,Coating-Parameter einstellen,Prozess,Coating,Stellen Sie Zulufttemperatur und Sprührate ein.,,,false
+XS-COA-003,Rückmeldung Coating,Rückmeldung,Coating,Melden Sie den Coating-Auftrag im SAP zurück.,CO11N,,false

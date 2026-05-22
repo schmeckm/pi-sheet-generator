@@ -1,0 +1,54 @@
+# PI Sheet Generator — Cursor Rules
+
+Full-stack LLM-powered PI Sheet Generator for pharmaceutical manufacturing (SAP XSteps → PI Sheets).
+
+## Tech Stack
+- Frontend: Vue 3 (Composition API) + Vite + Pinia + Vue Router + Tailwind CSS + Axios
+- Backend: Node.js + Express + Sequelize v6
+- Database: PostgreSQL 16 + pgvector (`vector(1536)` on `xsteps.embedding`)
+- LLM: Anthropic Claude (`claude-sonnet-4-20250514`)
+- Auth: JWT + bcryptjs
+- Import: CSV, Excel (xlsx), JSON, XML (fast-xml-parser), ZIP (adm-zip) — see `IMPORT-SPEC.md`
+
+## Project Layout
+- `/server` — Express API, Sequelize models, services, routes, seeders
+- `/client` — Vue 3 SPA (operator chat + admin)
+- `docker-compose.yml` — `pgvector/pgvector:pg16`
+- `.env` — `DATABASE_URL`, `ANTHROPIC_API_KEY`, `JWT_SECRET`, `PORT=3000`
+
+## Database Models (6)
+User, XStep (embedding vector 1536), PISheet, PISheetStep, PromptConfig, AuditLog
+
+### Associations
+- User hasMany XStep, PISheet, PromptConfig, AuditLog
+- PISheet belongsTo User; hasMany PISheetStep (CASCADE)
+- PISheetStep belongsTo PISheet
+
+## XStep Categories (enum)
+Warenbewegung | Rückmeldung | Prozess | Qualität | Dokumentation
+
+## Language
+- Operator UI + PI instructions: **German**
+- Admin UI: **English**
+
+## npm Scripts (root)
+- `dev` — server + client concurrently
+- `db:sync` — Sequelize sync + pgvector extension
+- `db:seed` — users, 17 XSteps, default PromptConfig
+- `db:reset` — drop, sync, seed
+
+## Seed Users
+- admin@pisheet.local / admin123 (admin)
+- operator@pisheet.local / operator123 (operator)
+
+## Implementation Order
+1. DB + models + seed
+2. Auth
+3. Repository + import (IMPORT-SPEC.md)
+4. Embeddings + vector search
+5. LLM + chat SSE
+6. Templates + PDF
+7–11. Frontend + polish
+
+## GMP
+Always suggest line clearance, IPC, documentation; quality steps need signatures. Generated sheets are **Entwurf** (draft).

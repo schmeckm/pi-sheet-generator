@@ -1,0 +1,107 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.print-line {
+  display: block;
+  min-width: 120px;
+  border-bottom: 1px dotted #999;
+  min-height: 1.25rem;
+}
+
+.print-view {
+  color: #000 !important;
+}
+
+.prompt-md-preview .md-h1 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 0.75rem 0 0.5rem;
+}
+.prompt-md-preview .md-h2 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin: 0.65rem 0 0.4rem;
+}
+.prompt-md-preview .md-h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0.5rem 0 0.35rem;
+}
+.prompt-md-preview .md-p {
+  margin: 0.35rem 0;
+}
+.prompt-md-preview .md-ul,
+.prompt-md-preview .md-ol {
+  margin: 0.35rem 0 0.35rem 1.25rem;
+}
+.prompt-md-preview .md-code {
+  font-family: ui-monospace, monospace;
+  font-size: 0.85em;
+  background: #f3f4f6;
+  padding: 0.1em 0.35em;
+  border-radius: 3px;
+}
+.prompt-md-preview .md-pre {
+  margin: 0.5rem 0;
+  padding: 0.75rem;
+  background: #1e293b;
+  color: #e2e8f0;
+  border-radius: 6px;
+  overflow-x: auto;
+  font-size: 12px;
+}
+.prompt-md-preview .md-hr {
+  margin: 0.75rem 0;
+  border: none;
+  border-top: 1px solid #d1d5db;
+}
+
+@media print {
+  .sap-shell-bar,
+  .sap-side-nav,
+  .sap-joule-panel > section:first-child,
+  .sap-joule-panel > .relative > section:first-child,
+  .sap-btn,
+  .chat-input-area,
+  .quick-prompts,
+  header,
+  nav,
+  .print\\:hidden,
+  form {
+    display: none !important;
+  }
+
+  body {
+    background: #fff !important;
+  }
+
+  .sap-shell,
+  .sap-shell-body,
+  .sap-shell-main,
+  .sap-shell-content {
+    display: block !important;
+    overflow: visible !important;
+    height: auto !important;
+  }
+
+  .pisheet-print-area,
+  .print-view {
+    position: static !important;
+    width: 100% !important;
+    max-width: none !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  .step-card,
+  .print-table {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  @page {
+    size: A4;
+    margin: 12mm;
+  }
+}

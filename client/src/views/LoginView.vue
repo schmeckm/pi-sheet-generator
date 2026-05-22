@@ -1,0 +1,129 @@
+<template>
+  <div class="flex min-h-screen flex-col bg-[var(--sapBackgroundColor)]">
+    <header class="sap-shell-bar !shadow-none">
+      <div class="sap-shell-bar__brand">
+        <div class="sap-shell-bar__logo">SAP</div>
+        <div>
+          <p class="sap-shell-bar__title">{{ t('common.appName') }}</p>
+          <p class="sap-shell-bar__subtitle">{{ t('login.subtitle') }}</p>
+        </div>
+      </div>
+      <LanguageSwitcher />
+    </header>
+
+    <div class="flex flex-1 items-center justify-center p-6">
+      <form class="sap-tile w-full max-w-md p-8" @submit.prevent="submit">
+        <div class="mb-6 text-center">
+          <div class="sap-joule-orb mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full">
+            <svg class="h-7 w-7 text-white" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path
+                d="M12 2a1 1 0 011 .894l1.618 8.088 7.088 1.618a1 1 0 01.416 1.789l-5.5 4.5 1.618 7.088a1 1 0 01-1.53.894l-6.5-5.5-6.5 5.5a1 1 0 01-1.53-.894l1.618-7.088-5.5-4.5a1 1 0 01.416-1.789l7.088-1.618L11 2.894A1 1 0 0112 2z"
+              />
+            </svg>
+          </div>
+          <h1 class="text-xl font-bold text-[var(--sapTextColor)]">{{ t('login.signInTitle') }}</h1>
+          <div
+            class="mt-4 rounded border border-[var(--sapGroupContentBorderColor)] bg-[var(--sapGroupContentBackground)] px-4 py-3 text-left text-sm"
+            role="note"
+          >
+            <p class="font-semibold text-[var(--sapTextColor)]">{{ t('login.demoTitle') }}</p>
+            <ul class="mt-2 space-y-1 text-[var(--sapContentLabelColor)]">
+              <li>
+                <span class="font-medium text-[var(--sapTextColor)]">{{ t('common.roleAdmin') }}:</span>
+                {{ t('login.demoAdmin') }}
+              </li>
+              <li>
+                <span class="font-medium text-[var(--sapTextColor)]">{{ t('common.roleOperator') }}:</span>
+                {{ t('login.demoOperator') }}
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <label class="mb-4 block">
+          <span class="sap-label">{{ t('login.email') }}</span>
+          <input
+            v-model="email"
+            type="email"
+            required
+            class="sap-input"
+            placeholder="admin@pisheet.local"
+          />
+        </label>
+
+        <label class="mb-4 block">
+          <span class="sap-label">{{ t('login.password') }}</span>
+          <input v-model="password" type="password" required class="sap-input" />
+        </label>
+
+        <p v-if="error" class="mb-3 text-sm text-[var(--sapErrorColor)]">{{ error }}</p>
+
+        <button type="submit" class="sap-btn sap-btn--emphasized w-full !py-2.5" :disabled="loading">
+          {{ loading ? t('login.submitting') : t('login.submit') }}
+        </button>
+
+        <p class="sap-message-strip mt-4">{{ t('login.gmpNotice') }}</p>
+      </form>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref, onMounted } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
+import { useI18n } from 'vue-i18n';
+import { useAuthStore } from '@/stores/auth';
+import { get } from '@/composables/useApi';
+import LanguageSwitcher from '@/components/shared/LanguageSwitcher.vue';
+
+const { t } = useI18n();
+const email = ref('admin@pisheet.local');
+const password = ref('admin123');
+const error = ref('');
+const loading = ref(false);
+const auth = useAuthStore();
+const router = useRouter();
+const route = useRoute();
+
+function resolveLoginError(err) {
+  const apiDown =
+    !err.response ||
+    err.response.status === 503 ||
+    err.response.data?.error === 'API_UNAVAILABLE';
+  if (apiDown) {
+    return t('login.apiUnreachable');
+  }
+  if (err.response.status === 429) {
+    return t('login.rateLimited');
+  }
+  const msg = err.response.data?.error;
+  if (msg === 'Invalid credentials') {
+    return t('login.failed');
+  }
+  return msg || t('login.failed');
+}
+
+onMounted(async () => {
+  try {
+    await get('/health');
+  } catch (e) {
+    if (!e.response || e.response.status === 503 || e.response.data?.error === 'API_UNAVAILABLE') {
+      error.value = t('login.apiUnreachable');
+    }
+  }
+});
+
+async function submit() {
+  error.value = '';
+  loading.value = true;
+  try {
+    const user = await auth.login(email.value.trim(), password.value);
+    const redirect = route.query.redirect || (user.role === 'admin' ? '/admin' : '/chat');
+    router.push(redirect);
+  } catch (e) {
+    error.value = resolveLoginError(e);
+  } finally {
+    loading.value = false;
+  }
+}
+</script>

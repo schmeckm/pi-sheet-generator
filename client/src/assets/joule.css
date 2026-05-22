@@ -1,0 +1,38 @@
+/* Joule copilot animations — colors via sap-theme.css */
+.joule-thinking-dot {
+  animation: joule-pulse 1.4s ease-in-out infinite;
+}
+
+.joule-stream-cursor::after {
+  content: '';
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  margin-left: 2px;
+  background: var(--sapBrandColor);
+  vertical-align: text-bottom;
+  animation: joule-blink 1s step-end infinite;
+}
+
+@keyframes joule-pulse {
+  0%,
+  100% {
+    opacity: 0.4;
+    transform: scale(0.95);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes joule-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+.joule-suggestion:hover {
+  border-color: var(--sapBrandColor);
+  box-shadow: var(--sapContent_Shadow1);
+}

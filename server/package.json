@@ -1,0 +1,53 @@
+{
+  "name": "pi-sheet-generator-server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "dev": "node --watch --watch-path=./index.js --watch-path=./routes --watch-path=./services --watch-path=./middleware --watch-path=./websocket index.js",
+    "start": "node index.js",
+    "db:sync": "node scripts/db-sync.js",
+    "db:seed": "node seeders/seed-xsteps.js",
+    "db:seed-settings": "node seeders/seed-settings.js",
+    "db:seed-equipment": "node seeders/seed-equipment.js",
+    "db:reset": "node scripts/db-reset.js",
+    "db:migrate": "sequelize-cli db:migrate",
+    "db:embed": "node scripts/embed-all.js",
+    "test": "node --test test/**/*.test.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.98.0",
+    "adm-zip": "^0.5.16",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "csv-parser": "^3.2.0",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "express-rate-limit": "^8.5.2",
+    "fast-xml-parser": "^4.5.1",
+    "helmet": "^8.0.0",
+    "joi": "^17.13.3",
+    "jsonwebtoken": "^9.0.2",
+    "mammoth": "^1.12.0",
+    "morgan": "^1.10.0",
+    "mqtt": "^5.15.1",
+    "multer": "^1.4.5-lts.1",
+    "node-opcua": "^2.173.1",
+    "pdf-parse": "^2.4.5",
+    "pdfkit": "^0.16.0",
+    "pg": "^8.13.3",
+    "pg-hstore": "^2.3.4",
+    "pgvector": "^0.2.0",
+    "sequelize": "^6.37.5",
+    "sharp": "^0.34.5",
+    "sparkplug-client": "^3.2.4",
+    "tesseract.js": "^7.0.0",
+    "uuid": "^11.0.5",
+    "ws": "^8.20.1",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "sequelize-cli": "^6.6.2"
+  }
+}
