@@ -1,5 +1,5 @@
 <template>
-  <div v-if="target > 0" class="mt-3">
+  <div class="mt-3 min-h-[2.75rem]">
     <div class="relative h-3 overflow-hidden rounded-full bg-gray-200">
       <div
         class="absolute inset-y-0 bg-green-200"

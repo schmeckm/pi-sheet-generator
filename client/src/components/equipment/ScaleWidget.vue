@@ -29,7 +29,11 @@
     <WeighingResult :result="confirmed" :four-eyes="fourEyes" />
   </div>
 
-  <div v-else-if="!readOnly" class="sap-tile mt-2 p-4 !shadow-none">
+  <div
+    v-else-if="!readOnly"
+    class="sap-tile mt-2 p-4 !shadow-none"
+    :class="compact ? 'min-h-[17.5rem]' : ''"
+  >
     <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
       <div>
         <p class="text-sm font-semibold text-[var(--sapTextColor)]">{{ meta.name || equipmentId }}</p>
@@ -64,7 +68,7 @@
       :net="live.netWeight"
       :tare="live.tareWeight"
       :unit="live.unit"
-      :stable="live.stable"
+      :stable="compact ? displayStable : live.stable"
       :equipment-name="meta.name"
       :equipment-id="equipmentId"
     />
@@ -98,7 +102,7 @@
     </div>
 
     <ToleranceBar
-      v-if="live.netWeight > 0"
+      v-if="!isConfirmed"
       :target="targetWeight"
       :tolerance-abs="toleranceAbs"
       :current-value="live.netWeight"
@@ -140,6 +144,8 @@ const props = defineProps({
   materialInfo: { type: Object, default: null },
   readOnly: { type: Boolean, default: false },
   printMode: { type: Boolean, default: false },
+  /** PI sheet embed: throttle display, no weight animation, fixed layout */
+  compact: { type: Boolean, default: false },
   piSheetId: { type: String, default: null },
   piSheetStepId: { type: String, default: null },
   existingRecord: { type: Object, default: null },
@@ -172,8 +178,12 @@ const dosing = ref(false);
 const error = ref('');
 const stableSince = ref(null);
 const displayGross = ref(0);
+const displayStable = ref(false);
 let unsub = null;
 let rafId = null;
+let compactDisplayTimer = null;
+let compactDisplayPending = null;
+let stableHoldTimer = null;
 
 const toleranceAbs = computed(() => {
   if (props.toleranceAbs != null) return props.toleranceAbs;
@@ -231,6 +241,63 @@ function smoothDisplay(target) {
   rafId = requestAnimationFrame(step);
 }
 
+function setDisplayStable(stable) {
+  if (!props.compact) {
+    displayStable.value = stable;
+    return;
+  }
+  if (!stable) {
+    if (stableHoldTimer) clearTimeout(stableHoldTimer);
+    stableHoldTimer = null;
+    displayStable.value = false;
+    return;
+  }
+  if (stableHoldTimer) return;
+  stableHoldTimer = setTimeout(() => {
+    displayStable.value = true;
+    stableHoldTimer = null;
+  }, 450);
+}
+
+function flushCompactDisplay(v) {
+  displayGross.value = v.grossWeight;
+  setDisplayStable(v.stable);
+}
+
+function scheduleCompactDisplay(v) {
+  compactDisplayPending = v;
+  if (compactDisplayTimer) return;
+  compactDisplayTimer = setTimeout(() => {
+    const pending = compactDisplayPending;
+    compactDisplayPending = null;
+    compactDisplayTimer = null;
+    if (pending) flushCompactDisplay(pending);
+  }, 200);
+}
+
+function applyLiveReading(v) {
+  live.value = { ...v };
+  if (props.compact) {
+    scheduleCompactDisplay(v);
+  } else {
+    smoothDisplay(v.grossWeight);
+    setDisplayStable(v.stable);
+  }
+  rawReadings.value.push({
+    timestamp: v.timestamp || Date.now(),
+    gross: v.grossWeight,
+    net: v.netWeight,
+    tare: v.tareWeight,
+    stable: v.stable,
+  });
+  if (v.stable) {
+    if (!stableSince.value) stableSince.value = Date.now();
+  } else {
+    stableSince.value = null;
+  }
+  if (v.tareWeight > 0) isTared.value = true;
+}
+
 async function loadMeta() {
   try {
     const data = await get(`/equipment/${encodeURIComponent(props.equipmentId)}/status`);
@@ -255,27 +322,7 @@ onMounted(async () => {
   const sub = equipment.subscribe(props.equipmentId);
   unsub = sub.unsubscribe;
 
-  watch(
-    sub.live,
-    (v) => {
-      live.value = { ...v };
-      smoothDisplay(v.grossWeight);
-      rawReadings.value.push({
-        timestamp: v.timestamp || Date.now(),
-        gross: v.grossWeight,
-        net: v.netWeight,
-        tare: v.tareWeight,
-        stable: v.stable,
-      });
-      if (v.stable) {
-        if (!stableSince.value) stableSince.value = Date.now();
-      } else {
-        stableSince.value = null;
-      }
-      if (v.tareWeight > 0) isTared.value = true;
-    },
-    { deep: true, immediate: true }
-  );
+  watch(sub.live, (v) => applyLiveReading(v), { deep: true, immediate: true });
 
   watch(sub.status, (s) => {
     liveStatus.value = s;
@@ -285,6 +332,8 @@ onMounted(async () => {
 onUnmounted(() => {
   if (unsub) unsub();
   if (rafId) cancelAnimationFrame(rafId);
+  if (compactDisplayTimer) clearTimeout(compactDisplayTimer);
+  if (stableHoldTimer) clearTimeout(stableHoldTimer);
 });
 
 async function doTare() {

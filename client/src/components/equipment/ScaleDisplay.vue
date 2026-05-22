@@ -6,11 +6,13 @@
     <div class="grid grid-cols-3 items-end gap-2">
       <div class="text-right">
         <p class="text-[10px] text-[#6ee7b7]/70">{{ t('equipment.tare') }}</p>
-        <p class="text-lg tabular-nums">{{ fmt(tare) }}</p>
+        <p class="min-h-[1.75rem] text-lg tabular-nums leading-none">{{ fmt(tare) }}</p>
       </div>
-      <div class="text-center">
-        <StabilityIndicator :stable="stable" class="mb-1 block" />
-        <p class="text-4xl font-bold leading-none tabular-nums">{{ fmt(gross) }}</p>
+      <div class="flex min-h-[5.5rem] flex-col items-center justify-end text-center">
+        <div class="mb-1 flex h-4 w-full items-center justify-center">
+          <StabilityIndicator :stable="stable" />
+        </div>
+        <p class="min-h-[2.75rem] text-4xl font-bold leading-none tabular-nums">{{ fmt(gross) }}</p>
         <p class="mt-1 text-sm text-[#6ee7b7]/90">{{ unit }}</p>
       </div>
       <div class="text-left">
