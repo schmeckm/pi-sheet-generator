@@ -1,29 +1,19 @@
 # Portainer Stack — PI Sheet Generator (images from Docker Hub)
-#
-# 1. GitHub Actions pushes images on every push to main (see .github/workflows/docker-publish.yml)
-# 2. In Portainer: Stacks → Add stack → Web editor → paste this file
-# 3. Add environment variables (see deploy/.env.portainer.example) under "Environment variables" or env_file
-#
-# Images (replace DOCKERHUB_USER if not schmeckm):
-#   schmeckm/pi-sheet-generator-api:latest
-#   schmeckm/pi-sheet-generator-client:latest
+# Paste into Portainer → Stacks → Add stack → Web editor
+# Env: see deploy/.env.portainer.example (POSTGRES_PASSWORD, JWT_SECRET, ANTHROPIC_API_KEY required)
 
 services:
   db:
     image: pgvector/pgvector:pg16
+    shm_size: 256mb
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-pisheet}
-      POSTGRES_USER: ${POSTGRES_USER:-pisheet}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+      POSTGRES_DB: pisheet
+      POSTGRES_USER: pisheet
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - pgdata:/var/lib/postgresql/data
-    # Healthcheck uses fixed user/db (defaults) — ${VAR} in test often fails on Portainer
-    healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U pisheet -d pisheet || exit 1']
-      interval: 5s
-      timeout: 10s
-      retries: 15
-      start_period: 40s
+    # No healthcheck — Portainer/NAS often mark pg as unhealthy while still starting.
+    # API retries DB connection via restart policy until Postgres is ready.
     restart: unless-stopped
     networks:
       - pisheet
@@ -33,10 +23,10 @@ services:
     environment:
       NODE_ENV: production
       PORT: 7000
-      DATABASE_URL: postgres://${POSTGRES_USER:-pisheet}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-pisheet}
-      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET}
+      DATABASE_URL: postgres://pisheet:${POSTGRES_PASSWORD}@db:5432/pisheet
+      JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
-      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:?Set ANTHROPIC_API_KEY}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
       EMBEDDING_API_KEY: ${EMBEDDING_API_KEY:-}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       EMBEDDING_MODEL: ${EMBEDDING_MODEL:-text-embedding-3-small}
@@ -46,14 +36,13 @@ services:
       SAP_MCP_AUTH_TOKEN: ${SAP_MCP_AUTH_TOKEN:-}
       AUTO_SEED: ${AUTO_SEED:-true}
     depends_on:
-      db:
-        condition: service_healthy
+      - db
     healthcheck:
       test: ['CMD', 'wget', '-qO-', 'http://127.0.0.1:7000/api/health']
       interval: 15s
-      timeout: 5s
-      start_period: 60s
-      retries: 5
+      timeout: 10s
+      start_period: 120s
+      retries: 10
     restart: unless-stopped
     networks:
       - pisheet
@@ -63,8 +52,7 @@ services:
     ports:
       - '${CLIENT_PORT:-7004}:80'
     depends_on:
-      api:
-        condition: service_healthy
+      - api
     restart: unless-stopped
     networks:
       - pisheet

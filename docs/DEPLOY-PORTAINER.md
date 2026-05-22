@@ -91,11 +91,26 @@ Internet/LAN → :7004 → client (nginx)
 
 ### `db` is unhealthy
 
-1. **Portainer → Containers → `…-db-1` → Logs** lesen (häufig: Passwort am Volume geändert, Korruption, zu wenig RAM).
-2. Stack **entfernen** und dabei **„Remove volumes“ / Volumes löschen** aktivieren (löscht `pgdata` — nur OK bei Erstinstallation oder wenn Demo-Daten egal sind).
-3. Stack neu deployen mit aktuellem [deploy/portainer-stack.yml](../deploy/portainer-stack.yml).
-4. **`POSTGRES_PASSWORD`:** nur Buchstaben/Zahlen (`A-Za-z0-9`), **kein** `#`, `$`, `@`, `%` (sonst bricht `DATABASE_URL` in der API).
-5. Wenn `POSTGRES_USER` ≠ `pisheet` oder `POSTGRES_DB` ≠ `pisheet`: in der Compose müssen Healthcheck und DB-Env übereinstimmen (Standard: `pisheet` / `pisheet`).
+Der aktuelle Stack hat **keinen DB-Healthcheck** mehr (API startet nach `db`, mit `restart: unless-stopped`).
+
+Wenn die Meldung **trotzdem** erscheint, läuft noch eine **alte Compose-Version** in Portainer:
+
+1. Stack **komplett entfernen** → **„Remove volumes“** aktivieren.
+2. Compose neu einfügen von:  
+   https://raw.githubusercontent.com/schmeckm/pi-sheet-generator/main/deploy/portainer-stack.yml
+3. Env-Variablen prüfen — **diese drei müssen gesetzt sein:**
+
+| Variable | Beispiel |
+|----------|----------|
+| `POSTGRES_PASSWORD` | `PiSheetDb2026Secure` (nur Buchstaben/Zahlen) |
+| `JWT_SECRET` | mind. 32 Zeichen |
+| `ANTHROPIC_API_KEY` | `sk-ant-...` |
+
+4. **Containers → db → Logs:**  
+   - `Permission denied` → Volume/Rechte auf NAS  
+   - `No space left` → Speicher freigeben  
+   - `exec format error` → falscher CPU-Typ (ARM vs. amd64) — Host-Architektur prüfen  
+5. Nach Deploy **2–3 Minuten warten** — API kann erst nach DB-Init healthy werden.
 
 ### Weitere Probleme
 
