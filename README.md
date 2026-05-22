@@ -2,90 +2,39 @@
 
 LLM-powered Process Instruction (PI) Sheet generator for pharmaceutical manufacturing — SAP Joule-style chat, GMP workflow, equipment/scales Q&A, and admin tooling.
 
+## Documentation
+
 | Document | Purpose |
 |----------|---------|
-| **[DOCUMENTATION.md](./DOCUMENTATION.md)** | **Full guide** (DE): setup, chat, „Neues Gespräch“, architecture, env vars |
-| [DEV.md](./DEV.md) | Developer handbook: ports, Docker vs local, troubleshooting |
-| [MVP4-SPEC.md](./MVP4-SPEC.md) | GMP lifecycle (draft → review → approved → archived) |
+| **[docs/DOCUMENTATION.md](./docs/DOCUMENTATION.md)** | Full guide (DE): setup, chat, architecture, env vars |
+| **[docs/DEV.md](./docs/DEV.md)** | Developer handbook: ports, Docker, troubleshooting |
+| **[docs/README.md](./docs/README.md)** | Specs, playbooks, project layout |
 
-**MVP 4** adds GMP lifecycle and QA workflow. If the DB predates MVP4: `node server/scripts/apply-lifecycle-migration.js`.
-
-### Chat highlights
-
-- **Quick prompts** on the start screen (PI Sheet + equipment questions)
-- **„Neues Gespräch“** in the shell bar — clears the session and restores the start screen (with confirmation if messages exist)
-- **„Verlauf“** — opens saved PI sheets (not per-message chat threads)
-
-After UI changes in Docker: `docker compose --profile full up -d --build client`, then hard refresh (`Ctrl+F5`).
-
-## Port scheme (host, all ≥ 7000)
-
-| Port | Service |
-|------|---------|
-| **7000** | API (Express) |
-| **7001** | SAP MCP Server |
-| **7002** | Vite dev UI |
-| **7003** | PostgreSQL (Docker) |
-| **7004** | Production UI (nginx, Docker `--profile full`) |
-
-## Prerequisites
-
-- Node.js 20+
-- Docker Desktop (for PostgreSQL + pgvector)
-
-## Quick start (Docker — full stack)
+## Quick start (Docker)
 
 ```bash
 cp .env.docker.example .env
-# Edit .env — set ANTHROPIC_API_KEY at minimum
+# Set ANTHROPIC_API_KEY at minimum
 
-docker compose --profile full up -d
+docker compose --profile full up -d --build
 ```
 
 | Service | URL |
 |---------|-----|
-| **App (UI)** | http://localhost:7004 |
+| **UI** | http://localhost:7004 |
 | **API** | http://localhost:7000/api |
-| **SAP MCP** | http://localhost:7001/health |
-| **PostgreSQL** | `localhost:7003` |
 
-DB + SAP MCP only (local Node dev):
+**Login:** `admin@pisheet.local` / `admin123` · `operator@pisheet.local` / `operator123`
 
-```bash
-docker compose up -d
-```
+After UI code changes: `docker compose --profile full up -d --build client` and hard refresh (`Ctrl+F5`).
 
-```bash
-npm run docker:logs
-npm run docker:down
-npm run docker:seed
-```
-
----
-
-## Quick start (local Node dev)
+## Quick start (local dev)
 
 ```bash
 cp .env.example .env
-
 docker compose up -d
-```
-
-> After changing the DB host port to **7003**, recreate the DB container once if you used **5434** before:
-> `docker compose down` then `docker compose up -d` (existing volume keeps data; only the host port mapping changes).
-
-```bash
-# Optional SAP MCP (separate repo) — must listen on 7001
-cd ../sap-mcp-server
-# set PORT=7001 in .env, then:
-npm start
-
-cd ../pi-sheet-generator
-npm install
-npm install --prefix server
-npm install --prefix client
-npm run db:migrate --prefix server
-npm run db:seed
+npm install && npm install --prefix server && npm install --prefix client
+npm run db:migrate --prefix server && npm run db:seed
 npm run dev
 ```
 
@@ -94,20 +43,30 @@ npm run dev
 | **UI** | http://localhost:7002 |
 | **API** | http://localhost:7000/api |
 
-**Credentials**
+## Ports
 
-| Role | Email | Password |
-|------|-------|----------|
-| Admin | `admin@pisheet.local` | `admin123` |
-| Operator | `operator@pisheet.local` | `operator123` |
-
-Optional: `npm run db:embed` when embedding API keys are set.
+| Port | Service |
+|------|---------|
+| 7000 | API |
+| 7001 | SAP MCP |
+| 7002 | Vite dev UI |
+| 7003 | PostgreSQL |
+| 7004 | Docker UI (nginx) |
 
 ## Scripts
 
 | Script | Description |
 |--------|-------------|
-| `npm run dev` | Start Express API and Vite frontend |
-| `npm run db:migrate` | Run Sequelize migrations |
-| `npm run db:seed` | Seed XSteps, users, default prompt |
-| `npm run docker:up` | Docker full stack (`--profile full`) |
+| `npm run dev` | API + Vite |
+| `npm run docker:up` | Full Docker stack |
+| `npm run db:seed` | Demo users, XSteps, prompt |
+
+## Project layout
+
+```
+client/     Vue 3 frontend
+server/     Express API
+docker/     Container images
+docs/       Documentation & specs
+fixtures/   Sample CSV/images for tests
+```

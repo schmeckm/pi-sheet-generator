@@ -230,11 +230,12 @@ Vorlagen: `.env.example` (lokal), `.env.docker.example` (Compose).
 
 | Datei | Inhalt |
 |-------|--------|
-| [README.md](./README.md) | Kurz-README, Ports, Quick Start |
+| [README.md](../README.md) | Kurz-README, Ports, Quick Start |
+| [docs/README.md](./README.md) | Dokumentations-Index & Projektstruktur |
 | [DEV.md](./DEV.md) | Entwickler-Handbuch, Fehler, Prompt Config |
-| [MVP4-SPEC.md](./MVP4-SPEC.md) | GMP-Lifecycle, Freigabe |
-| [EQUIPMENT-SPEC.md](./EQUIPMENT-SPEC.md) | Waagen, MCP, Namespace |
-| [MVP3-CURSOR-PLAYBOOK.md](./MVP3-CURSOR-PLAYBOOK.md) | Implementierungs-Playbook |
+| [MVP4-SPEC.md](./specs/MVP4-SPEC.md) | GMP-Lifecycle, Freigabe |
+| [EQUIPMENT-SPEC.md](./specs/EQUIPMENT-SPEC.md) | Waagen, MCP, Namespace |
+| [mvp3-playbook.md](./playbooks/mvp3-playbook.md) | Implementierungs-Playbook |
 
 ---
 

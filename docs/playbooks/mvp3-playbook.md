@@ -1,7 +1,7 @@
 # PI Sheet Generator — MVP 3.0 Cursor Playbook
 
 > **Voraussetzung**: MVP 1.0 (11 Steps) + MVP 2.0 (4 Runden) sind komplett.
-> Lege `EQUIPMENT-SPEC.md` und dieses Playbook ins Projekt-Root.
+> Specs: `docs/specs/EQUIPMENT-SPEC.md` · Playbook: `docs/playbooks/mvp3-playbook.md`
 > Jeder Prompt geht in den Cursor Composer (Cmd+I).
 
 ---
@@ -822,14 +822,14 @@ RUNDE 7 → Chat Parameter Query  (Claude kann Equipment abfragen und in PI Shee
 
 ```
 pi-sheet-generator/
-├── .cursorrules                    ← MVP 1.0 Architektur (File 1)
-├── IMPORT-SPEC.md                  ← Multi-Format Import (File 3)
-├── MVP2-SPEC.md                    ← Vision + RAG + SAP Architektur (File 4)
-├── EQUIPMENT-SPEC.md               ← Equipment Integration Details (File 6)
-├── pi-sheet-cursor-playbook.md     ← MVP 1.0: Steps 1-11 (File 2)
-├── MVP2-CURSOR-PLAYBOOK.md         ← MVP 2.0: Runden 1-4 (File 5)
-├── MVP3-CURSOR-PLAYBOOK.md         ← MVP 3.0: Runden 5-7 (dieses File)
-└── ... (generierter Code)
+├── .cursorrules
+├── client/ · server/ · docker/
+├── docs/
+│   ├── DOCUMENTATION.md · DEV.md
+│   ├── specs/          ← IMPORT, MVP2, MVP4, EQUIPMENT
+│   └── playbooks/      ← mvp1/2/3-playbook.md (dieses File)
+├── fixtures/           ← test-xsteps.csv, images/
+└── ...
 ```
 
 ## Build-Reihenfolge gesamt

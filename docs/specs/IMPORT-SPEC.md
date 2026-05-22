@@ -1,6 +1,6 @@
 # PI Sheet Generator — Enhanced Import Module
 
-> **Dieses Dokument ergänzt die .cursorrules und das Playbook.** Es ersetzt den Import-Teil in Step 3 und die UploadView in Step 10. Lege es als `IMPORT-SPEC.md` ins Projekt-Root neben die `.cursorrules`.
+> **Dieses Dokument ergänzt die .cursorrules und das Playbook.** Pfad: `docs/specs/IMPORT-SPEC.md`
 
 ---
 

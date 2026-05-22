@@ -737,7 +737,7 @@ Test plan — full end-to-end:
 
 ## Bonus: Test CSV for Upload
 
-Save this as `test-xsteps.csv` to test the import:
+Save this as `fixtures/test-xsteps.csv` to test the import:
 
 ```csv
 xstep_id,name,category,process_type,description,sap_transaction,movement_type,gmp_relevant

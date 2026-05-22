@@ -123,4 +123,4 @@ npm run docker:logs
 npm run docker:seed
 ```
 
-Weitere Spezifikation: [README.md](./README.md), [DOCUMENTATION.md](./DOCUMENTATION.md), [MVP3-CURSOR-PLAYBOOK.md](./MVP3-CURSOR-PLAYBOOK.md).
+Weitere Spezifikation: [README.md](../README.md), [DOCUMENTATION.md](./DOCUMENTATION.md), [docs/README.md](./README.md), [mvp3-playbook.md](./playbooks/mvp3-playbook.md).

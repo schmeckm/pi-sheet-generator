@@ -1,7 +1,7 @@
 # PI Sheet Generator — Equipment Integration Spec
 
 > **Waagen-Anbindung über OPC UA / UNS mit Simulation für den Pilot**
-> Lege diese Datei als `EQUIPMENT-SPEC.md` ins Projekt-Root.
+> Spezifikation: `docs/specs/EQUIPMENT-SPEC.md`
 
 ---
 

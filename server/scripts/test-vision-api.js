@@ -7,7 +7,7 @@ const fs = require('fs');
 const path = require('path');
 
 const BASE = `http://localhost:${process.env.PORT || 7000}/api`;
-const PNG = path.resolve(__dirname, '../../test-assets/pi-test.png');
+const PNG = path.resolve(__dirname, '../../fixtures/images/pi-test.png');
 
 async function main() {
   const loginRes = await fetch(`${BASE}/auth/login`, {

@@ -8,11 +8,13 @@ Full-stack LLM-powered PI Sheet Generator for pharmaceutical manufacturing (SAP 
 - Database: PostgreSQL 16 + pgvector (`vector(1536)` on `xsteps.embedding`)
 - LLM: Anthropic Claude (`claude-sonnet-4-20250514`)
 - Auth: JWT + bcryptjs
-- Import: CSV, Excel (xlsx), JSON, XML (fast-xml-parser), ZIP (adm-zip) — see `IMPORT-SPEC.md`
+- Import: CSV, Excel (xlsx), JSON, XML (fast-xml-parser), ZIP (adm-zip) — see `docs/specs/IMPORT-SPEC.md`
 
 ## Project Layout
 - `/server` — Express API, Sequelize models, services, routes, seeders
 - `/client` — Vue 3 SPA (operator chat + admin)
+- `/docs` — DOCUMENTATION, DEV, specs/, playbooks/
+- `/fixtures` — test CSV and images (`fixtures/test-xsteps.csv`)
 - `docker-compose.yml` — `pgvector/pgvector:pg16`
 - `.env` — `DATABASE_URL`, `ANTHROPIC_API_KEY`, `JWT_SECRET`, `PORT=3000`
 
@@ -44,7 +46,7 @@ Warenbewegung | Rückmeldung | Prozess | Qualität | Dokumentation
 ## Implementation Order
 1. DB + models + seed
 2. Auth
-3. Repository + import (IMPORT-SPEC.md)
+3. Repository + import (`docs/specs/IMPORT-SPEC.md`)
 4. Embeddings + vector search
 5. LLM + chat SSE
 6. Templates + PDF

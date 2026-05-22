@@ -1,7 +1,7 @@
 # PI Sheet Generator — MVP 2.0 Cursor Playbook
 
 > **Voraussetzung**: MVP 1.0 ist komplett (alle 11 Steps). Dieses Playbook erweitert das bestehende Projekt.
-> Lege `MVP2-SPEC.md` ins Projekt-Root neben die `.cursorrules`.
+> Spec: `docs/specs/MVP2-SPEC.md` · Playbook: `docs/playbooks/mvp2-playbook.md`
 > Jeder Prompt geht in den Cursor Composer (Cmd+I).
 
 ---

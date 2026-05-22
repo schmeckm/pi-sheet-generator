@@ -123,7 +123,7 @@ export const architectureHelp = {
         list: [
           { label: 'Dashboard', text: 'Kennzahlen: XSteps, PI Sheets, Benutzer, GMP-relevante Steps, letzte Audit-Aktivität.' },
           { label: 'Repository', text: 'XSteps anlegen, bearbeiten, filtern, Bulk-Aktionen.' },
-          { label: 'Upload', text: 'CSV/JSON-Import mit Spalten-Mapping (siehe IMPORT-SPEC.md).' },
+          { label: 'Upload', text: 'CSV/JSON-Import mit Spalten-Mapping (siehe docs/specs/IMPORT-SPEC.md).' },
           { label: 'Wissensbasis', text: 'SOPs und Arbeitsanweisungen für erweitertes RAG.' },
           { label: 'Prompt Config', text: 'System-Prompt und Test-Generierung für Admins.' },
         ],
@@ -141,7 +141,7 @@ export const architectureHelp = {
         title: 'MVP-Roadmap',
         list: [
           { label: 'MVP 1.0 (aktuell)', text: 'Chat → PI Sheet, Admin XStep-Upload, Template-Vorschau, PDF-Export, RAG Wissensbasis, Digitalisieren.' },
-          { label: 'MVP 2.0', text: 'MCP SAP Live-Anbindung, erweiterte Multi-Modal-Analyse (siehe MVP2-SPEC.md).' },
+          { label: 'MVP 2.0', text: 'MCP SAP Live-Anbindung, erweiterte Multi-Modal-Analyse (siehe docs/specs/MVP2-SPEC.md).' },
           { label: 'MVP 3.0', text: 'Simulation, Approval Workflow, SAP-Rückschreibung, Shop-Floor-App, GxP Audit Trail.' },
         ],
       },
@@ -150,8 +150,8 @@ export const architectureHelp = {
         title: 'Weitere Dokumentation',
         list: [
           { label: 'README.md', text: 'Installation, Skripte, Zugangsdaten.' },
-          { label: 'IMPORT-SPEC.md', text: 'CSV/JSON-Import-Format und Mapping.' },
-          { label: 'MVP2-SPEC.md', text: 'MCP SAP, erweiterte RAG/Vision-Roadmap.' },
+          { label: 'IMPORT-SPEC.md', text: 'CSV/JSON-Import-Format und Mapping (docs/specs/).' },
+          { label: 'MVP2-SPEC.md', text: 'MCP SAP, erweiterte RAG/Vision-Roadmap (docs/specs/).' },
         ],
       },
     ],
@@ -280,7 +280,7 @@ export const architectureHelp = {
         list: [
           { label: 'Dashboard', text: 'Metrics: XSteps, PI sheets, users, GMP-relevant steps, recent audit activity.' },
           { label: 'Repository', text: 'Create, edit, filter XSteps, bulk actions.' },
-          { label: 'Upload', text: 'CSV/JSON import with column mapping (see IMPORT-SPEC.md).' },
+          { label: 'Upload', text: 'CSV/JSON import with column mapping (see docs/specs/IMPORT-SPEC.md).' },
           { label: 'Knowledge base', text: 'SOPs and work instructions for extended RAG.' },
           { label: 'Prompt config', text: 'System prompt and test generation for admins.' },
         ],
@@ -298,7 +298,7 @@ export const architectureHelp = {
         title: 'MVP roadmap',
         list: [
           { label: 'MVP 1.0 (current)', text: 'Chat → PI sheet, admin XStep upload, template preview, PDF export, RAG knowledge base, digitize.' },
-          { label: 'MVP 2.0', text: 'MCP SAP live integration, extended multimodal analysis (see MVP2-SPEC.md).' },
+          { label: 'MVP 2.0', text: 'MCP SAP live integration, extended multimodal analysis (see docs/specs/MVP2-SPEC.md).' },
           { label: 'MVP 3.0', text: 'Simulation, approval workflow, SAP write-back, shop-floor app, GxP audit trail.' },
         ],
       },
@@ -307,8 +307,8 @@ export const architectureHelp = {
         title: 'Further documentation',
         list: [
           { label: 'README.md', text: 'Installation, scripts, credentials.' },
-          { label: 'IMPORT-SPEC.md', text: 'CSV/JSON import format and mapping.' },
-          { label: 'MVP2-SPEC.md', text: 'MCP SAP, extended RAG/vision roadmap.' },
+          { label: 'IMPORT-SPEC.md', text: 'CSV/JSON import format and mapping (docs/specs/).' },
+          { label: 'MVP2-SPEC.md', text: 'MCP SAP, extended RAG/vision roadmap (docs/specs/).' },
         ],
       },
     ],
