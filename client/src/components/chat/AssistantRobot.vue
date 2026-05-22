@@ -46,7 +46,7 @@
         </text>
         <text
           x="32"
-          y="38.2"
+          y="39"
           text-anchor="middle"
           class="assistant-robot__tagline"
           fill="currentColor"
@@ -143,7 +143,7 @@ const ariaLabel = computed(() => t('chat.assistantName'));
 }
 
 .assistant-robot--hero .assistant-robot__tagline {
-  font-size: 2px;
+  font-size: 3px;
 }
 
 .assistant-robot__make {
@@ -153,7 +153,7 @@ const ariaLabel = computed(() => t('chat.assistantName'));
 }
 
 .assistant-robot__tagline {
-  font-size: 1.9px;
+  font-size: 3px;
   font-weight: 500;
   letter-spacing: 0;
 }
