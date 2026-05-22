@@ -17,11 +17,13 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
     volumes:
       - pgdata:/var/lib/postgresql/data
+    # Healthcheck uses fixed user/db (defaults) — ${VAR} in test often fails on Portainer
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-pisheet} -d ${POSTGRES_DB:-pisheet}']
+      test: ['CMD-SHELL', 'pg_isready -U pisheet -d pisheet || exit 1']
       interval: 5s
-      timeout: 5s
-      retries: 8
+      timeout: 10s
+      retries: 15
+      start_period: 40s
     restart: unless-stopped
     networks:
       - pisheet

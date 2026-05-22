@@ -89,6 +89,16 @@ Internet/LAN → :7004 → client (nginx)
 
 ## 6. Fehlerbehebung
 
+### `db` is unhealthy
+
+1. **Portainer → Containers → `…-db-1` → Logs** lesen (häufig: Passwort am Volume geändert, Korruption, zu wenig RAM).
+2. Stack **entfernen** und dabei **„Remove volumes“ / Volumes löschen** aktivieren (löscht `pgdata` — nur OK bei Erstinstallation oder wenn Demo-Daten egal sind).
+3. Stack neu deployen mit aktuellem [deploy/portainer-stack.yml](../deploy/portainer-stack.yml).
+4. **`POSTGRES_PASSWORD`:** nur Buchstaben/Zahlen (`A-Za-z0-9`), **kein** `#`, `$`, `@`, `%` (sonst bricht `DATABASE_URL` in der API).
+5. Wenn `POSTGRES_USER` ≠ `pisheet` oder `POSTGRES_DB` ≠ `pisheet`: in der Compose müssen Healthcheck und DB-Env übereinstimmen (Standard: `pisheet` / `pisheet`).
+
+### Weitere Probleme
+
 | Problem | Lösung |
 |---------|--------|
 | Actions schlägt fehl | Secrets `DOCKERHUB_*` prüfen |
