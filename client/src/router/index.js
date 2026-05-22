@@ -40,6 +40,12 @@ const routes = [
     meta: { requiresAuth: true, requiresAdmin: true, layout: 'admin' },
   },
   {
+    path: '/admin/process-graph',
+    name: 'admin-process-graph',
+    component: () => import('@/views/ProcessGraphView.vue'),
+    meta: { requiresAuth: true, requiresAdmin: true, layout: 'admin' },
+  },
+  {
     path: '/admin/repository',
     name: 'admin-repository',
     component: () => import('@/views/RepositoryView.vue'),

@@ -116,8 +116,12 @@ async function load() {
   }
 }
 
-function openDetail(row) {
-  detail.value = row;
+async function openDetail(row) {
+  try {
+    detail.value = await get(`/templates/${row.id}`);
+  } catch {
+    detail.value = row;
+  }
 }
 
 function onDetailUpdated(updated) {

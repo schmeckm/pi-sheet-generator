@@ -19,6 +19,12 @@ Dir stehen zusätzlich relevante Auszüge aus Unternehmensdokumenten zur Verfüg
 - GMP-konforme Prozessschritte und Dokumentationsanforderungen
 - Parameter-Grenzwerte, Toleranzen und Prüfkriterien aus den Dokumenten
 Wenn Dokumentauszüge mit XSteps kollidieren, bevorzuge validierte XSteps; ergänze fehlende Details aus den Dokumenten.`,
+    graphContextAppend: `
+
+Prozess-Wissensgraph (strukturierte Beziehungen):
+- **recommended_step_order**: bevorzugte Reihenfolge der XSteps für den Prozesstyp — halte diese Abfolge ein, wenn du ein PI Sheet erstellst.
+- **requirements** (z. B. USES_EQUIPMENT): verpflichtende Geräte-Zuordnungen — übernimm equipment_id exakt in Wägeschritte (type "scale").
+Wenn Graph und semantische XStep-Suche kollidieren, hat die Graph-Reihenfolge Vorrang für die Schrittfolge; einzelne Zusatzschritte nur bei klarer Nutzeranfrage.`,
     mcpContextAppend: `
 
 Datenquellen für PI Sheets:
@@ -29,6 +35,7 @@ Entscheide selbst: Repository für validierte Templates; SAP-Tools für aktuelle
 
 Konfigurierte Produktionsgeräte (Waagen, Sensoren) werden im User-Prompt als JSON mitgeliefert. Für Wägeschritte (type "scale") nur equipment_id aus dieser Liste verwenden — keine erfundenen IDs. Bei fehlender passender Waage Hinweis in warnings statt falscher Referenz.`,
     labels: {
+      processGraph: 'Prozess-Wissensgraph',
       xsteps: 'Verfügbare XSteps aus dem Repository',
       documents: 'Relevante Dokumente',
       equipment: 'Konfigurierte Geräte (Equipment)',
@@ -49,6 +56,12 @@ You also have relevant excerpts from company documents (SOPs, work instructions,
 - GMP-compliant process steps and documentation requirements
 - Parameter limits, tolerances, and inspection criteria from the documents
 If document excerpts conflict with XSteps, prefer validated XSteps; add missing details from the documents.`,
+    graphContextAppend: `
+
+Process knowledge graph (structured relationships):
+- **recommended_step_order**: preferred XStep sequence for the process type — follow this order when building a PI sheet.
+- **requirements** (e.g. USES_EQUIPMENT): mandatory equipment links — use the exact equipment_id in scale steps (type "scale").
+If the graph and semantic XStep search disagree, the graph order takes precedence for step sequencing; add extra steps only when clearly requested.`,
     mcpContextAppend: `
 
 Data sources for PI Sheets:
@@ -59,6 +72,7 @@ Decide yourself: repository for validated templates; SAP tools for current order
 
 Configured production equipment (scales, sensors) is provided as JSON in the user prompt. For weighing steps (type "scale"), use only equipment_id values from that list — do not invent IDs. If no suitable scale exists, add a warning instead of a wrong reference.`,
     labels: {
+      processGraph: 'Process knowledge graph',
       xsteps: 'Available XSteps from the repository',
       documents: 'Relevant documents',
       equipment: 'Configured equipment',

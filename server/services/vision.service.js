@@ -517,7 +517,12 @@ async function generateFromDocument(file, userId, options = {}) {
   );
 
   const userPrompt = `Vision-Import: ${file.originalname}`;
-  const saved = await llmService.savePiSheet(piSheetJson, userPrompt, userId);
+  const saved = await llmService.savePiSheet(
+    piSheetJson,
+    userPrompt,
+    userId,
+    options.locale
+  );
 
   await logAudit({
     userId,

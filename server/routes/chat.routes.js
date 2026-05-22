@@ -46,7 +46,7 @@ router.post('/generate', chatLimiter, async (req, res, next) => {
   }
 });
 
-function attachStreamHandlers(res, stream, { prompt, userId }) {
+function attachStreamHandlers(res, stream, { prompt, userId, locale }) {
   let closed = false;
   let finishing = false;
 
@@ -109,7 +109,7 @@ function attachStreamHandlers(res, stream, { prompt, userId }) {
     finishing = true;
     writeEvent({ type: 'status', phase: 'finalizing' });
     try {
-      const piSheet = await llmService.finalizeStream(stream, prompt, userId);
+      const piSheet = await llmService.finalizeStream(stream, prompt, userId, { locale });
       const sheetJson =
         piSheet && typeof piSheet.toJSON === 'function' ? piSheet.toJSON() : piSheet;
       finish({ type: 'complete', piSheet: sheetJson });
@@ -239,6 +239,7 @@ router.post('/generate-stream', chatLimiter, async (req, res, next) => {
     attachStreamHandlers(res, stream, {
       prompt: value.prompt,
       userId: req.user.id,
+      locale: value.locale,
     });
   } catch (err) {
     if (err.statusCode === 503) {

@@ -12,13 +12,13 @@
         <tr v-if="p.type !== 'scale'" class="border-b border-gray-100">
           <td class="py-2 pr-2">{{ p.name }}</td>
           <td class="py-2">
-            <span v-if="printMode" class="print-line">{{ displayValue(p) }}</span>
+            <span v-if="inputsLocked" class="print-line">{{ displayValue(p) }}</span>
             <span v-else-if="p.type === 'display'" class="text-gray-500">{{ displayValue(p) }}</span>
             <input
               v-else-if="p.type === 'checkbox'"
               v-model="p.checked"
               type="checkbox"
-              :disabled="printMode"
+              :disabled="inputsLocked"
               class="rounded"
             />
             <input
@@ -27,7 +27,7 @@
               type="text"
               class="w-full rounded border border-gray-200 px-2 py-1 text-sm"
               :placeholder="p.unit || ''"
-              :disabled="printMode"
+              :disabled="inputsLocked"
             />
           </td>
           <td class="text-center">{{ p.required ? '●' : '○' }}</td>
@@ -48,7 +48,7 @@
               :min-stability-ms="p.equipment_config.min_stability_ms || 2000"
               :four-eyes="Boolean(p.equipment_config.four_eyes)"
               :material-info="materialInfo"
-              :read-only="printMode"
+              :read-only="inputsLocked"
               :print-mode="printMode"
               :pi-sheet-id="piSheetId"
               :pi-sheet-step-id="step?.id"
@@ -75,6 +75,7 @@ import {
 const props = defineProps({
   params: { type: Array, default: () => [] },
   printMode: { type: Boolean, default: false },
+  readOnly: { type: Boolean, default: false },
   step: { type: Object, default: null },
   piSheetId: { type: String, default: null },
 });
@@ -82,6 +83,7 @@ const props = defineProps({
 const emit = defineEmits(['param-updated']);
 const { t } = useI18n();
 
+const inputsLocked = computed(() => props.printMode || props.readOnly);
 const hasScaleParam = computed(() => props.params.some((p) => p.type === 'scale'));
 const materialInfo = computed(() => (props.step ? getMaterialInfo(props.step) : null));
 
@@ -112,4 +114,4 @@ function onWeighingConfirmed(param, event) {
   emit('param-updated', { step: props.step, param, event });
 }
 </script>
-
+

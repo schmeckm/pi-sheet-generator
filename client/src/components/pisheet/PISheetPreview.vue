@@ -77,7 +77,8 @@
         v-for="step in sortedSteps"
         :key="step.id || step.step_nr"
         :step="step"
-        :print-mode="viewMode === 'print'"
+        :print-mode="viewMode === 'print' || sheetReadOnly"
+        :read-only="sheetReadOnly"
         :pi-sheet-id="sheet?.id"
         :match-status="showMatchBorders ? step.match_status : null"
       />
@@ -135,6 +136,8 @@ const sheetStatus = computed(() => {
   const s = props.sheet?.status || 'draft';
   return s === 'review' ? 'in_review' : s;
 });
+
+const sheetReadOnly = computed(() => ['approved', 'archived', 'in_review'].includes(sheetStatus.value));
 
 const versionLabel = computed(() => {
   const st = sheetStatus.value;

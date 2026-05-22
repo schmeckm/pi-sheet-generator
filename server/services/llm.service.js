@@ -3,12 +3,18 @@ const { getAnthropicClient } = require('../config/anthropic');
 const { PromptConfig, PISheet, PISheetStep, EquipmentConfig } = require('../models');
 const embeddingService = require('./embedding.service');
 const knowledgeService = require('./knowledge.service');
+const graphService = require('./graph.service');
 const { logAudit } = require('./audit.service');
 const settingsService = require('./settings.service');
 const {
   EQUIPMENT_TOOL_DEFINITIONS,
   executeEquipmentToolSafe,
 } = require('./equipment/equipment-llm.tools');
+const {
+  GRAPH_TOOL_DEFINITIONS,
+  GRAPH_TOOL_NAMES,
+  executeGraphToolSafe,
+} = require('./graph-llm.tools');
 const { applyLocaleToSystemPrompt, getLlmLocaleConfig } = require('../utils/locale');
 
 const MODEL = 'claude-sonnet-4-20250514';
@@ -123,33 +129,36 @@ function formatDocumentChunksContext(chunks, locale = 'de') {
 }
 
 async function buildMessages(userPrompt, systemPrompt, locale = 'de') {
-  const { documentContextAppend, equipmentContextAppend, mcpContextAppend, labels } =
+  const { documentContextAppend, equipmentContextAppend, mcpContextAppend, graphContextAppend, labels } =
     getLlmLocaleConfig(locale);
   const processType = inferProcessType(userPrompt);
-  const [xsteps, docChunks, equipmentRows] = await Promise.all([
+  const [rawXsteps, docChunks, equipmentRows] = await Promise.all([
     retrieveXSteps(userPrompt, processType),
     retrieveDocumentChunks(userPrompt, processType),
     retrieveEquipmentContext(),
   ]);
+  const { xsteps, graphCtx } = await graphService.mergeXStepsWithGraph(rawXsteps, processType);
 
   const xstepsJSON = formatXStepsContext(xsteps);
+  const graphJSON = graphService.formatGraphContext(graphCtx, locale);
   const docsJSON = formatDocumentChunksContext(docChunks, locale);
   const equipmentJSON = formatEquipmentContext(equipmentRows);
   const sapOn = await isSapMcpEnabled();
   const mcpAppend = sapOn ? mcpContextAppend : '';
   const extendedSystem = applyLocaleToSystemPrompt(
-    `${systemPrompt}${documentContextAppend}${equipmentContextAppend}${mcpAppend}`,
+    `${systemPrompt}${graphContextAppend}${documentContextAppend}${equipmentContextAppend}${mcpAppend}`,
     locale
   );
 
   const userContent = [
+    `${labels.processGraph}:\n${graphJSON}`,
     `${labels.xsteps}:\n${xstepsJSON}`,
     `${labels.documents}: ${docsJSON}`,
     `${labels.equipment}:\n${equipmentJSON}`,
     `${labels.userRequest}: ${userPrompt}`,
   ].join('\n\n');
 
-  return { xsteps, docChunks, equipmentRows, userContent, systemPrompt: extendedSystem };
+  return { xsteps, graphCtx, docChunks, equipmentRows, userContent, systemPrompt: extendedSystem };
 }
 
 async function isSapMcpEnabled() {
@@ -234,15 +243,23 @@ function extractTextFromResponse(response) {
     .join('\n');
 }
 
+async function executeChatToolSafe(name, input = {}) {
+  if (GRAPH_TOOL_NAMES.has(name)) {
+    return executeGraphToolSafe(name, input);
+  }
+  return executeEquipmentToolSafe(name, input);
+}
+
 async function runToolLoop(client, requestParams, maxRounds = 6) {
   const createMessage = requestParams.mcp_servers
     ? (params) =>
         client.beta.messages.create({ ...params, betas: [MCP_BETA] })
     : (params) => client.messages.create(params);
 
+  const defaultTools = [...EQUIPMENT_TOOL_DEFINITIONS, ...GRAPH_TOOL_DEFINITIONS];
   let params = { ...requestParams };
   if (!params.tools?.length) {
-    params.tools = EQUIPMENT_TOOL_DEFINITIONS;
+    params.tools = defaultTools;
   }
   let response = await createMessage(params);
   let rounds = 0;
@@ -253,7 +270,7 @@ async function runToolLoop(client, requestParams, maxRounds = 6) {
       if (block.type !== 'tool_use') continue;
       let result;
       try {
-        result = await executeEquipmentToolSafe(block.name, block.input || {});
+        result = await executeChatToolSafe(block.name, block.input || {});
       } catch (err) {
         result = { error: err.message };
       }
@@ -266,7 +283,7 @@ async function runToolLoop(client, requestParams, maxRounds = 6) {
 
     params = {
       ...requestParams,
-      tools: EQUIPMENT_TOOL_DEFINITIONS,
+      tools: requestParams.tools?.length ? requestParams.tools : defaultTools,
       messages: [
         ...requestParams.messages,
         { role: 'assistant', content: response.content },
@@ -308,11 +325,12 @@ async function buildMcpConnectorParams() {
 }
 
 async function buildClaudeRequestParams({ systemPrompt, userContent }, options = {}) {
-  const { includeMcp = true, includeEquipmentTools = true } = options;
+  const { includeMcp = true, includeEquipmentTools = true, includeGraphTools = false } = options;
   const mcp = includeMcp ? await buildMcpConnectorParams() : {};
   const { tools: mcpTools, ...mcpRest } = mcp;
   const tools = [
     ...(includeEquipmentTools ? EQUIPMENT_TOOL_DEFINITIONS : []),
+    ...(includeGraphTools ? GRAPH_TOOL_DEFINITIONS : []),
     ...(mcpTools || []),
   ];
   return {
@@ -332,7 +350,8 @@ function validatePiSheet(parsed) {
   return parsed;
 }
 
-async function savePiSheet(parsed, userPrompt, userId) {
+async function savePiSheet(parsed, userPrompt, userId, locale = 'de') {
+  const warnings = await graphService.warningsForPiSheet(parsed, locale);
   const piSheet = await PISheet.create({
     title: parsed.title,
     process_type: parsed.process_type || null,
@@ -341,7 +360,7 @@ async function savePiSheet(parsed, userPrompt, userId) {
     llm_response: parsed,
     status: 'draft',
     notes: parsed.notes || [],
-    warnings: parsed.warnings || [],
+    warnings,
     created_by: userId,
   });
 
@@ -411,7 +430,7 @@ async function generatePISheet(userPrompt, userId, options = {}) {
 
   const text = extractTextFromResponse(response);
   const parsed = validatePiSheet(parseLlmJson(text));
-  return savePiSheet(parsed, userPrompt, userId);
+  return savePiSheet(parsed, userPrompt, userId, options.locale);
 }
 
 function resolveChatMode(userPrompt) {
@@ -437,14 +456,16 @@ async function buildAnswerChatRequest(userPrompt, options = {}) {
 [Laufzeit — Modus 2 aktiv]
 Diese Anfrage ist eine Informationsfrage, kein PI-Sheet-Auftrag. Befolge Abschnitt „Modus 2“ im System-Prompt: natürliche Sprache, Equipment-Tools nutzen, kein JSON.
 
-Effizienz: Bei Fragen zu aktiven/inaktiven Geräten oder Waagen reicht in der Regel ein Aufruf von list_equipment (z. B. active_only, equipment_type scale). Keine OPC/MQTT-Verbindungen, kein search_industrial_namespace und kein read_equipment_value, außer der Nutzer fragt explizit nach Live-Werten, Namespace oder Nodes.`,
+Effizienz: Bei Fragen zu aktiven/inaktiven Geräten oder Waagen reicht in der Regel ein Aufruf von list_equipment (z. B. active_only, equipment_type scale). Keine OPC/MQTT-Verbindungen, kein search_industrial_namespace und kein read_equipment_value, außer der Nutzer fragt explizit nach Live-Werten, Namespace oder Nodes.
+
+Prozessgraph: Bei Fragen zu Schrittfolge, Standard-XSteps oder Equipment-Zuordnung pro Prozess (z. B. Verpackung) nutze get_process_chain oder get_step_requirements.`,
     options.locale
   );
 
   const { userContent } = await buildMessages(userPrompt, promptConfig.system_prompt, options.locale);
   const requestParams = await buildClaudeRequestParams(
     { systemPrompt: qaSystem, userContent },
-    { includeMcp: false }
+    { includeMcp: false, includeGraphTools: true }
   );
   return { client, requestParams };
 }
@@ -498,7 +519,7 @@ function createLlmStreamEmitter(client, requestParams, maxRounds = 6) {
         for (const block of toolUses) {
           let result;
           try {
-            result = await executeEquipmentToolSafe(block.name, block.input || {});
+            result = await executeChatToolSafe(block.name, block.input || {});
           } catch (err) {
             result = { error: err.message };
           }
@@ -576,18 +597,18 @@ async function finalizeAnswerStream(stream, finalMessageOverride) {
   return text.trim() || 'Keine Antwort.';
 }
 
-async function finalizeStream(stream, userPrompt, userId) {
+async function finalizeStream(stream, userPrompt, userId, options = {}) {
   const finalMessage = await stream.finalMessage();
-  return finalizeFromMessage(finalMessage, userPrompt, userId);
+  return finalizeFromMessage(finalMessage, userPrompt, userId, options);
 }
 
-async function finalizeFromMessage(finalMessage, userPrompt, userId) {
+async function finalizeFromMessage(finalMessage, userPrompt, userId, options = {}) {
   const text = finalMessage.content
     .filter((b) => b.type === 'text')
     .map((b) => b.text)
     .join('\n');
   const parsed = validatePiSheet(parseLlmJson(text));
-  return savePiSheet(parsed, userPrompt, userId);
+  return savePiSheet(parsed, userPrompt, userId, options.locale);
 }
 
 module.exports = {

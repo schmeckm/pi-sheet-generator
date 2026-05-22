@@ -12,6 +12,7 @@
 | Datei | Thema |
 |-------|--------|
 | [MVP4-SPEC.md](./specs/MVP4-SPEC.md) | GMP-Lifecycle, Freigabe-Workflow |
+| [MVP5-SPEC.md](./specs/MVP5-SPEC.md) | Prozess-Wissensgraph (5.1) |
 | [EQUIPMENT-SPEC.md](./specs/EQUIPMENT-SPEC.md) | Waagen, OPC-UA/UNS, MCP, LLM-Tools |
 | [IMPORT-SPEC.md](./specs/IMPORT-SPEC.md) | Multi-Format-Import (CSV, Excel, JSON, …) |
 | [MVP2-SPEC.md](./specs/MVP2-SPEC.md) | Vision, Knowledge Base, SAP MCP (Roadmap) |

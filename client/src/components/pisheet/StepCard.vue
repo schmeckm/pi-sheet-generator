@@ -29,6 +29,7 @@
         <ParamTable
           :params="step.params || []"
           :print-mode="printMode"
+          :read-only="readOnly"
           :step="step"
           :pi-sheet-id="piSheetId"
         />
@@ -55,6 +56,7 @@ const { localizeText, localizeCategory } = usePiSheetDisplay();
 const props = defineProps({
   step: { type: Object, required: true },
   printMode: { type: Boolean, default: false },
+  readOnly: { type: Boolean, default: false },
   piSheetId: { type: String, default: null },
   /** matched | possible | new — vision digitalization review borders */
   matchStatus: { type: String, default: null },

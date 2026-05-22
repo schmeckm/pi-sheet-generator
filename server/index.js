@@ -22,6 +22,7 @@ const visionRoutes = require('./routes/vision.routes');
 const equipmentRoutes = require('./routes/equipment.routes');
 const weighingRoutes = require('./routes/weighing.routes');
 const settingsRoutes = require('./routes/settings.routes');
+const graphRoutes = require('./routes/graph.routes');
 const { attachEquipmentWebSocket, closeEquipmentWebSocket } = require('./websocket/equipment.ws');
 const equipmentGateway = require('./services/equipment/gateway.service');
 
@@ -78,6 +79,7 @@ app.use('/api/vision', visionRoutes);
 app.use('/api/equipment', equipmentRoutes);
 app.use('/api/weighing', weighingRoutes);
 app.use('/api/settings', settingsRoutes);
+app.use('/api/graph', graphRoutes);
 
 app.use(errorHandler);
 

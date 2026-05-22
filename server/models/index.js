@@ -10,6 +10,7 @@ const defineDocumentChunk = require('./DocumentChunk');
 const defineEquipmentConfig = require('./EquipmentConfig');
 const defineWeighingRecord = require('./WeighingRecord');
 const defineSystemSetting = require('./SystemSetting');
+const defineProcessGraphEdge = require('./ProcessGraphEdge');
 
 const User = defineUser(sequelize);
 const XStep = defineXStep(sequelize);
@@ -22,6 +23,7 @@ const DocumentChunk = defineDocumentChunk(sequelize);
 const EquipmentConfig = defineEquipmentConfig(sequelize);
 const WeighingRecord = defineWeighingRecord(sequelize);
 const SystemSetting = defineSystemSetting(sequelize);
+const ProcessGraphEdge = defineProcessGraphEdge(sequelize);
 
 // User associations
 User.hasMany(XStep, { foreignKey: 'created_by', as: 'xsteps' });
@@ -78,6 +80,9 @@ WeighingRecord.belongsTo(User, { foreignKey: 'weighed_by', as: 'weighedBy' });
 User.hasMany(WeighingRecord, { foreignKey: 'verified_by', as: 'verifiedWeighings' });
 WeighingRecord.belongsTo(User, { foreignKey: 'verified_by', as: 'verifiedBy' });
 
+User.hasMany(ProcessGraphEdge, { foreignKey: 'created_by', as: 'graphEdges' });
+ProcessGraphEdge.belongsTo(User, { foreignKey: 'created_by', as: 'creator' });
+
 module.exports = {
   sequelize,
   ensurePgVectorExtension,
@@ -92,4 +97,5 @@ module.exports = {
   EquipmentConfig,
   WeighingRecord,
   SystemSetting,
+  ProcessGraphEdge,
 };

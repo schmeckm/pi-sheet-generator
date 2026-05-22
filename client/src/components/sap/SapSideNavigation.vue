@@ -57,6 +57,11 @@ const items = computed(() => [
     icon: icon('M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2'),
   },
   {
+    to: '/admin/process-graph',
+    label: t('nav.processGraph'),
+    icon: icon('M13 10V3L4 14h7v7l9-11h-7z'),
+  },
+  {
     to: '/admin/repository',
     label: t('nav.repository'),
     icon: icon('M4 7v10c0 2 1 3 3 3h10c2 0 3-1 3-3V7M4 7l8-4 8 4'),
