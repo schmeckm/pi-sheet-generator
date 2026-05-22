@@ -62,6 +62,8 @@ Repository auf **Public** stellen, damit Portainer ohne Login pullen kann — od
 
 `AUTO_SEED` nach erstem erfolgreichen Start auf `false` setzen und Stack **Update** ausführen.
 
+`AUTO_SEED` legt Users, XSteps, Settings und **Demo-Equipment** (3 Geräte, Simulation) an. Fehlen Geräte nach älterem Image: einmalig im API-Container `node seeders/seed-equipment.js` ausführen (siehe unten).
+
 ---
 
 ## 4. Updates

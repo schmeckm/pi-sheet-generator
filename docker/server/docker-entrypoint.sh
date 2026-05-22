@@ -9,6 +9,7 @@ fi
 if [ "${AUTO_SEED}" = "true" ]; then
   echo "Seeding database (AUTO_SEED=true)..."
   node seeders/seed-xsteps.js || true
+  node seeders/seed-equipment.js || true
 fi
 
 echo "Starting API server..."
