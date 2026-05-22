@@ -43,6 +43,11 @@ const DEFAULTS = [
     description: 'JSON report of last sync',
   },
   {
+    key: 'plant_explorer_enabled',
+    value: 'false',
+    description: 'Show Plant Explorer in navigation and allow /api/plants',
+  },
+  {
     key: 'production_plants',
     value: JSON.stringify([
       { code: 'CH01', name: 'Basel' },
