@@ -1,0 +1,61 @@
+name: Bug report
+description: Report incorrect behavior
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. Include steps to reproduce and environment details.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Chat / PI Assistant
+        - PI Sheet preview / GMP workflow
+        - Admin (repository, import, knowledge)
+        - Equipment / scales
+        - Docker / deployment
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: "1. Open chat ... 2. Send prompt ..."
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: dropdown
+    id: environment
+    attributes:
+      label: Environment
+      options:
+        - Docker (profile full, port 7004)
+        - Local npm run dev (7002/7000)
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Commit or version
+      placeholder: main @ abc1234
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / screenshots
+      description: API logs, browser console, or screenshots

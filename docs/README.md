@@ -4,6 +4,7 @@
 |----------|--------|
 | **[DOCUMENTATION.md](./DOCUMENTATION.md)** | Vollständiges Handbuch (Setup, Chat, Architektur, GitHub) |
 | **[DEV.md](./DEV.md)** | Entwickler-Referenz (Ports, Docker, Fehlerbehebung) |
+| **[../.github/REPOSITORY_SETTINGS.md](../.github/REPOSITORY_SETTINGS.md)** | GitHub-Beschreibung, Topics, Labels (Checkliste) |
 
 ## Spezifikationen (`specs/`)
 

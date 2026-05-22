@@ -1,0 +1,49 @@
+# Sync with: gh label create ...  or  scripts/sync-github-labels.ps1
+- name: bug
+  color: d73a4a
+  description: Something is not working
+- name: enhancement
+  color: a2eeef
+  description: New feature or request
+- name: documentation
+  color: 0075ca
+  description: Docs, README, in-app help
+- name: good first issue
+  color: 7057ff
+  description: Good for newcomers
+- name: help wanted
+  color: 008672
+  description: Extra attention needed
+- name: question
+  color: d876e3
+  description: Further information requested
+- name: duplicate
+  color: cfd3d7
+  description: Already exists
+- name: invalid
+  color: e4e669
+  description: Not reproducible or out of scope
+- name: wontfix
+  color: ffffff
+  description: Will not be addressed
+- name: frontend
+  color: 1d76db
+  description: Vue client
+- name: backend
+  color: 5319e7
+  description: Express API
+- name: docker
+  color: 2496ED
+  description: Docker / compose
+- name: gmp
+  color: fef2c0
+  description: GMP workflow, compliance, audit
+- name: equipment
+  color: fbca04
+  description: Scales, OPC-UA, MCP, equipment Q&A
+- name: llm
+  color: b60205
+  description: Claude, prompts, RAG
+- name: dependencies
+  color: 0366d6
+  description: npm / dependency updates
