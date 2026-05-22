@@ -127,11 +127,21 @@ function attachEquipmentWebSocket(httpServer) {
 
         sendJson(ws, { type: 'error', message: 'Unknown action' });
       } catch (err) {
-        sendJson(ws, {
-          type: 'error',
-          equipmentId,
-          message: err.message,
-        });
+        if (action === 'command' && equipmentId && command) {
+          sendJson(ws, {
+            type: 'command_result',
+            equipmentId,
+            command,
+            success: false,
+            message: err.message,
+          });
+        } else {
+          sendJson(ws, {
+            type: 'error',
+            equipmentId,
+            message: err.message,
+          });
+        }
       }
     });
 

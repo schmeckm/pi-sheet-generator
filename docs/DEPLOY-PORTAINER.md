@@ -87,6 +87,17 @@ Internet/LAN → :7004 → client (nginx)
 
 **SAP MCP** ist in diesem Stack **nicht** enthalten (`SAP_MCP_ENABLED=false`). Equipment-Live-Daten erfordern einen erreichbaren MCP-Endpunkt (HTTPS) — siehe [DEV.md](./DEV.md).
 
+### Waagen-Widget: „Command timeout“
+
+Live-Waagen nutzen **WebSocket** `wss://<domain>/ws/equipment` (über nginx im Client-Container → API).
+
+In **Nginx Proxy Manager** für `pisheet.iotshowroom.de`:
+
+- **Websockets Support: ON**
+- Forward zu `pi-sheet-generator-client-1:80` (nicht direkt API)
+
+Demo-Geräte: einmal `node seeders/seed-equipment.js` im API-Container, falls die Equipment-Liste leer ist.
+
 ---
 
 ## 6. Fehlerbehebung

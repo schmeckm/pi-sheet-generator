@@ -32,6 +32,23 @@ function handleMessage(event) {
     return;
   }
 
+  if (msg.type === 'error') {
+    const err = new Error(msg.message || 'Equipment error');
+    if (commandWaiter) {
+      commandWaiter.reject(err);
+      commandWaiter = null;
+    }
+    if (listWaiter) {
+      listWaiter.reject(err);
+      listWaiter = null;
+    }
+    if (snapshotWaiter) {
+      snapshotWaiter.reject(err);
+      snapshotWaiter = null;
+    }
+    return;
+  }
+
   if (msg.type === 'data' && msg.equipmentId && equipmentRefs.has(msg.equipmentId)) {
     const entry = equipmentRefs.get(msg.equipmentId);
     entry.data.value = {
@@ -98,9 +115,25 @@ export function useEquipment() {
 
     return new Promise((resolve, reject) => {
       const url = `${wsUrl()}?token=${encodeURIComponent(auth.token)}`;
+      let settled = false;
+      const fail = (err) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(openTimer);
+        connectionStatus.value = 'disconnected';
+        reject(err);
+      };
+
+      const openTimer = setTimeout(() => {
+        fail(new Error('WebSocket connection timeout'));
+      }, 12000);
+
       ws = new WebSocket(url);
 
       ws.onopen = () => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(openTimer);
         connectionStatus.value = 'connected';
         for (const [equipmentId] of equipmentRefs) {
           send({ action: 'subscribe', equipmentId });
@@ -111,12 +144,12 @@ export function useEquipment() {
       ws.onmessage = handleMessage;
 
       ws.onclose = () => {
-        scheduleReconnect();
-        reject(new Error('WebSocket closed'));
+        if (!settled) fail(new Error('WebSocket closed'));
+        else scheduleReconnect();
       };
 
       ws.onerror = () => {
-        connectionStatus.value = 'disconnected';
+        if (!settled) fail(new Error('WebSocket connection failed'));
       };
     }).catch(() => {
       /* reconnect will retry */
@@ -168,16 +201,29 @@ export function useEquipment() {
 
   function sendCommand(equipmentId, command, params = {}) {
     return new Promise((resolve, reject) => {
+      if (commandWaiter) {
+        reject(new Error('Another equipment command is in progress'));
+        return;
+      }
       connect()
         .then(() => {
+          if (ws?.readyState !== WebSocket.OPEN) {
+            reject(new Error('WebSocket not connected'));
+            return;
+          }
+          send({ action: 'subscribe', equipmentId });
           commandWaiter = { resolve, reject };
           send({ action: 'command', equipmentId, command, params });
           setTimeout(() => {
             if (commandWaiter) {
-              commandWaiter.reject(new Error('Command timeout'));
+              commandWaiter.reject(
+                new Error(
+                  'Command timeout — check WebSocket (/ws/equipment) and NPM proxy "Websockets Support"'
+                )
+              );
               commandWaiter = null;
             }
-          }, 8000);
+          }, 15000);
         })
         .catch(reject);
     });
