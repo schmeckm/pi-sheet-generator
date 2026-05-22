@@ -15,6 +15,7 @@
 <script setup>
 import { useI18n } from 'vue-i18n';
 import { setLocale as applyLocale } from '@/i18n';
+import { useAuthStore } from '@/stores/auth';
 
 defineProps({
   /** @deprecated use shell styling only */
@@ -28,5 +29,16 @@ const options = [
   { code: 'en', label: 'EN' },
 ];
 
-const setLocale = (code) => applyLocale(code);
+const auth = useAuthStore();
+
+async function setLocale(code) {
+  applyLocale(code);
+  if (auth.isAuthenticated) {
+    try {
+      await auth.updatePreferredLocale(code);
+    } catch {
+      /* UI locale still applied locally */
+    }
+  }
+}
 </script>

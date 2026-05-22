@@ -9,6 +9,24 @@
 
     <div v-else class="space-y-6">
       <section class="sap-tile p-6">
+        <h2 class="text-lg font-semibold">{{ t('settings.localeTitle') }}</h2>
+        <p class="mt-1 text-sm text-[var(--sapContentLabelColor)]">{{ t('settings.localeHint') }}</p>
+        <p class="mt-2 text-xs text-[var(--sapContentLabelColor)]">
+          {{ auth.user?.email }} · {{ auth.user?.name }}
+        </p>
+        <label class="mt-4 block max-w-xs">
+          <span class="sap-label">{{ t('settings.localeLabel') }}</span>
+          <select v-model="preferredLocale" class="sap-input">
+            <option value="de">{{ t('settings.localeDe') }}</option>
+            <option value="en">{{ t('settings.localeEn') }}</option>
+          </select>
+        </label>
+        <button type="button" class="sap-btn sap-btn--emphasized mt-4" @click="saveLocale">
+          {{ t('settings.localeSave') }}
+        </button>
+      </section>
+
+      <section class="sap-tile p-6">
         <div class="flex flex-wrap items-center justify-between gap-4">
           <div>
             <h2 class="text-lg font-semibold">{{ t('settings.sapTitle') }}</h2>
@@ -71,9 +89,13 @@ import { ref, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { get, put, post } from '@/composables/useApi';
 import { useToast } from '@/composables/useToast';
+import { useAuthStore } from '@/stores/auth';
 
 const { t } = useI18n();
 const toast = useToast();
+const auth = useAuthStore();
+
+const preferredLocale = ref('de');
 
 const loading = ref(true);
 const testing = ref(false);
@@ -90,9 +112,25 @@ const form = ref({
   sap_sync_interval_minutes: 60,
 });
 
+function loadLocaleFromUser() {
+  const loc = auth.user?.preferred_locale;
+  preferredLocale.value = loc === 'en' ? 'en' : 'de';
+}
+
+async function saveLocale() {
+  try {
+    await auth.updatePreferredLocale(preferredLocale.value);
+    toast.success(t('settings.localeSaved'));
+  } catch (e) {
+    toast.error(e.response?.data?.error || e.message);
+  }
+}
+
 async function load() {
   loading.value = true;
   try {
+    await auth.ensureProfile();
+    loadLocaleFromUser();
     const all = await get('/settings');
     form.value.sap_integration_enabled = all.sap_integration_enabled === 'true';
     form.value.sap_mcp_url = all.sap_mcp_url || form.value.sap_mcp_url;

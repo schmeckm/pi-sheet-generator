@@ -212,15 +212,27 @@ flowchart LR
 
 ## Umgebungsvariablen
 
+**Vorlagen (mit Kommentaren):** [`.env.example`](../.env.example) (lokal), [`.env.docker.example`](../.env.docker.example) (Compose), [`deploy/.env.portainer.example`](../deploy/.env.portainer.example) (Portainer).
+
+**Nicht in `.env`:** Prompt-Text, Modell und viele SAP-Optionen → **Admin → Einstellungen** (Datenbank `system_settings`). `.env` ist Infrastruktur und Secrets.
+
 | Variable | Pflicht | Beschreibung |
 |----------|---------|--------------|
-| `DATABASE_URL` | Ja | PostgreSQL-Verbindung |
-| `JWT_SECRET` | Ja | Auth-Token |
+| `DATABASE_URL` | Ja (lokal) | PostgreSQL; in Compose aus `docker-compose.yml` |
+| `DB_SSL` | Optional | `true` für verwaltetes Postgres mit SSL |
+| `JWT_SECRET` | Ja | Signatur für Login-Token; in Production zwingend |
+| `JWT_EXPIRES_IN` | Optional | Standard `7d` |
 | `ANTHROPIC_API_KEY` | Ja (Chat/KI) | Claude API |
-| `SAP_MCP_URL` | Optional | z. B. `http://sap-mcp:7001` |
-| `SAP_MCP_ENABLED` | Optional | `true` für Equipment-Live-Daten |
-
-Vorlagen: `.env.example` (lokal), `.env.docker.example` (Compose).
+| `OPENAI_API_KEY` / `EMBEDDING_API_KEY` | Optional | Vektorsuche (RAG); sonst Keyword-Fallback |
+| `EMBEDDING_MODEL` | Optional | Standard `text-embedding-3-small` |
+| `EMBEDDING_API_URL` | Optional | Kompatibler Embeddings-Endpunkt |
+| `PORT` / `NODE_ENV` | Optional | API-Port (7000), Laufzeitmodus |
+| `CORS_ORIGINS` | Optional | Komma-getrennte erlaubte Origins (Compose setzt Defaults) |
+| `SAP_MCP_ENABLED` | Optional | `true` für Live-Equipment über MCP |
+| `SAP_MCP_URL` | Optional | MCP-SSE-URL; Admin-Setting hat Vorrang |
+| `SAP_MCP_AUTH_TOKEN` | Optional | Bearer für geschützten MCP-Server |
+| `AUTO_SEED` | Docker | `true` = Demo-User/XSteps beim Container-Start |
+| `VITE_DEV_PORT` / `VITE_API_URL` | Lokal | Vite (7002); API-Pfad `/api` mit Proxy |
 
 **Niemals committen:** `.env`, API-Keys, `login.json`.
 

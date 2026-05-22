@@ -110,9 +110,9 @@ PI-Sheet-Generierung erhält zusätzlich **konfigurierte Geräte** als JSON im U
 
 ## Umgebungsvariablen
 
-Kopieren: `.env.example` → `.env` (lokal) bzw. `.env.docker.example` → `.env` (Docker).
+Kopieren: `.env.example` → `.env` (lokal) bzw. `.env.docker.example` → `.env` (Docker). Vollständige Liste mit Kommentaren in den Example-Dateien; Referenztabelle in [DOCUMENTATION.md](./DOCUMENTATION.md#umgebungsvariablen).
 
-Wichtig: `DATABASE_URL`, `JWT_SECRET`, `ANTHROPIC_API_KEY`, optional `SAP_MCP_URL` / `SAP_MCP_ENABLED`.
+Pflicht für KI/Login: `DATABASE_URL`, `JWT_SECRET`, `ANTHROPIC_API_KEY`. Optional: Embeddings-Keys, `SAP_MCP_*`, `CORS_ORIGINS`, `DB_SSL`. Prompt/SAP-URL in der UI: **Admin → Einstellungen** (nicht `.env`).
 
 ## Nützliche Befehle
 

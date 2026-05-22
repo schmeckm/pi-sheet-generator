@@ -430,7 +430,15 @@ export default {
   },
   settings: {
     title: 'Einstellungen',
-    subtitle: 'SAP-Integration und Systemoptionen',
+    subtitle: 'SAP-Integration, Sprache und Systemoptionen',
+    localeTitle: 'Portalsprache (Ihr Benutzerkonto)',
+    localeHint:
+      'Standard-Sprache für die Oberfläche und KI-Antworten nach dem Login. Gilt für dieses Konto (auch am Sprachumschalter oben).',
+    localeLabel: 'Bevorzugte Sprache',
+    localeDe: 'Deutsch',
+    localeEn: 'Englisch',
+    localeSave: 'Sprache speichern',
+    localeSaved: 'Standardsprache gespeichert',
     sapTitle: 'SAP Integration (optional)',
     sapEnable: 'SAP-Anbindung aktivieren',
     sapOnHint: 'SAP MCP kann PI Sheets und XSteps anreichern.',

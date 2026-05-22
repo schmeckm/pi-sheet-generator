@@ -21,6 +21,7 @@ const registerSchema = Joi.object({
   password: Joi.string().min(6).required(),
   name: Joi.string().min(1).required(),
   role: Joi.string().valid('admin', 'operator').default('operator'),
+  preferred_locale: Joi.string().valid('de', 'en').default('de'),
 });
 
 function signToken(user) {
@@ -28,8 +29,19 @@ function signToken(user) {
 }
 
 function publicUser(user) {
-  return { id: user.id, email: user.email, name: user.name, role: user.role };
+  const locale = user.preferred_locale === 'en' ? 'en' : 'de';
+  return {
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    role: user.role,
+    preferred_locale: locale,
+  };
 }
+
+const profileSchema = Joi.object({
+  preferred_locale: Joi.string().valid('de', 'en').required(),
+});
 
 router.post('/login', async (req, res, next) => {
   try {
@@ -63,6 +75,7 @@ router.post('/register', authMiddleware, roles('admin'), async (req, res, next) 
       password_hash,
       name: value.name,
       role: value.role,
+      preferred_locale: value.preferred_locale,
     });
 
     const token = signToken(user);
@@ -73,7 +86,22 @@ router.post('/register', authMiddleware, roles('admin'), async (req, res, next) 
 });
 
 router.get('/me', authMiddleware, (req, res) => {
-  res.json({ user: req.user });
+  res.json({ user: publicUser(req.user) });
+});
+
+router.patch('/me', authMiddleware, async (req, res, next) => {
+  try {
+    const { error, value } = profileSchema.validate(req.body);
+    if (error) return res.status(400).json({ error: error.details[0].message });
+
+    const user = await User.findByPk(req.user.id);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    await user.update({ preferred_locale: value.preferred_locale });
+    res.json({ user: publicUser(user) });
+  } catch (err) {
+    next(err);
+  }
 });
 
 module.exports = router;

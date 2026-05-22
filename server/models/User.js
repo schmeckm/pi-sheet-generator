@@ -27,6 +27,11 @@ module.exports = (sequelize) => {
         allowNull: false,
         defaultValue: 'operator',
       },
+      preferred_locale: {
+        type: DataTypes.STRING(5),
+        allowNull: false,
+        defaultValue: 'de',
+      },
     },
     {
       tableName: 'users',

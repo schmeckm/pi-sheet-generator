@@ -88,9 +88,16 @@ const router = createRouter({
   routes,
 });
 
-router.beforeEach((to) => {
+router.beforeEach(async (to) => {
   const auth = useAuthStore();
   auth.loadFromStorage();
+  if (auth.isAuthenticated) {
+    try {
+      await auth.ensureProfile();
+    } catch {
+      /* token expired — login redirect below */
+    }
+  }
   if (to.meta.public) return true;
   if (to.meta.requiresAuth && !auth.isAuthenticated) {
     return { name: 'login', query: { redirect: to.fullPath } };

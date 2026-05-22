@@ -337,6 +337,7 @@ async function seedUsers() {
       password_hash: adminHash,
       name: 'Admin',
       role: 'admin',
+      preferred_locale: 'de',
     },
   });
   await admin.update({ password_hash: adminHash, name: 'Admin', role: 'admin' });
@@ -348,6 +349,7 @@ async function seedUsers() {
       password_hash: operatorHash,
       name: 'Operator',
       role: 'operator',
+      preferred_locale: 'de',
     },
   });
   await operator.update({ password_hash: operatorHash, name: 'Operator', role: 'operator' });
