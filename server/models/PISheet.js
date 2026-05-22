@@ -76,6 +76,10 @@ module.exports = (sequelize) => {
         type: DataTypes.TEXT,
         allowNull: true,
       },
+      graph_snapshot: {
+        type: DataTypes.JSONB,
+        allowNull: true,
+      },
     },
     {
       tableName: 'pi_sheets',

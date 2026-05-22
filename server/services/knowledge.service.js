@@ -7,6 +7,7 @@ const XLSX = require('xlsx');
 const { KnowledgeDocument, DocumentChunk, User, sequelize } = require('../models');
 const embeddingService = require('./embedding.service');
 const { logAudit } = require('./audit.service');
+const graphRagService = require('./graph-rag.service');
 
 const UPLOAD_DIR = path.join(__dirname, '../uploads/knowledge');
 const CHUNK_CHARS = 2000;
@@ -274,6 +275,12 @@ async function processDocument(documentId) {
       chunk_count: createdChunks.length,
       error_message: null,
     });
+
+    if (doc.process_type) {
+      graphRagService.extractFromDocument(doc.id).catch((err) => {
+        console.warn(`[graph-rag] extract failed for ${doc.id}:`, err.message);
+      });
+    }
 
     return { document: doc, chunks: createdChunks.length, embedded: embeddedCount };
   } catch (err) {

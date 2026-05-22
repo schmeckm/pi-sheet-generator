@@ -1,6 +1,7 @@
 const express = require('express');
 const Joi = require('joi');
 const graphService = require('../services/graph.service');
+const graphRagService = require('../services/graph-rag.service');
 const { authMiddleware } = require('../middleware/auth');
 const { roles } = require('../middleware/roles');
 
@@ -59,6 +60,41 @@ router.post('/edges', roles('admin'), async (req, res, next) => {
     if (err.name === 'SequelizeUniqueConstraintError') {
       return res.status(409).json({ error: 'This edge already exists.' });
     }
+    if (err.statusCode) return res.status(err.statusCode).json({ error: err.message });
+    next(err);
+  }
+});
+
+router.get('/suggestions', roles('admin'), async (req, res, next) => {
+  try {
+    const suggestions = await graphRagService.listSuggestions({
+      status: req.query.status || 'pending',
+      process_type: req.query.process_type || undefined,
+    });
+    res.json(suggestions);
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post('/suggestions/:id/approve', roles('admin'), async (req, res, next) => {
+  try {
+    const result = await graphRagService.approveSuggestion(req.params.id, req.user.id);
+    res.json(result);
+  } catch (err) {
+    if (err.statusCode) return res.status(err.statusCode).json({ error: err.message });
+    if (err.name === 'SequelizeUniqueConstraintError') {
+      return res.status(409).json({ error: 'Edge already exists in graph.' });
+    }
+    next(err);
+  }
+});
+
+router.post('/suggestions/:id/reject', roles('admin'), async (req, res, next) => {
+  try {
+    const suggestion = await graphRagService.rejectSuggestion(req.params.id, req.user.id);
+    res.json(suggestion);
+  } catch (err) {
     if (err.statusCode) return res.status(err.statusCode).json({ error: err.message });
     next(err);
   }

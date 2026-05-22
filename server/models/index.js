@@ -11,6 +11,7 @@ const defineEquipmentConfig = require('./EquipmentConfig');
 const defineWeighingRecord = require('./WeighingRecord');
 const defineSystemSetting = require('./SystemSetting');
 const defineProcessGraphEdge = require('./ProcessGraphEdge');
+const defineGraphEdgeSuggestion = require('./GraphEdgeSuggestion');
 
 const User = defineUser(sequelize);
 const XStep = defineXStep(sequelize);
@@ -24,6 +25,7 @@ const EquipmentConfig = defineEquipmentConfig(sequelize);
 const WeighingRecord = defineWeighingRecord(sequelize);
 const SystemSetting = defineSystemSetting(sequelize);
 const ProcessGraphEdge = defineProcessGraphEdge(sequelize);
+const GraphEdgeSuggestion = defineGraphEdgeSuggestion(sequelize);
 
 // User associations
 User.hasMany(XStep, { foreignKey: 'created_by', as: 'xsteps' });
@@ -83,6 +85,17 @@ WeighingRecord.belongsTo(User, { foreignKey: 'verified_by', as: 'verifiedBy' });
 User.hasMany(ProcessGraphEdge, { foreignKey: 'created_by', as: 'graphEdges' });
 ProcessGraphEdge.belongsTo(User, { foreignKey: 'created_by', as: 'creator' });
 
+KnowledgeDocument.hasMany(GraphEdgeSuggestion, {
+  foreignKey: 'document_id',
+  as: 'graphSuggestions',
+  onDelete: 'CASCADE',
+});
+GraphEdgeSuggestion.belongsTo(KnowledgeDocument, { foreignKey: 'document_id', as: 'document' });
+DocumentChunk.hasMany(GraphEdgeSuggestion, { foreignKey: 'chunk_id', as: 'graphSuggestions' });
+GraphEdgeSuggestion.belongsTo(DocumentChunk, { foreignKey: 'chunk_id', as: 'chunk' });
+User.hasMany(GraphEdgeSuggestion, { foreignKey: 'reviewed_by', as: 'reviewedGraphSuggestions' });
+GraphEdgeSuggestion.belongsTo(User, { foreignKey: 'reviewed_by', as: 'reviewer' });
+
 module.exports = {
   sequelize,
   ensurePgVectorExtension,
@@ -98,4 +111,5 @@ module.exports = {
   WeighingRecord,
   SystemSetting,
   ProcessGraphEdge,
+  GraphEdgeSuggestion,
 };

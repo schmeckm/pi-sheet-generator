@@ -79,6 +79,16 @@ async function transition(id, action, userId, userRole, options = {}) {
       updates.status = 'approved';
       updates.approved_at = new Date();
       updates.approved_by = userId;
+      if (sheet.process_type) {
+        const graphService = require('./graph.service');
+        const ctx = await graphService.getProcessContext(sheet.process_type);
+        updates.graph_snapshot = {
+          captured_at: new Date().toISOString(),
+          process_type: ctx.processType,
+          chain: ctx.chain,
+          requirements: ctx.requirements,
+        };
+      }
       break;
     }
     case 'archive': {
