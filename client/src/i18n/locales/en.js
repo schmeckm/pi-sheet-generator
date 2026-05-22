@@ -713,8 +713,6 @@ export default {
     zoomIn: 'Zoom in',
     zoomOut: 'Zoom out',
     zoomReset: 'Default',
-    zoomFullscreen: 'Fullscreen',
-    zoomClose: 'Close',
     panHint: 'Hold left mouse button and drag to pan the graph',
     edgeType: 'Edge type',
     fromRef: 'From (ref)',

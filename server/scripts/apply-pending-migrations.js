@@ -9,6 +9,7 @@ const scripts = [
   'apply-locale-migration.js',
   'apply-graph-migration.js',
   'apply-graph-rag-migration.js',
+  'apply-plant-migration.js',
 ];
 
 const serverRoot = path.join(__dirname, '..');

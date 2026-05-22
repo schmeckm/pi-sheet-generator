@@ -62,9 +62,7 @@
         {{ mermaidError }}
       </div>
       <MermaidZoomViewport
-        ref="mermaidZoomRef"
         :disabled="!explorer.mermaid || !!mermaidError || renderingMermaid"
-        :diagram-el="mermaidContainer"
       >
         <div
           ref="mermaidContainer"
@@ -224,7 +222,6 @@ import MermaidZoomViewport from '@/components/graph/MermaidZoomViewport.vue';
 mermaid.initialize(mermaidInitConfig);
 
 const mermaidContainer = ref(null);
-const mermaidZoomRef = ref(null);
 const mermaidError = ref('');
 const renderingMermaid = ref(false);
 let mermaidRenderSeq = 0;
@@ -245,8 +242,6 @@ async function renderMermaidDiagram(code) {
     const { svg } = await mermaid.render(id, code);
     if (seq !== mermaidRenderSeq) return;
     el.innerHTML = svg;
-    await nextTick();
-    mermaidZoomRef.value?.onDiagramUpdated?.();
   } catch (err) {
     if (seq !== mermaidRenderSeq) return;
     el.innerHTML = '';

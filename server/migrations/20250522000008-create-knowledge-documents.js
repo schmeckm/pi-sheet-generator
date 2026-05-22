@@ -3,8 +3,29 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable('knowledge_documents', {
-      id: {
+    const sequelize = queryInterface.sequelize;
+
+    async function tableExists(tableName) {
+      const [rows] = await sequelize.query(
+        `SELECT 1 FROM information_schema.tables
+         WHERE table_schema = 'public' AND table_name = $1`,
+        { bind: [tableName] }
+      );
+      return rows.length > 0;
+    }
+
+    async function columnExists(tableName, columnName) {
+      const [rows] = await sequelize.query(
+        `SELECT 1 FROM information_schema.columns
+         WHERE table_schema = 'public' AND table_name = $1 AND column_name = $2`,
+        { bind: [tableName, columnName] }
+      );
+      return rows.length > 0;
+    }
+
+    if (!(await tableExists('knowledge_documents'))) {
+      await queryInterface.createTable('knowledge_documents', {
+        id: {
         type: Sequelize.UUID,
         defaultValue: Sequelize.literal('gen_random_uuid()'),
         primaryKey: true,
@@ -73,8 +94,10 @@ module.exports = {
         defaultValue: Sequelize.literal('NOW()'),
       },
     });
+    }
 
-    await queryInterface.createTable('document_chunks', {
+    if (!(await tableExists('document_chunks'))) {
+      await queryInterface.createTable('document_chunks', {
       id: {
         type: Sequelize.UUID,
         defaultValue: Sequelize.literal('gen_random_uuid()'),
@@ -115,14 +138,23 @@ module.exports = {
         defaultValue: Sequelize.literal('NOW()'),
       },
     });
+    }
 
-    await queryInterface.sequelize.query(
-      'ALTER TABLE document_chunks ADD COLUMN embedding vector(1536);'
+    if (!(await columnExists('document_chunks', 'embedding'))) {
+      await queryInterface.sequelize.query(
+        'ALTER TABLE document_chunks ADD COLUMN embedding vector(1536);'
+      );
+    }
+
+    await sequelize.query(
+      'CREATE INDEX IF NOT EXISTS document_chunks_document_id ON document_chunks (document_id);'
     );
-
-    await queryInterface.addIndex('document_chunks', ['document_id']);
-    await queryInterface.addIndex('knowledge_documents', ['status']);
-    await queryInterface.addIndex('knowledge_documents', ['process_type']);
+    await sequelize.query(
+      'CREATE INDEX IF NOT EXISTS knowledge_documents_status ON knowledge_documents (status);'
+    );
+    await sequelize.query(
+      'CREATE INDEX IF NOT EXISTS knowledge_documents_process_type ON knowledge_documents (process_type);'
+    );
   },
 
   async down(queryInterface) {

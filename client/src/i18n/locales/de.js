@@ -713,8 +713,6 @@ export default {
     zoomIn: 'Vergrößern',
     zoomOut: 'Verkleinern',
     zoomReset: 'Standard',
-    zoomFullscreen: 'Vollbild',
-    zoomClose: 'Schließen',
     panHint: 'Linke Maustaste gedrückt halten und ziehen, um den Graphen zu verschieben',
     edgeType: 'Kantentyp',
     fromRef: 'Von (Ref)',
