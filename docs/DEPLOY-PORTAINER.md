@@ -102,11 +102,28 @@ Demo-Geräte: einmal `node seeders/seed-equipment.js` im API-Container, falls di
 
 ## 6. Fehlerbehebung
 
+### `getaddrinfo ENOTFOUND db` (API-Logs)
+
+Der Hostname **`db`** existiert nur **innerhalb des Stacks** (Service-Name der PostgreSQL-Container).
+
+**Ursachen:**
+
+- Nur der **API-Container** wurde neu gestartet / aus einem Image erstellt, **ohne** den Stack (`db` fehlt im Netzwerk).
+- Stack unvollständig (nur `api` + `client`, **ohne** Service `db`).
+- `DATABASE_URL` zeigt auf `@db:5432`, aber der Postgres-Service heißt anders.
+
+**Lösung:**
+
+1. **Stacks → pi-sheet-generator** — nicht einzeln unter **Containers** nur `api` starten.
+2. Stack **Update** oder **Pull and redeploy** (alle Services: `db`, `api`, `client`).
+3. In den API-Logs sollte zuerst stehen: `[wait-for-db] Database is reachable.` — sonst bleibt der Container in einer Restart-Schleife (korrekt).
+4. `DATABASE_URL` in Portainer-Env: `postgres://pisheet:${POSTGRES_PASSWORD}@db:5432/pisheet` (Host **`db`**, nicht `localhost`).
+
 ### `db` is unhealthy
 
-Der aktuelle Stack hat **keinen DB-Healthcheck** mehr (API startet nach `db`, mit `restart: unless-stopped`).
+Der Stack wartet mit **DB-Healthcheck**, bis Postgres `pg_isready` meldet, dann startet die API.
 
-Wenn die Meldung **trotzdem** erscheint, läuft noch eine **alte Compose-Version** in Portainer:
+Wenn `db` **unhealthy** bleibt:
 
 1. Stack **komplett entfernen** → **„Remove volumes“** aktivieren.
 2. Compose neu einfügen von:  
@@ -162,7 +179,8 @@ Danach:
 |---------|--------|
 | Actions schlägt fehl | Secrets `DOCKERHUB_*` prüfen |
 | Portainer `pull access denied` | Image public oder Registry in Portainer anlegen |
-| UI lädt, API 502 | API-Container-Logs; `depends_on` abwarten (~60 s) |
+| UI lädt, API 502 | API-Container-Logs; ENOTFOUND `db` → vollen Stack redeployen; sonst ~2 Min. warten |
+| `ENOTFOUND db` | Vollen Stack deployen; nicht nur API-Container isoliert starten |
 | CORS-Fehler | `CORS_ORIGINS` um Ihre URL ergänzen (z. B. `http://192.168.1.5:7004`) |
 | Keine KI-Antwort | `ANTHROPIC_API_KEY` in Stack-Env |
 

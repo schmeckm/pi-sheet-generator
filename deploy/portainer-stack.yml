@@ -12,8 +12,12 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - pgdata:/var/lib/postgresql/data
-    # No healthcheck — Portainer/NAS often mark pg as unhealthy while still starting.
-    # API retries DB connection via restart policy until Postgres is ready.
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U pisheet -d pisheet']
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
     restart: unless-stopped
     networks:
       - pisheet
@@ -36,7 +40,8 @@ services:
       SAP_MCP_AUTH_TOKEN: ${SAP_MCP_AUTH_TOKEN:-}
       AUTO_SEED: ${AUTO_SEED:-true}
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     healthcheck:
       test: ['CMD', 'wget', '-qO-', 'http://127.0.0.1:7000/api/health']
       interval: 15s

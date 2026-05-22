@@ -1,6 +1,9 @@
 #!/bin/sh
 set -e
 
+echo "Waiting for database..."
+node scripts/wait-for-db.js
+
 echo "Running database migrations..."
 if ! npx sequelize-cli db:migrate; then
   echo "Migration failed (tables may exist from db:sync). Applying pending patches..."

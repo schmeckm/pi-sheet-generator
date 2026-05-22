@@ -15,6 +15,8 @@ services:
       timeout: 5s
       retries: 8
     restart: unless-stopped
+    networks:
+      - default
 
   sap-mcp:
     build:
@@ -32,6 +34,8 @@ services:
       retries: 5
       start_period: 10s
     restart: unless-stopped
+    networks:
+      - default
 
   api:
     profiles: ["full"]
@@ -67,6 +71,8 @@ services:
       start_period: 120s
       retries: 5
     restart: unless-stopped
+    networks:
+      - default
 
   client:
     profiles: ["full"]
@@ -81,6 +87,11 @@ services:
       api:
         condition: service_healthy
     restart: unless-stopped
+    networks:
+      - default
+
+networks:
+  default:
 
 volumes:
   pgdata:
