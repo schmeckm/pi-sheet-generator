@@ -108,6 +108,21 @@ async function ensureGraphRagSchema() {
 }
 
 /**
+ * Daily LLM token usage (GET /api/chat/token-budget); partial deploys may skip migrate.
+ */
+async function ensureLlmUsageDailyTable() {
+  const [tables] = await sequelize.query(
+    `SELECT 1 FROM information_schema.tables
+     WHERE table_schema = 'public' AND table_name = 'llm_usage_daily'`
+  );
+  if (tables.length) return;
+
+  const migration = require('../migrations/20250523000003-create-llm-usage-daily');
+  const qi = sequelize.getQueryInterface();
+  await migration.up(qi, Sequelize);
+}
+
+/**
  * Test connection and initialize pgvector (tables may not exist yet).
  */
 async function initializeDatabase() {
@@ -115,6 +130,7 @@ async function initializeDatabase() {
   await ensurePgVectorExtension();
   await ensureXStepSapMetadataColumns();
   await ensureGraphRagSchema();
+  await ensureLlmUsageDailyTable();
 }
 
 module.exports = {
@@ -123,6 +139,7 @@ module.exports = {
   ensureXStepEmbeddingColumn,
   ensureXStepSapMetadataColumns,
   ensureGraphRagSchema,
+  ensureLlmUsageDailyTable,
   ensureDocumentChunkEmbeddingColumn,
   initializeDatabase,
 };

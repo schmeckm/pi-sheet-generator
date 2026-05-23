@@ -11,6 +11,7 @@ const scripts = [
   'apply-graph-rag-migration.js',
   'apply-plant-migration.js',
   'apply-sap-metadata-migration.js',
+  'apply-prompt-budget-migrations.js',
 ];
 
 const serverRoot = path.join(__dirname, '..');
