@@ -96,7 +96,7 @@ export default {
   },
   joule: {
     title: 'PI Sheet Assistent',
-    subtitle: 'Basierend auf XStep Repository · GMP-konform',
+    subtitle: '',
     newChat: 'Neues Gespräch',
     clearChatTitle: 'Gespräch beenden?',
     clearChatMessage:
