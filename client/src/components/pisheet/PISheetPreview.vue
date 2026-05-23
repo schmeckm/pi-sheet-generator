@@ -78,6 +78,20 @@
             {{ t('preview.graphSnapshotAt', { date: formatDate(sheet.graph_snapshot.captured_at) }) }}
           </p>
         </div>
+        <div
+          v-if="overallConfidence != null && viewMode !== 'print'"
+          class="mt-4 rounded-lg border border-[var(--sapNeutralBorderColor)] bg-[var(--sapBackgroundColor)] p-3"
+        >
+          <ConfidenceMeter
+            :value="overallConfidence"
+            :label="t('preview.confidenceOverall')"
+            :hint="t('preview.confidenceHint')"
+          />
+          <p v-if="confidenceBreakdownText" class="mt-2 text-[11px] text-[var(--sapContentLabelColor)]">
+            {{ confidenceBreakdownText }}
+          </p>
+          <TokenUsageLine :usage="tokenUsage" class="mt-2" />
+        </div>
         <p v-if="viewMode === 'print'" class="mt-3 text-sm">
           {{ t('preview.printFields') }}
         </p>
@@ -120,6 +134,8 @@ import { useI18n } from 'vue-i18n';
 import StepCard from './StepCard.vue';
 import PISheetStatusBadge from './PISheetStatusBadge.vue';
 import PISheetWorkflow from './PISheetWorkflow.vue';
+import ConfidenceMeter from '@/components/shared/ConfidenceMeter.vue';
+import TokenUsageLine from '@/components/shared/TokenUsageLine.vue';
 import { api } from '@/composables/useApi';
 import { useToast } from '@/composables/useToast';
 import { usePiSheetDisplay } from '@/composables/usePiSheetDisplay';
@@ -140,6 +156,28 @@ const toast = useToast();
 
 const sortedSteps = computed(() =>
   [...(props.sheet?.steps || [])].sort((a, b) => a.step_nr - b.step_nr)
+);
+
+const overallConfidence = computed(() => {
+  const s = props.sheet;
+  if (s?.confidence != null) return s.confidence;
+  if (s?.confidence_percent != null) return s.confidence_percent;
+  return s?.llm_response?.confidence ?? null;
+});
+
+const confidenceBreakdownText = computed(() => {
+  const b = props.sheet?.confidence_breakdown || props.sheet?.llm_response?.confidence_breakdown;
+  if (!b) return '';
+  return t('preview.confidenceBreakdown', {
+    repo: b.repository_steps ?? 0,
+    adapted: b.adapted_steps ?? 0,
+    suggest: b.suggestion_steps ?? 0,
+    warnings: b.warning_count ?? 0,
+  });
+});
+
+const tokenUsage = computed(
+  () => props.sheet?.llm_usage || props.sheet?.llm_response?.llm_usage || null
 );
 
 const sheetStatus = computed(() => {

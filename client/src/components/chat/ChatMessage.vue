@@ -36,8 +36,14 @@
           >
             {{ t('chat.resultCard.openPreview') }}
           </button>
+          <TokenUsageLine :usage="message.tokenUsage || message.piSheet?.llm_usage" class="mt-2" />
         </div>
       </div>
+
+      <TokenUsageLine
+        v-if="!message.piSheet && message.tokenUsage && !message.streaming"
+        :usage="message.tokenUsage"
+      />
 
       <p v-if="message.timestamp" class="mt-1 px-1 text-[10px] text-[var(--sapContentLabelColor)]">
         {{ formatTime(message.timestamp) }}
@@ -50,6 +56,7 @@
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { usePiSheetDisplay } from '@/composables/usePiSheetDisplay';
+import TokenUsageLine from '@/components/shared/TokenUsageLine.vue';
 
 const { localizeProcessType, localizeText } = usePiSheetDisplay();
 

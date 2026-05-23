@@ -9,6 +9,9 @@ import { i18n } from '@/i18n';
 import { useShellStore } from '@/stores/shell';
 
 import { getChatRequestMode } from '@/utils/chatIntent';
+import { resolveChatError, contextTrimmedMessage } from '@/utils/chatErrors';
+import { streamChatGenerate, streamChatQa } from '@/composables/useStreaming';
+import { useToast } from '@/composables/useToast';
 
 
 
@@ -39,22 +42,46 @@ function normalizePiSheet(raw) {
   const base = raw.dataValues ? { ...raw.dataValues } : { ...raw };
 
   let steps = raw.steps || base.steps || [];
+  const llmResponse = base.llm_response || raw.llm_response;
+  const llmSteps = llmResponse?.steps || [];
+  const llmByNr = new Map(llmSteps.map((s) => [s.step_nr, s]));
 
   if (Array.isArray(steps)) {
-
-    steps = steps.map((s) => (s?.dataValues ? { ...s.dataValues } : s));
-
+    steps = steps.map((s) => {
+      const row = s?.dataValues ? { ...s.dataValues } : { ...s };
+      const llm = llmByNr.get(row.step_nr);
+      if (row.confidence == null && llm?.confidence != null) {
+        row.confidence = llm.confidence;
+        row.confidence_source = llm.confidence_source;
+      }
+      return row;
+    });
   } else {
-
     steps = [];
-
   }
+
+  const confidence =
+    base.confidence ?? llmResponse?.confidence ?? null;
+  const confidence_percent =
+    base.confidence_percent ?? llmResponse?.confidence_percent ?? null;
+  const confidence_breakdown =
+    base.confidence_breakdown ?? llmResponse?.confidence_breakdown ?? null;
+  const llm_usage = base.llm_usage ?? llmResponse?.llm_usage ?? null;
 
   const title = base.title || raw.title;
 
   if (!title) return null;
 
-  return { ...base, title, steps };
+  return {
+    ...base,
+    title,
+    steps,
+    llm_response: llmResponse,
+    confidence,
+    confidence_percent,
+    confidence_breakdown,
+    llm_usage,
+  };
 
 }
 
@@ -132,6 +159,8 @@ export const useChatStore = defineStore('chat', () => {
 
         requestMode: payload.requestMode || 'qa',
 
+        tokenUsage: payload.usage || null,
+
         timestamp: Date.now(),
 
       };
@@ -140,7 +169,7 @@ export const useChatStore = defineStore('chat', () => {
 
     }
 
-    const piSheet = applyPiSheetToPreview(payload);
+    const piSheet = applyPiSheetToPreview(payload.piSheet || payload);
 
     if (!piSheet) {
 
@@ -167,6 +196,8 @@ export const useChatStore = defineStore('chat', () => {
       requestMode: 'pi_sheet',
 
       piSheet,
+
+      tokenUsage: payload.usage || piSheet.llm_usage || null,
 
       timestamp: Date.now(),
 
@@ -213,6 +244,12 @@ export const useChatStore = defineStore('chat', () => {
   }
 
 
+
+  function notifyContextTrimmed(result) {
+    if (!result?.contextTrimmed) return;
+    const toast = useToast();
+    toast.warning(contextTrimmedMessage(result.trimmedSections));
+  }
 
   async function sendMessage(prompt) {
 
@@ -269,49 +306,48 @@ export const useChatStore = defineStore('chat', () => {
 
 
     try {
+      const locale = portalLocale();
+      const onChunk = (text) => {
+        const msg = messages.value[assistantIdx];
+        if (msg) msg.content = (msg.content || '') + text;
+      };
+      const onMeta = (meta) => {
+        if (meta.requestMode) requestMode.value = meta.requestMode;
+        if (meta.contextTrimmed) {
+          useToast().warning(contextTrimmedMessage(meta.trimmedSections));
+        }
+      };
 
-      const result = await post(
-
-        '/chat/generate',
-
-        { prompt, locale: portalLocale() },
-
-        { timeout: 180000 }
-
-      );
-
-      applyServerMode(result);
-
-      if (result.type === 'text') {
-
-        messages.value[assistantIdx] = {
-
-          role: 'assistant',
-
-          content: result.message,
-
-          streaming: false,
-
-          requestMode: result.requestMode || 'qa',
-
-          timestamp: Date.now(),
-
-        };
-
+      let result;
+      if (clientMode === 'pi_sheet') {
+        result = await streamChatGenerate(prompt, { locale, onChunk, onMeta });
       } else {
-
-        const raw = result.piSheet || result;
-
-        applyStreamResult(raw, assistantIdx);
-
+        result = await streamChatQa(prompt, {
+          locale,
+          onChunk,
+          onMeta,
+          onTools: (tools) => {
+            activeTools.value = tools || [];
+          },
+        });
       }
 
+      applyServerMode(result);
+      applyStreamResult(result, assistantIdx);
+      notifyContextTrimmed(result);
     } catch (err) {
-
       const ok = await tryNonStreamGenerate(prompt, assistantIdx);
-
-      if (!ok) throw err;
-
+      if (!ok) {
+        const message = resolveChatError(err);
+        messages.value[assistantIdx] = {
+          role: 'assistant',
+          content: message,
+          streaming: false,
+          errorCode: err?.response?.data?.code || err?.code,
+          timestamp: Date.now(),
+        };
+        throw Object.assign(new Error(message), { code: err?.response?.data?.code });
+      }
     } finally {
 
       clearInterval(phaseTimer);
@@ -339,6 +375,7 @@ export const useChatStore = defineStore('chat', () => {
       }, { timeout: 180000 });
 
       applyServerMode(result);
+      notifyContextTrimmed(result);
 
       if (result.type === 'text') {
 
@@ -351,6 +388,8 @@ export const useChatStore = defineStore('chat', () => {
           streaming: false,
 
           requestMode: result.requestMode || 'qa',
+
+          tokenUsage: result.usage || null,
 
           timestamp: Date.now(),
 
@@ -386,6 +425,8 @@ export const useChatStore = defineStore('chat', () => {
 
         piSheet,
 
+        tokenUsage: result.usage || piSheet.llm_usage || null,
+
         timestamp: Date.now(),
 
       };
@@ -394,22 +435,15 @@ export const useChatStore = defineStore('chat', () => {
 
       return true;
 
-    } catch {
-
+    } catch (err) {
       messages.value[assistantIdx] = {
-
         role: 'assistant',
-
-        content: t('chat.generateFailed'),
-
+        content: resolveChatError(err),
         streaming: false,
-
+        errorCode: err?.response?.data?.code,
         timestamp: Date.now(),
-
       };
-
       return false;
-
     }
 
   }

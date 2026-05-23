@@ -1,7 +1,7 @@
 const { SystemSetting } = require('../models');
 const { logAudit } = require('./audit.service');
 
-const BOOL_KEYS = new Set(['sap_integration_enabled', 'sap_auto_sync', 'plant_explorer_enabled']);
+const BOOL_KEYS = new Set(['sap_integration_enabled', 'sap_auto_sync']);
 
 async function get(key) {
   const row = await SystemSetting.findOne({ where: { key } });

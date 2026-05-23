@@ -497,6 +497,14 @@ html {
   margin-top: 1.25rem;
 }
 
+.joule-quick-prompts__subhint {
+  margin: -0.25rem 0 0.75rem;
+  font-size: 0.75rem;
+  line-height: 1.35;
+  text-align: center;
+  color: var(--sapContentLabelColor);
+}
+
 .joule-quick-prompts__grid {
   display: grid;
   gap: 0.5rem;

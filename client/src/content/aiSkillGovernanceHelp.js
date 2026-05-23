@@ -1,9 +1,11 @@
-/** KI-Skill-Governance — immer zweisprachig (DE + EN) in Hilfe & Architektur */
+/** KI-Skill-Governance — DE/EN je nach UI-Sprache (Admin → Hilfe & Architektur) */
 
 export const aiSkillGovernanceBilingualSections = [
   {
     id: 'ai-skill-governance',
-    title: 'KI-Skill-Governance & GMP-Validierung / AI skill governance & GMP validation',
+    title: 'KI-Skill-Governance & GMP-Validierung',
+    titleDe: 'KI-Skill-Governance & GMP-Validierung',
+    titleEn: 'AI skill governance & GMP validation',
     bilingual: true,
     image: '/help/ai-skill-governance.png',
     imageAltDe: 'Infografik: KI-Skill-Governance — Was die Validierung für GMP-Compliance berücksichtigen muss',
@@ -77,7 +79,9 @@ export const aiSkillGovernanceBilingualSections = [
   },
   {
     id: 'ai-skill-allowed',
-    title: 'Erlaubt vs. verboten / Allowed vs. forbidden',
+    title: 'Erlaubt vs. verboten',
+    titleDe: 'Erlaubt vs. verboten',
+    titleEn: 'Allowed vs. forbidden',
     bilingual: true,
     locales: {
       de: {
@@ -102,7 +106,9 @@ export const aiSkillGovernanceBilingualSections = [
   },
   {
     id: 'ai-skill-principles',
-    title: 'Leitprinzipien / Key principles',
+    title: 'Leitprinzipien',
+    titleDe: 'Leitprinzipien',
+    titleEn: 'Key principles',
     bilingual: true,
     locales: {
       de: {

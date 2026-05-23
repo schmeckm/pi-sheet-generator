@@ -16,6 +16,8 @@ export default {
     cancel: 'Abbrechen',
     confirm: 'Bestätigen',
     menu: 'Menü',
+    tokenUsage: 'Tokens',
+    tokenUsageDetail: '{input} Eingabe · {output} Ausgabe · {total} gesamt',
   },
   shell: {
     adminArea: 'Administration',
@@ -93,7 +95,7 @@ export default {
     jouleGreetingHiGuest: 'Hallo,',
     jouleGreetingLead: 'Wie kann ich helfen?',
     description:
-      'Ich erstelle Process Instruction Sheets aus Ihrem XStep-Repository — mit Warenbewegungen, Rückmeldungen, IPC und GMP-Schritten in logischer Reihenfolge.',
+      'Ich erstelle Process Instruction Sheets aus Ihrem XStep-Repository — getrennt nach EWM/HU, SAP-MM-Bewegungsarten oder reinen Rückmeldungen, plus IPC und GMP-Schritte.',
     caps: {
       packaging: 'Verpackung',
       filling: 'Abfüllung',
@@ -104,6 +106,8 @@ export default {
   },
   prompts: {
     hint: 'PI Sheet — Klick startet die Generierung',
+    movementHint: 'Verpackung — EWM, SAP MM oder nur Rückmeldung (jeweils ein Pfad, nicht mischen)',
+    processHint: 'Weitere Prozesse & GMP',
     equipmentHint: 'Equipment & Waagen — Informationsfragen (ohne PI Sheet)',
     scalesActive: {
       title: 'Aktive Waagen',
@@ -121,9 +125,20 @@ export default {
       title: 'Geräteliste',
       text: 'Liste alle konfigurierten Waagen mit Online-Status',
     },
-    packaging: {
-      title: 'Verpackung',
-      text: 'Erstelle ein PI Sheet für Verpackung mit Rückmeldungen und Warenbewegungen',
+    packagingEwm: {
+      title: 'Verpackung EWM/HU',
+      text:
+        'Erstelle ein PI Sheet für Verpackung ausschließlich mit SAP EWM Handling-Unit-Schritten (XSteps XS-VP-EWM-001 bis XS-VP-EWM-004, Transaktionen /SCWM/*). Keine MIGO-Schritte XS-VP-003 oder XS-VP-008.',
+    },
+    packagingMm: {
+      title: 'Verpackung MM (311/261)',
+      text:
+        'Erstelle ein PI Sheet für Verpackung ausschließlich mit SAP MM Warenbewegungen per MIGO (Bewegungsarten 311 und 261, XSteps XS-VP-003 und XS-VP-008). Kein EWM, keine HU-Schritte XS-VP-EWM-*.',
+    },
+    packagingConfirmations: {
+      title: 'Verpackung Rückmeldung',
+      text:
+        'Erstelle ein PI Sheet für Verpackung mit SAP-Rückmeldungen am Fertigungsauftrag (CO11N, XStep XS-VP-007) plus Prozess-, IPC- und Dokumentationsschritten — ohne Warenbewegungen (weder EWM noch MIGO 311/261).',
     },
     filling: {
       title: 'Abfüllung',
@@ -135,7 +150,8 @@ export default {
     },
     gmpFull: {
       title: 'GMP komplett',
-      text: 'Erstelle ein PI Sheet für Verpackung mit Linienclearance, IPC Gewicht und Etikettierung',
+      text:
+        'Erstelle ein PI Sheet für Verpackung mit Linienclearance, IPC Gewicht und Etikettierung. Warenbewegungen nur aus einem Pfad (EWM/HU oder MM 311/261), nicht beide mischen.',
     },
     packagingGmpClose: {
       title: 'Verpackung GMP-Abschluss',
@@ -151,7 +167,7 @@ export default {
     assistantNameQa: 'Equipment-Assistent',
     toolsRunning: 'Tools: {tools}',
     placeholder:
-      'Beschreiben Sie Ihren Prozess… z. B. „PI Sheet für Verpackung mit Rückmeldungen und Warenbewegungen“',
+      'Beschreiben Sie Ihren Prozess… z. B. „PI Sheet Verpackung nur EWM/HU“ oder „nur MIGO 311/261“',
     placeholderJoule: 'Wie kann ich helfen?',
     minChars: 'Mindestens 10 Zeichen',
     charCount: '{count} / 2000',
@@ -164,6 +180,41 @@ export default {
     generateFailedToast:
       'Die KI konnte kein PI Sheet generieren. Bitte formulieren Sie Ihre Anfrage anders.',
     loadSheetFailed: 'PI Sheet konnte nicht geladen werden.',
+    contextTrimmed:
+      'Ein Teil des Kontexts wurde wegen des Modell-Limits gekürzt ({sections}). Ergebnisse können weniger präzise sein.',
+    errors: {
+      LLM_NOT_CONFIGURED:
+        'Die KI ist nicht konfiguriert. Bitte ANTHROPIC_API_KEY setzen.',
+      LLM_AUTH_FAILED:
+        'Anthropic-Authentifizierung fehlgeschlagen. API-Schlüssel prüfen.',
+      LLM_RATE_LIMIT:
+        'Zu viele Anfragen an die KI. Bitte kurz warten und erneut versuchen.',
+      LLM_OVERLOADED:
+        'Der KI-Dienst ist überlastet. Bitte in Kürze erneut versuchen.',
+      LLM_TIMEOUT:
+        'Die KI-Anfrage hat das Zeitlimit überschritten. Bitte erneut versuchen.',
+      LLM_NETWORK:
+        'Die KI ist nicht erreichbar. Netzwerk und API-Verfügbarkeit prüfen.',
+      LLM_BILLING:
+        'Anthropic-Kontingent oder Abrechnung erschöpft. Administrator kontaktieren.',
+      LLM_CONTEXT_TOO_LONG:
+        'Der Kontext ist zu groß. Kürzen Sie die Anfrage oder reduzieren Sie Repository-Daten.',
+      LLM_MCP_UNAVAILABLE:
+        'SAP-MCP-Verbindung fehlgeschlagen. Erneuter Versuch ohne SAP-Kontext.',
+      LLM_TOOL_LOOP: 'Zu viele Tool-Aufrufe. Bitte Anfrage vereinfachen.',
+      LLM_GENERIC: 'Ein unerwarteter KI-Fehler ist aufgetreten.',
+      PROMPT_CONFIG_MISSING:
+        'Keine aktive Prompt-Konfiguration. Administrator kontaktieren.',
+      PI_JSON_PARSE:
+        'Das PI Sheet konnte aus der KI-Antwort nicht gelesen werden. Bitte erneut versuchen.',
+      PI_INVALID_STRUCTURE:
+        'Die KI-Antwort hat keine gültige PI-Sheet-Struktur (Titel und Schritte).',
+      PI_EMPTY_RESPONSE: 'Die KI hat eine leere Antwort geliefert.',
+      PI_REFUSAL:
+        'Die KI hat die Erstellung eines PI Sheets für diese Anfrage abgelehnt.',
+      PI_TRUNCATED:
+        'Die Antwort wurde abgeschnitten (Token-Limit). Bitte kürzere Anfrage stellen.',
+    },
     resultCard: {
       label: 'PI Sheet erstellt',
       steps: '{type} · {count} Schritte · Entwurf',
@@ -226,6 +277,17 @@ export default {
     paramRequired: 'Pflicht',
     aiSuggestion: 'KI-Vorschlag',
     newStep: 'NEU',
+    confidenceOverall: 'Generierungs-Konfidenz',
+    confidenceStep: 'Schritt-Konfidenz',
+    confidenceHint:
+      'Schätzung aus Repository-Abgleich und KI-Bewertung (0–100 %). Niedrige Werte → manuelle QA empfohlen.',
+    confidenceBreakdown: '{repo} validierte · {adapted} angepasste · {suggest} KI-Vorschläge · {warnings} Hinweise',
+    confidenceSourceRepository: 'Validierter Repository-XStep',
+    confidenceSourceAdapted: 'Repository-XStep (angepasst)',
+    confidenceSourceContext: 'Kontext-Match',
+    confidenceSourceSuggestion: 'KI-Vorschlag',
+    confidenceSourceNew: 'Neuer Schritt',
+    confidenceSourceEstimated: 'KI-Schätzung',
   },
   digitalize: {
     title: 'PI Sheet digitalisieren',

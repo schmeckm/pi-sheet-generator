@@ -59,7 +59,7 @@ export const architectureHelp = {
   de: {
     title: 'Hilfe & Architektur',
     subtitle:
-      'Bedienung des PI Assistenten und technischer Systemüberblick — UI-Sprache über Profil/Shell (DE/EN); KI-Skill-Governance unten auf Deutsch und Englisch',
+      'Bedienung des PI Assistenten und technischer Systemüberblick — Sprache folgt der UI-Auswahl (DE/EN) in der Shell',
     toc: 'Inhalt',
     sections: [
       {
@@ -74,20 +74,29 @@ export const architectureHelp = {
         id: 'chat-help',
         title: 'Hilfe: PI Assistent',
         paragraphs: [
-          'Bei leerem Chat erscheinen Begrüßung und Quick-Prompts (typische PI-Sheet- und Equipment-Fragen). Nach der ersten Nachricht wechselt die Ansicht in den Dialog.',
+          'Der PI Assistent nutzt ein Joule-ähnliches Copilot-Layout: lila Kopfzeile, Willkommens-Karte mit Roboter (Branding „MAKE / make it happen“) und zweizeiliger Begrüßung, darunter strukturierte Quick-Prompt-Karten mit Titel und Beschreibung.',
+          'Nach der ersten Nachricht wechselt die Ansicht in den Dialog: Ihre Nachrichten erscheinen als lila Sprechblasen rechts, Antworten des Assistenten hellgrau links. Die PI-Sheet-Vorschau bleibt rechts sichtbar (Desktop).',
         ],
         list: [
           {
             label: 'Neues Gespräch',
-            text: 'Kopfzeile „Neues Gespräch“ oder im Verlauf „+ Neues Gespräch“. Leert nur die aktuelle Browser-Session; gespeicherte PI Sheets im Verlauf bleiben. Bei laufender Antwort erscheint ein Bestätigungsdialog.',
+            text: 'Kopfzeile „Neues Gespräch“ oder „+ Neues Gespräch“ im Verlauf. Leert nur die aktuelle Browser-Session; gespeicherte PI Sheets bleiben. Bei laufender Antwort erscheint ein Bestätigungsdialog.',
           },
           {
             label: 'Verlauf',
             text: 'Listet zuletzt erstellte PI Sheets aus der Datenbank (keine Chat-Threads). Ein Eintrag öffnet Sheet und Kontext in der Vorschau.',
           },
           {
+            label: 'Quick Prompts',
+            text: 'Karten unter der Willkommens-Karte: PI-Sheet-Beispiele (Verpackung, Abfüllung, …) und Equipment-Fragen (Waagen, Namespace). Klick startet die Generierung bzw. Q&A.',
+          },
+          {
+            label: 'Eingabe',
+            text: 'Rundes Eingabefeld unten mit Platzhalter „Wie kann ich helfen?“ und lila Senden-Button (Pfeil). Mindestens 10 Zeichen pro Nachricht.',
+          },
+          {
             label: 'Vorschau & GMP',
-            text: 'Schritte, Parameter, GMP-Stepper; Workflow-Aktionen: zur Prüfung einreichen, freigeben, archivieren (siehe Admin → PI Sheets).',
+            text: 'Schritte, Parameter, GMP-Stepper; Workflow: zur Prüfung einreichen, freigeben, archivieren (Admin → PI Sheets).',
           },
           {
             label: 'Digitalisieren',
@@ -231,7 +240,7 @@ export const architectureHelp = {
           { label: 'Equipment', text: 'Geräte/Waagen, Verbindungstest, Namespace-Suche.' },
           { label: 'Einstellungen', text: 'system_settings: API-Keys, MCP-URL, Modell, SAP-Optionen.' },
           { label: 'Prompt Config', text: 'System-Prompt bearbeiten, Versionen, Diff, API-Test.' },
-          { label: 'Hilfe & Architektur', text: 'Diese Seite inkl. KI-Skill-Governance & GMP-Validierung (folgt UI-Sprache DE/EN).' },
+          { label: 'Hilfe & Architektur', text: 'Diese Seite inkl. KI-Skill-Governance — Inhalt und Formatierung folgen der UI-Sprache (DE/EN) in der Shell.' },
         ],
       },
       {
@@ -280,7 +289,7 @@ export const architectureHelp = {
   en: {
     title: 'Help & Architecture',
     subtitle:
-      'PI Assistant usage and technical system overview — UI language via profile/shell (DE/EN); AI skill governance below in German and English',
+      'PI Assistant usage and technical system overview — language follows the UI selection (DE/EN) in the shell',
     toc: 'Contents',
     sections: [
       {
@@ -295,20 +304,29 @@ export const architectureHelp = {
         id: 'chat-help',
         title: 'Help: PI Assistant',
         paragraphs: [
-          'When the chat is empty, a welcome message and quick prompts appear (typical PI sheet and equipment questions). After the first message, the view switches to the conversation.',
+          'The PI Assistant uses a Joule-style copilot layout: purple header, welcome card with robot mascot (“MAKE / make it happen” branding) and a two-line greeting, followed by structured quick-prompt cards with title and description.',
+          'After the first message, the view switches to the conversation: your messages appear as purple bubbles on the right, assistant replies in light grey on the left. The PI sheet preview stays visible on the right (desktop).',
         ],
         list: [
           {
             label: 'New conversation',
-            text: 'Header “New conversation” or “+ New conversation” in history. Clears only the current browser session; saved PI sheets in history remain. A confirmation dialog appears if a response is in progress.',
+            text: 'Header “New conversation” or “+ New conversation” in history. Clears only the current browser session; saved PI sheets remain. A confirmation dialog appears if a response is in progress.',
           },
           {
             label: 'History',
             text: 'Lists recently created PI sheets from the database (not chat threads). An entry opens the sheet and context in the preview.',
           },
           {
+            label: 'Quick prompts',
+            text: 'Cards below the welcome card: PI sheet examples (packaging, filling, …) and equipment questions (scales, namespace). Click starts generation or Q&A.',
+          },
+          {
+            label: 'Input',
+            text: 'Rounded input field at the bottom with placeholder “How can I help you?” and purple send button (arrow). At least 10 characters per message.',
+          },
+          {
             label: 'Preview & GMP',
-            text: 'Steps, parameters, GMP stepper; workflow actions: submit for review, approve, archive (see Admin → PI Sheets).',
+            text: 'Steps, parameters, GMP stepper; workflow: submit for review, approve, archive (Admin → PI Sheets).',
           },
           {
             label: 'Digitize',
@@ -452,7 +470,7 @@ export const architectureHelp = {
           { label: 'Equipment', text: 'Devices/scales, connection test, namespace search.' },
           { label: 'Settings', text: 'system_settings: API keys, MCP URL, model, SAP options.' },
           { label: 'Prompt config', text: 'Edit system prompt, versions, diff, API test.' },
-          { label: 'Help & Architecture', text: 'This page including AI skill governance & GMP validation (follows UI language DE/EN).' },
+          { label: 'Help & Architecture', text: 'This page including AI skill governance — content and formatting follow the UI language (DE/EN) in the shell.' },
         ],
       },
       {

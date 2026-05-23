@@ -8,7 +8,7 @@
     <div class="flex flex-col gap-8 lg:flex-row lg:items-start">
       <nav
         class="sap-tile shrink-0 p-4 lg:sticky lg:top-4 lg:w-52"
-        aria-label="Table of contents"
+        :aria-label="content.toc"
       >
         <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--sapContentLabelColor)]">
           {{ content.toc }}
@@ -20,7 +20,7 @@
               class="block rounded px-2 py-1 text-[var(--sapBrandColor)] hover:bg-[var(--sapHighlightColor)]"
               @click.prevent="scrollTo(section.id)"
             >
-              {{ section.title }}
+              {{ sectionTitle(section) }}
             </a>
           </li>
         </ul>
@@ -33,7 +33,7 @@
           :key="section.id"
           class="sap-tile scroll-mt-6 p-6"
         >
-          <h2 class="mb-4 text-lg font-semibold">{{ section.title }}</h2>
+          <h2 class="mb-4 text-lg font-semibold">{{ sectionTitle(section) }}</h2>
 
           <HelpZoomableMedia
             v-if="section.image"
@@ -44,20 +44,10 @@
             :initial-scale="1.15"
           />
 
-          <template v-if="section.bilingual">
-            <div
-              v-for="lang in bilingualLangs"
-              :key="`${section.id}-${lang}`"
-              class="mb-8 last:mb-0"
-            >
-              <h3
-                class="mb-3 border-b border-[var(--sapNeutralBorderColor)] pb-2 text-xs font-semibold uppercase tracking-wide text-[var(--sapContentLabelColor)]"
-              >
-                {{ lang === 'de' ? t('help.langDe') : t('help.langEn') }}
-              </h3>
-              <HelpSectionBlock :block="section.locales[lang]" />
-            </div>
-          </template>
+          <HelpSectionBlock
+            v-if="section.bilingual"
+            :block="bilingualBlock(section)"
+          />
 
           <HelpSectionBlock v-else :block="section" />
         </section>
@@ -73,23 +63,36 @@ import { getArchitectureHelp } from '@/content/architectureHelp';
 import HelpSectionBlock from '@/components/help/HelpSectionBlock.vue';
 import HelpZoomableMedia from '@/components/help/HelpZoomableMedia.vue';
 
-const { t, locale } = useI18n();
-
-const bilingualLangs = ['de', 'en'];
+const { locale } = useI18n();
 
 const content = computed(() => getArchitectureHelp(locale.value));
+
+const localeKey = computed(() => (locale.value === 'en' ? 'en' : 'de'));
 
 function scrollTo(id) {
   document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
+function sectionTitle(section) {
+  if (section.bilingual) {
+    return localeKey.value === 'en'
+      ? section.titleEn || section.title
+      : section.titleDe || section.title;
+  }
+  return section.title;
+}
+
+function bilingualBlock(section) {
+  return section.locales?.[localeKey.value] || section.locales?.de || {};
+}
+
 function sectionImageAlt(section) {
-  if (locale.value === 'en' && section.imageAltEn) return section.imageAltEn;
+  if (localeKey.value === 'en' && section.imageAltEn) return section.imageAltEn;
   return section.imageAltDe || section.imageAlt || '';
 }
 
 function sectionImageCaption(section) {
-  if (locale.value === 'en' && section.imageCaptionEn) return section.imageCaptionEn;
+  if (localeKey.value === 'en' && section.imageCaptionEn) return section.imageCaptionEn;
   return section.imageCaptionDe || section.imageCaption || '';
 }
 </script>

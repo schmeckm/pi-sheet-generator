@@ -5,6 +5,7 @@ const { PISheet } = require('../models');
 const llmService = require('../services/llm.service');
 const lifecycle = require('../services/lifecycle.service');
 const { authMiddleware } = require('../middleware/auth');
+const { toErrorPayload } = require('../utils/llmErrors');
 
 const router = express.Router();
 
@@ -23,6 +24,35 @@ const promptSchema = Joi.object({
   locale: Joi.string().valid('de', 'en').default('de'),
 });
 
+function respondLlmError(res, err, locale, next) {
+  const payload = toErrorPayload(err, locale);
+  if (res.headersSent) {
+    try {
+      res.write(
+        `data: ${JSON.stringify({
+          type: 'error',
+          message: payload.error,
+          code: payload.code,
+        })}\n\n`
+      );
+      res.end();
+    } catch {
+      /* client gone */
+    }
+    return;
+  }
+  return res.status(payload.statusCode).json({
+    error: payload.error,
+    code: payload.code,
+    details: payload.details,
+  });
+}
+
+function streamErrorEvent(err, locale = 'de') {
+  const payload = toErrorPayload(err, locale);
+  return { type: 'error', message: payload.error, code: payload.code };
+}
+
 router.post('/generate', chatLimiter, async (req, res, next) => {
   try {
     const { error, value } = promptSchema.validate(req.body);
@@ -33,16 +63,13 @@ router.post('/generate', chatLimiter, async (req, res, next) => {
     });
     if (result.piSheet?.toJSON) {
       result.piSheet = result.piSheet.toJSON();
+      if (result.usage && !result.piSheet.llm_usage) {
+        result.piSheet.llm_usage = result.usage;
+      }
     }
     res.json(result);
   } catch (err) {
-    if (err.statusCode === 503) {
-      return res.status(503).json({
-        error:
-          'Die KI konnte kein PI Sheet generieren. Bitte ANTHROPIC_API_KEY konfigurieren.',
-      });
-    }
-    next(err);
+    respondLlmError(res, err, req.body?.locale || 'de', next);
   }
 });
 
@@ -76,6 +103,14 @@ function attachStreamHandlers(res, stream, { prompt, userId, locale }) {
     }
   };
 
+  if (stream.contextMeta?.contextTrimmed) {
+    writeEvent({
+      type: 'meta',
+      contextTrimmed: true,
+      trimmedSections: stream.contextMeta.trimmedSections || [],
+    });
+  }
+
   const finish = (payload) => {
     if (finishing) return;
     finishing = true;
@@ -101,7 +136,7 @@ function attachStreamHandlers(res, stream, { prompt, userId, locale }) {
 
   stream.on('error', (err) => {
     console.error('[chat] stream error:', err.message);
-    finish({ type: 'error', message: err.message });
+    finish(streamErrorEvent(err, locale));
   });
 
   stream.on('end', async () => {
@@ -109,18 +144,21 @@ function attachStreamHandlers(res, stream, { prompt, userId, locale }) {
     finishing = true;
     writeEvent({ type: 'status', phase: 'finalizing' });
     try {
-      const piSheet = await llmService.finalizeStream(stream, prompt, userId, { locale });
+      const { piSheet, usage } = await llmService.finalizeStream(stream, prompt, userId, { locale });
       const sheetJson =
         piSheet && typeof piSheet.toJSON === 'function' ? piSheet.toJSON() : piSheet;
-      finish({ type: 'complete', piSheet: sheetJson });
+      if (usage && sheetJson && !sheetJson.llm_usage) {
+        sheetJson.llm_usage = usage;
+      }
+      finish({ type: 'complete', piSheet: sheetJson, usage });
     } catch (err) {
       console.error('[chat] finalize error:', err.message);
-      finish({ type: 'error', message: err.message });
+      finish(streamErrorEvent(err, locale));
     }
   });
 }
 
-function attachQaStreamHandlers(res, stream) {
+function attachQaStreamHandlers(res, stream, locale = 'de') {
   let closed = false;
   let finishing = false;
 
@@ -169,18 +207,18 @@ function attachQaStreamHandlers(res, stream) {
 
   stream.on('error', (err) => {
     console.error('[chat] qa stream error:', err.message);
-    finish({ type: 'error', message: err.message });
+    finish(streamErrorEvent(err, locale));
   });
 
   stream.on('end', async (finalMsg) => {
     if (finishing) return;
     finishing = true;
     try {
-      const message = await llmService.finalizeAnswerStream(stream, finalMsg);
-      finish({ type: 'complete', requestMode: 'qa', message });
+      const { message, usage } = await llmService.finalizeAnswerStream(stream, finalMsg);
+      finish({ type: 'complete', requestMode: 'qa', message, usage });
     } catch (err) {
       console.error('[chat] qa finalize error:', err.message);
-      finish({ type: 'error', message: err.message });
+      finish(streamErrorEvent(err, locale));
     }
   });
 }
@@ -199,25 +237,9 @@ router.post('/qa-stream', chatLimiter, async (req, res, next) => {
     const stream = await llmService.generateAnswerChatStream(value.prompt, {
       locale: value.locale,
     });
-    attachQaStreamHandlers(res, stream);
+    attachQaStreamHandlers(res, stream, value.locale);
   } catch (err) {
-    if (err.statusCode === 503) {
-      return res.status(503).json({
-        error:
-          'Die KI konnte nicht antworten. Bitte ANTHROPIC_API_KEY konfigurieren.',
-      });
-    }
-    if (!res.headersSent) next(err);
-    else {
-      try {
-        res.write(
-          `data: ${JSON.stringify({ type: 'error', message: err.message })}\n\n`
-        );
-        res.end();
-      } catch {
-        /* ignore */
-      }
-    }
+    respondLlmError(res, err, req.body?.locale || 'de', next);
   }
 });
 
@@ -242,24 +264,7 @@ router.post('/generate-stream', chatLimiter, async (req, res, next) => {
       locale: value.locale,
     });
   } catch (err) {
-    if (err.statusCode === 503) {
-      return res.status(503).json({
-        error:
-          'Die KI konnte kein PI Sheet generieren. Bitte ANTHROPIC_API_KEY konfigurieren.',
-      });
-    }
-    if (!res.headersSent) {
-      next(err);
-    } else {
-      try {
-        res.write(
-          `data: ${JSON.stringify({ type: 'error', message: err.message })}\n\n`
-        );
-        res.end();
-      } catch {
-        /* ignore */
-      }
-    }
+    respondLlmError(res, err, req.body?.locale || 'de', next);
   }
 });
 

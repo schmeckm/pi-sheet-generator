@@ -155,14 +155,16 @@ router.post('/:id/test', async (req, res, next) => {
 
     if (resolvedMode === 'qa') {
       const answer = await llmService.answerChat(value.test_prompt, req.user.id, opts);
-      return res.json({ mode: 'qa', message: answer.message });
+      return res.json({ mode: 'qa', message: answer.message, usage: answer.usage });
     }
 
-    const piSheet = await llmService.generatePISheet(value.test_prompt, req.user.id, opts);
+    const { piSheet, usage } = await llmService.generatePISheet(value.test_prompt, req.user.id, opts);
+    const sheetJson = piSheet?.toJSON ? piSheet.toJSON() : piSheet;
     res.json({
       mode: 'pi_sheet',
-      piSheet,
-      raw: piSheet.llm_response,
+      piSheet: sheetJson,
+      raw: sheetJson?.llm_response,
+      usage,
     });
   } catch (err) {
     next(err);

@@ -33,6 +33,15 @@
           :step="step"
           :pi-sheet-id="piSheetId"
         />
+        <ConfidenceMeter
+          v-if="stepConfidence != null && !printMode"
+          class="mt-3"
+          compact
+          :value="stepConfidence"
+          :label="t('preview.confidenceStep')"
+          :hint="confidenceSourceLabel"
+          :show-percent="true"
+        />
         <p
           v-if="printMode && needsSignature"
           class="mt-3 border-t border-dotted border-gray-400 pt-2 text-xs"
@@ -48,6 +57,7 @@
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import ParamTable from './ParamTable.vue';
+import ConfidenceMeter from '@/components/shared/ConfidenceMeter.vue';
 import { usePiSheetDisplay } from '@/composables/usePiSheetDisplay';
 
 const { t } = useI18n();
@@ -97,4 +107,19 @@ const borderClass = computed(() => {
 const needsSignature = computed(
   () => props.step.category === 'Qualität' || props.step.gmp_relevant
 );
+
+const stepConfidence = computed(() => props.step.confidence ?? null);
+
+const confidenceSourceLabel = computed(() => {
+  const key = props.step.confidence_source;
+  const map = {
+    repository_verified: 'preview.confidenceSourceRepository',
+    repository_adapted: 'preview.confidenceSourceAdapted',
+    context_match: 'preview.confidenceSourceContext',
+    ai_suggestion: 'preview.confidenceSourceSuggestion',
+    new_step: 'preview.confidenceSourceNew',
+    ai_estimated: 'preview.confidenceSourceEstimated',
+  };
+  return key && map[key] ? t(map[key]) : '';
+});
 </script>

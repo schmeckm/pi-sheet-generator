@@ -1,8 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
-import { useFeaturesStore } from '@/stores/features';
-
-const PLANT_EXPLORER_ROUTE_NAMES = new Set(['plant-explorer', 'admin-plant-explorer']);
 
 const routes = [
   { path: '/', redirect: '/chat' },
@@ -47,18 +44,6 @@ const routes = [
     name: 'admin-process-graph',
     component: () => import('@/views/ProcessGraphView.vue'),
     meta: { requiresAuth: true, requiresAdmin: true, layout: 'admin' },
-  },
-  {
-    path: '/admin/plant-explorer',
-    name: 'admin-plant-explorer',
-    component: () => import('@/views/PlantExplorerView.vue'),
-    meta: { requiresAuth: true, requiresAdmin: true, layout: 'admin' },
-  },
-  {
-    path: '/plant-explorer',
-    name: 'plant-explorer',
-    component: () => import('@/views/PlantExplorerView.vue'),
-    meta: { requiresAuth: true, layout: 'default' },
   },
   {
     path: '/admin/repository',
@@ -131,17 +116,6 @@ router.beforeEach(async (to) => {
   }
   if (to.meta.requiresPromptAccess && !auth.canManagePrompts) {
     return { name: 'chat' };
-  }
-  if (auth.isAuthenticated && PLANT_EXPLORER_ROUTE_NAMES.has(to.name)) {
-    const features = useFeaturesStore();
-    try {
-      await features.ensureLoaded();
-    } catch {
-      return { name: 'chat' };
-    }
-    if (!features.plantExplorerEnabled) {
-      return auth.isAdmin ? { name: 'admin' } : { name: 'chat' };
-    }
   }
   return true;
 });

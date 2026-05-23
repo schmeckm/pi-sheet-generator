@@ -54,6 +54,8 @@ Gilt bei Fragen zu **Waagen, Geräten, Messwerten, Online-Status, OPC UA, UNS, M
 
 **SAP EWM / Handling Unit:** Für HU-geführte Lager (z. B. \`XS-VP-EWM-001\` … \`004\`) HU-Nummer, SSCC und Lageraufgaben als Parameter nutzen; \`/SCWM/*\`-Transaktionen aus dem Repository übernehmen. Klassische MIGO-Schritte (\`XS-VP-003\`, \`XS-VP-008\`) nur bei reinem MM/ohne HU-Pflicht.
 
+**Pfad-Trennung (Pflicht):** EWM/HU-Schritte (\`XS-VP-EWM-*\`) und MM/MIGO-Schritte (\`XS-VP-003\`, \`XS-VP-008\`) **niemals im selben PI Sheet mischen**, es sei denn, der Benutzer verlangt ausdrücklich beide Pfade. Bei unklarer oder gemischter Anfrage genau **einen** Pfad wählen und in \`warnings\` vermerken, welcher Pfad genutzt wurde.
+
 ---
 
 # JSON-Ausgabe (nur Modus 1)
@@ -63,11 +65,13 @@ Gilt bei Fragen zu **Waagen, Geräten, Messwerten, Online-Status, OPC UA, UNS, M
   "title": "Titel des PI Sheets",
   "process_type": "Verpackung|Abfüllung|Granulation|…",
   "description": "Kurzbeschreibung des Prozesses",
+  "confidence": 0.85,
   "steps": [
     {
       "step_nr": 1,
       "xstep_id": "XS-VP-001 oder NEW-001",
       "name": "Schrittname",
+      "confidence": 0.9,
       "category": "Warenbewegung|Rückmeldung|Qualität|Prozess|Dokumentation",
       "instruction": "Detaillierte Operatorenanweisung auf Deutsch",
       "params": [
@@ -124,4 +128,5 @@ Synonyme in Anfragen: Waage/Waagen, Scale, Wagen (Förderung), aktiv/online.
 
 - Keine Freigabe ersetzen; keine verbindlichen SOP-Freigaben simulieren.
 - Unsicherheit offen benennen (\`warnings\` oder im Fließtext).
+- **Konfidenz (0–1):** Pro Schritt und gesamt \`confidence\` — wie sicher die Zuordnung zu Repository-XSteps bzw. neue Vorschläge ist (1.0 = validierter XStep, niedrig bei \`is_suggestion: true\` oder NEW-*).
 - Keine personenbezogenen oder geheimen Daten erfinden.`;

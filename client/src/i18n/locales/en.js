@@ -16,6 +16,8 @@ export default {
     cancel: 'Cancel',
     confirm: 'Confirm',
     menu: 'Menu',
+    tokenUsage: 'Tokens',
+    tokenUsageDetail: '{input} input · {output} output · {total} total',
   },
   shell: {
     adminArea: 'Administration',
@@ -93,7 +95,7 @@ export default {
     jouleGreetingHiGuest: 'Hi,',
     jouleGreetingLead: 'How can I help you?',
     description:
-      'I create Process Instruction Sheets from your XStep repository — including goods movements, confirmations, in-process controls, and GMP steps in logical order.',
+      'I create Process Instruction Sheets from your XStep repository — separately for EWM/HU, SAP MM movement types, or confirmations only, plus IPC and GMP steps.',
     caps: {
       packaging: 'Packaging',
       filling: 'Filling',
@@ -104,6 +106,8 @@ export default {
   },
   prompts: {
     hint: 'PI sheet — click to start generation',
+    movementHint: 'Packaging — EWM, SAP MM, or confirmations only (one path; do not mix)',
+    processHint: 'Other processes & GMP',
     equipmentHint: 'Equipment & scales — informational questions (no PI sheet)',
     scalesActive: {
       title: 'Active scales',
@@ -121,9 +125,20 @@ export default {
       title: 'Device list',
       text: 'List all configured scales with online status',
     },
-    packaging: {
-      title: 'Packaging',
-      text: 'Create a PI Sheet for packaging with confirmations and goods movements',
+    packagingEwm: {
+      title: 'Packaging EWM/HU',
+      text:
+        'Create a PI Sheet for packaging using only SAP EWM handling-unit steps (XSteps XS-VP-EWM-001 through XS-VP-EWM-004, /SCWM/* transactions). Do not use MIGO steps XS-VP-003 or XS-VP-008.',
+    },
+    packagingMm: {
+      title: 'Packaging MM (311/261)',
+      text:
+        'Create a PI Sheet for packaging using only SAP MM goods movements via MIGO (movement types 311 and 261, XSteps XS-VP-003 and XS-VP-008). No EWM, no HU steps XS-VP-EWM-*.',
+    },
+    packagingConfirmations: {
+      title: 'Packaging confirmations',
+      text:
+        'Create a PI Sheet for packaging with SAP order confirmations (CO11N, XStep XS-VP-007) plus process, IPC, and documentation steps — no goods movements (neither EWM nor MIGO 311/261).',
     },
     filling: {
       title: 'Filling',
@@ -135,7 +150,8 @@ export default {
     },
     gmpFull: {
       title: 'Full GMP',
-      text: 'Create a PI Sheet for packaging with line clearance, weight IPC, and labeling',
+      text:
+        'Create a PI Sheet for packaging with line clearance, weight IPC, and labeling. Use only one goods-movement path (EWM/HU or MM 311/261), do not mix both.',
     },
     packagingGmpClose: {
       title: 'Packaging GMP close-out',
@@ -151,7 +167,7 @@ export default {
     assistantNameQa: 'Equipment Assistant',
     toolsRunning: 'Tools: {tools}',
     placeholder:
-      'Describe your process… e.g. “PI Sheet for packaging with confirmations and goods movements”',
+      'Describe your process… e.g. “PI sheet packaging EWM/HU only” or “MIGO 311/261 only”',
     placeholderJoule: 'How can I help you?',
     minChars: 'At least 10 characters',
     charCount: '{count} / 2000',
@@ -164,6 +180,41 @@ export default {
     generateFailedToast:
       'The AI could not generate a PI Sheet. Please rephrase your request.',
     loadSheetFailed: 'Could not load PI Sheet.',
+    contextTrimmed:
+      'Some context was shortened due to model limits ({sections}). Results may be less precise.',
+    errors: {
+      LLM_NOT_CONFIGURED:
+        'AI is not configured. Set ANTHROPIC_API_KEY.',
+      LLM_AUTH_FAILED:
+        'Anthropic authentication failed. Check the API key.',
+      LLM_RATE_LIMIT:
+        'Too many AI requests. Please wait and try again.',
+      LLM_OVERLOADED:
+        'The AI service is overloaded. Please try again shortly.',
+      LLM_TIMEOUT:
+        'The AI request timed out. Please try again.',
+      LLM_NETWORK:
+        'Could not reach the AI service. Check network and API availability.',
+      LLM_BILLING:
+        'Anthropic quota or billing limit reached. Contact an administrator.',
+      LLM_CONTEXT_TOO_LONG:
+        'Context is too large. Shorten your prompt or reduce repository data.',
+      LLM_MCP_UNAVAILABLE:
+        'SAP MCP connection failed. Retrying without SAP context.',
+      LLM_TOOL_LOOP: 'Too many tool calls. Please simplify your request.',
+      LLM_GENERIC: 'An unexpected AI error occurred.',
+      PROMPT_CONFIG_MISSING:
+        'No active prompt configuration. Contact an administrator.',
+      PI_JSON_PARSE:
+        'Could not read the PI Sheet from the AI response. Please try again.',
+      PI_INVALID_STRUCTURE:
+        'The AI response is not a valid PI Sheet structure (title and steps).',
+      PI_EMPTY_RESPONSE: 'The AI returned an empty response.',
+      PI_REFUSAL:
+        'The AI declined to create a PI Sheet for this request.',
+      PI_TRUNCATED:
+        'The response was truncated (token limit). Try a shorter prompt.',
+    },
     resultCard: {
       label: 'PI Sheet created',
       steps: '{type} · {count} steps · Draft',
@@ -226,6 +277,17 @@ export default {
     paramRequired: 'Required',
     aiSuggestion: 'AI suggestion',
     newStep: 'NEW',
+    confidenceOverall: 'Generation confidence',
+    confidenceStep: 'Step confidence',
+    confidenceHint:
+      'Estimate from repository match and AI assessment (0–100%). Low values → manual QA recommended.',
+    confidenceBreakdown: '{repo} verified · {adapted} adapted · {suggest} AI suggestions · {warnings} warnings',
+    confidenceSourceRepository: 'Verified repository XStep',
+    confidenceSourceAdapted: 'Repository XStep (adapted)',
+    confidenceSourceContext: 'Context match',
+    confidenceSourceSuggestion: 'AI suggestion',
+    confidenceSourceNew: 'New step',
+    confidenceSourceEstimated: 'AI estimate',
   },
   digitalize: {
     title: 'Digitize PI Sheet',

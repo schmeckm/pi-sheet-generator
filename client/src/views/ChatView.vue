@@ -102,6 +102,7 @@ import { useI18n } from 'vue-i18n';
 import { useAuthStore } from '@/stores/auth';
 import { useChatStore } from '@/stores/chat';
 import { useShellStore } from '@/stores/shell';
+import { resolveChatError } from '@/utils/chatErrors';
 import { useToast } from '@/composables/useToast';
 import { useNewChat } from '@/composables/useNewChat';
 import ChatWelcome from '@/components/chat/ChatWelcome.vue';
@@ -170,9 +171,7 @@ async function onSend(prompt) {
     await scrollToBottom();
     if (isMobile.value && chat.requestMode === 'pi_sheet') shell.chatPreviewOpen = true;
   } catch (e) {
-    const msg = e.message || e.response?.data?.error || t('chat.generateFailedToast');
-    toast.error(msg);
-    chat.messages.push({ role: 'assistant', content: msg, timestamp: Date.now() });
+    toast.error(resolveChatError(e));
     await scrollToBottom();
   }
 }

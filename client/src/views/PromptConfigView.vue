@@ -209,6 +209,7 @@
                 :class="testResultMode === 'qa' ? 'bg-slate-50 text-[var(--sapTextColor)]' : 'bg-slate-900 text-green-400'"
               >{{ testResult }}</pre>
             </div>
+            <TokenUsageLine v-if="testUsage" :usage="testUsage" />
           </div>
         </div>
       </section>
@@ -261,6 +262,7 @@ import { useToast } from '@/composables/useToast';
 import { useConfirm } from '@/composables/useConfirm';
 import SkeletonBlock from '@/components/shared/SkeletonBlock.vue';
 import PromptEditor from '@/components/admin/PromptEditor.vue';
+import TokenUsageLine from '@/components/shared/TokenUsageLine.vue';
 
 const { t, locale } = useI18n();
 const auth = useAuthStore();
@@ -279,6 +281,7 @@ const testPrompt = ref('');
 const testMode = ref('auto');
 const testResult = ref('');
 const testResultMode = ref('');
+const testUsage = ref(null);
 const testing = ref(false);
 const history = ref([]);
 const createOpen = ref(false);
@@ -466,6 +469,7 @@ async function runTest() {
   testing.value = true;
   testResult.value = '';
   testResultMode.value = '';
+  testUsage.value = null;
   try {
     const res = await post(`/admin/prompts/${active.value.id}/test`, {
       test_prompt: testPrompt.value,
@@ -473,6 +477,7 @@ async function runTest() {
       locale: locale.value === 'en' ? 'en' : 'de',
     });
     testResultMode.value = res.mode || 'pi_sheet';
+    testUsage.value = res.usage || res.piSheet?.llm_usage || null;
     if (res.mode === 'qa') {
       testResult.value = res.message || '';
     } else {

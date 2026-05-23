@@ -76,7 +76,7 @@
             class="sap-btn sap-btn--emphasized !text-sm"
             @click="openInChat(detail.id)"
           >
-            {{ t('plantExplorer.openInChat') }}
+            {{ t('piSheets.openInChat') }}
           </button>
           <button type="button" class="sap-btn sap-btn--ghost !p-2" @click="detail = null">✕</button>
         </div>

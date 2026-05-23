@@ -1,5 +1,7 @@
 import { useAuthStore } from '@/stores/auth';
 
+import { resolveChatError, resolveStreamError } from '@/utils/chatErrors';
+
 const baseURL = import.meta.env.VITE_API_URL || '/api';
 
 function parseSseStream(url, body, { onChunk, onTools, onMeta } = {}) {
@@ -14,10 +16,16 @@ function parseSseStream(url, body, { onChunk, onTools, onMeta } = {}) {
       resolve(payload);
     }
 
-    function finishErr(message) {
+    function finishErr(errPayload) {
       if (settled) return;
       settled = true;
-      reject(new Error(message || 'Stream failed'));
+      const message =
+        typeof errPayload === 'string'
+          ? errPayload
+          : resolveStreamError(errPayload);
+      const err = new Error(message);
+      if (typeof errPayload === 'object' && errPayload?.code) err.code = errPayload.code;
+      reject(err);
     }
 
     function handleEventLine(line) {
@@ -30,7 +38,7 @@ function parseSseStream(url, body, { onChunk, onTools, onMeta } = {}) {
         if (data.type === 'chunk') onChunk?.(data.text);
         if (data.type === 'tools') onTools?.(data.tools);
         if (data.type === 'complete') finishOk(data);
-        if (data.type === 'error') finishErr(data.message);
+        if (data.type === 'error') finishErr({ message: data.message, code: data.code });
       } catch {
         /* ignore malformed lines */
       }
@@ -53,7 +61,7 @@ function parseSseStream(url, body, { onChunk, onTools, onMeta } = {}) {
 
         if (!res.ok) {
           const err = await res.json().catch(() => ({}));
-          finishErr(err.error || `Stream failed (${res.status})`);
+          finishErr({ message: resolveChatError({ response: { data: err } }), code: err.code });
           return;
         }
 
@@ -97,10 +105,20 @@ export function streamChatGenerate(prompt, { locale = 'de', onChunk, onMeta } = 
     onMeta,
     onTools: (tools) => onChunk?.(`\n🔧 ${tools?.join(', ')}\n`),
   }).then((data) => {
-    if (data.requestMode === 'qa' && data.message) return { text: data.message, requestMode: 'qa' };
-    if (data.piSheet) return { piSheet: data.piSheet, requestMode: 'pi_sheet' };
-    if (data.message) return { text: data.message, requestMode: data.requestMode || 'qa' };
-    return data;
+    const out = {
+      contextTrimmed: data.contextTrimmed,
+      trimmedSections: data.trimmedSections,
+    };
+    if (data.requestMode === 'qa' && data.message) {
+      return { ...out, text: data.message, requestMode: 'qa', usage: data.usage };
+    }
+    if (data.piSheet) {
+      return { ...out, piSheet: data.piSheet, requestMode: 'pi_sheet', usage: data.usage };
+    }
+    if (data.message) {
+      return { ...out, text: data.message, requestMode: data.requestMode || 'qa', usage: data.usage };
+    }
+    return { ...out, ...data };
   });
 }
 
@@ -110,5 +128,6 @@ export function streamChatQa(prompt, { locale = 'de', onChunk, onTools, onMeta }
   return parseSseStream(url, { prompt, locale }, { onChunk, onTools, onMeta }).then((data) => ({
     text: data.message || '',
     requestMode: data.requestMode || 'qa',
+    usage: data.usage,
   }));
 }
