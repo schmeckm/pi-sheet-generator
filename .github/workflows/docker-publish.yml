@@ -26,6 +26,9 @@ jobs:
             echo "::error::Set repository secrets DOCKERHUB_USERNAME and DOCKERHUB_TOKEN (Docker Hub → Account Settings → Security → Access Token)"
             exit 1
           fi
+          if echo "${{ secrets.DOCKERHUB_USERNAME }}" | grep -q '@'; then
+            echo "::warning::DOCKERHUB_USERNAME looks like an email — use your Docker Hub *username* (hub.docker.com/u/…)"
+          fi
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
