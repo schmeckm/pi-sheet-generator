@@ -1,6 +1,7 @@
 services:
   db:
     image: pgvector/pgvector:pg16
+    container_name: pisheet-db
     environment:
       POSTGRES_DB: pisheet
       POSTGRES_USER: pisheet
@@ -44,10 +45,17 @@ services:
       dockerfile: docker/server/Dockerfile
     ports:
       - "7000:7000"
+    # Hostname "db" resolves only on this compose network — always deploy db + api together.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - default
     environment:
       NODE_ENV: production
       PORT: 7000
       DATABASE_URL: postgres://pisheet:pisheet_dev@db:5432/pisheet
+      DB_CONNECT_HOSTS: pisheet-db,host.docker.internal
+      DB_FALLBACK_PORT: "7003"
       JWT_SECRET: ${JWT_SECRET:-change-me-docker-secret-min-32-chars}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
@@ -71,8 +79,6 @@ services:
       start_period: 120s
       retries: 5
     restart: unless-stopped
-    networks:
-      - default
 
   client:
     profiles: ["full"]

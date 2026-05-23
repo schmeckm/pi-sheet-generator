@@ -5,6 +5,7 @@
 services:
   db:
     image: pgvector/pgvector:pg16
+    container_name: pisheet-db
     shm_size: 256mb
     environment:
       POSTGRES_DB: pisheet
@@ -24,10 +25,13 @@ services:
 
   api:
     image: ${DOCKERHUB_USER:-schmeckm}/pi-sheet-generator-api:${IMAGE_TAG:-latest}
+    extra_hosts:
+      - host.docker.internal:host-gateway
     environment:
       NODE_ENV: production
       PORT: 7000
       DATABASE_URL: postgres://pisheet:${POSTGRES_PASSWORD}@db:5432/pisheet
+      DB_CONNECT_HOSTS: pisheet-db
       JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
@@ -57,7 +61,8 @@ services:
     ports:
       - '${CLIENT_PORT:-7004}:80'
     depends_on:
-      - api
+      api:
+        condition: service_healthy
     restart: unless-stopped
     networks:
       - pisheet
@@ -67,4 +72,5 @@ volumes:
 
 networks:
   pisheet:
+    name: pisheet-internal
     driver: bridge

@@ -1,8 +1,12 @@
-// override: true — shell PORT must not win over .env (default host port 7000)
+// override: true — shell PORT must not win over .env; keep Compose DATABASE_URL
+const preservedDatabaseUrl = process.env.DATABASE_URL;
 require('dotenv').config({
   path: require('path').resolve(__dirname, '../.env'),
   override: true,
 });
+if (preservedDatabaseUrl) {
+  process.env.DATABASE_URL = preservedDatabaseUrl;
+}
 
 const express = require('express');
 const cors = require('cors');
