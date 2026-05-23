@@ -297,12 +297,13 @@ async function load() {
     if (edgeTypeFilter.value) params.edge_type = edgeTypeFilter.value;
     const sugParams = { status: 'pending' };
     if (processFilter.value) sugParams.process_type = processFilter.value;
-    const [edgeRows, sugRows] = await Promise.all([
-      get('/graph/edges', { params }),
-      get('/graph/suggestions', { params: sugParams }),
-    ]);
+    const edgeRows = await get('/graph/edges', { params });
     edges.value = edgeRows;
-    suggestions.value = sugRows;
+    try {
+      suggestions.value = await get('/graph/suggestions', { params: sugParams });
+    } catch {
+      suggestions.value = [];
+    }
     if (processFilter.value) {
       const [ctx, exp] = await Promise.all([
         get('/graph/context', { params: { process_type: processFilter.value } }),

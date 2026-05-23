@@ -83,12 +83,38 @@ async function ensureDocumentChunkEmbeddingColumn() {
 }
 
 /**
+ * graph_edge_suggestions + pi_sheets.graph_snapshot (MVP 5.2 RAG suggestions).
+ */
+async function ensureGraphRagSchema() {
+  const [piSheets] = await sequelize.query(
+    `SELECT 1 FROM information_schema.tables
+     WHERE table_schema = 'public' AND table_name = 'pi_sheets'`
+  );
+  if (!piSheets.length) return;
+
+  const [suggestionsTable] = await sequelize.query(
+    `SELECT 1 FROM information_schema.tables
+     WHERE table_schema = 'public' AND table_name = 'graph_edge_suggestions'`
+  );
+  const [snapshotCol] = await sequelize.query(
+    `SELECT 1 FROM information_schema.columns
+     WHERE table_schema = 'public' AND table_name = 'pi_sheets' AND column_name = 'graph_snapshot'`
+  );
+  if (suggestionsTable.length && snapshotCol.length) return;
+
+  const migration = require('../migrations/20250522000015-graph-rag-and-snapshots');
+  const qi = sequelize.getQueryInterface();
+  await migration.up(qi, Sequelize);
+}
+
+/**
  * Test connection and initialize pgvector (tables may not exist yet).
  */
 async function initializeDatabase() {
   await sequelize.authenticate();
   await ensurePgVectorExtension();
   await ensureXStepSapMetadataColumns();
+  await ensureGraphRagSchema();
 }
 
 module.exports = {
@@ -96,6 +122,7 @@ module.exports = {
   ensurePgVectorExtension,
   ensureXStepEmbeddingColumn,
   ensureXStepSapMetadataColumns,
+  ensureGraphRagSchema,
   ensureDocumentChunkEmbeddingColumn,
   initializeDatabase,
 };

@@ -3,10 +3,23 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.addColumn('pi_sheets', 'graph_snapshot', {
-      type: Sequelize.JSONB,
-      allowNull: true,
-    });
+    const [piSheets] = await queryInterface.sequelize.query(
+      `SELECT 1 FROM information_schema.tables
+       WHERE table_schema = 'public' AND table_name = 'pi_sheets'`
+    );
+    if (piSheets.length) {
+      const desc = await queryInterface.describeTable('pi_sheets');
+      if (!desc.graph_snapshot) {
+        await queryInterface.addColumn('pi_sheets', 'graph_snapshot', {
+          type: Sequelize.JSONB,
+          allowNull: true,
+        });
+      }
+    }
+
+    const tables = await queryInterface.showAllTables();
+    const names = tables.map((t) => (typeof t === 'string' ? t : t.tableName || t));
+    if (names.includes('graph_edge_suggestions')) return;
 
     await queryInterface.createTable('graph_edge_suggestions', {
       id: {
@@ -91,17 +104,23 @@ module.exports = {
       },
     });
 
-    await queryInterface.addIndex('graph_edge_suggestions', ['status']);
-    await queryInterface.addIndex('graph_edge_suggestions', ['document_id']);
-    await queryInterface.addIndex(
-      'graph_edge_suggestions',
-      ['process_type', 'edge_type', 'from_ref', 'to_ref', 'status'],
-      { name: 'graph_edge_suggestions_dedupe' }
+    await queryInterface.sequelize.query(
+      'CREATE INDEX IF NOT EXISTS graph_edge_suggestions_status ON graph_edge_suggestions (status);'
+    );
+    await queryInterface.sequelize.query(
+      'CREATE INDEX IF NOT EXISTS graph_edge_suggestions_document_id ON graph_edge_suggestions (document_id);'
+    );
+    await queryInterface.sequelize.query(
+      `CREATE INDEX IF NOT EXISTS graph_edge_suggestions_dedupe
+       ON graph_edge_suggestions (process_type, edge_type, from_ref, to_ref, status);`
     );
   },
 
   async down(queryInterface) {
     await queryInterface.dropTable('graph_edge_suggestions');
-    await queryInterface.removeColumn('pi_sheets', 'graph_snapshot');
+    const desc = await queryInterface.describeTable('pi_sheets').catch(() => null);
+    if (desc?.graph_snapshot) {
+      await queryInterface.removeColumn('pi_sheets', 'graph_snapshot');
+    }
   },
 };
