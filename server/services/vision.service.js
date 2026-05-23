@@ -10,8 +10,12 @@ const embeddingService = require('./embedding.service');
 const llmService = require('./llm.service');
 const { logAudit } = require('./audit.service');
 const { applyLocaleToSystemPrompt, getLlmLocaleConfig } = require('../utils/locale');
+const { getModelConfig } = require('../utils/llmModel');
 
-const MODEL = 'claude-sonnet-4-20250514';
+async function visionLlmParams() {
+  const cfg = await getModelConfig('vision');
+  return { model: cfg.model, max_tokens: cfg.max_tokens };
+}
 const MAX_IMAGE_DIM = 2048;
 const PDF_TEXT_MIN_CHARS = 100;
 const MATCH_DIRECT = 0.85;
@@ -318,9 +322,9 @@ async function runClaudeAnalysis(preprocessed, options = {}) {
     userContent = `${preprocessed.text}\n\n${TEXT_ANALYSIS_PROMPT}`;
   }
 
+  const llmParams = await visionLlmParams();
   const response = await client.messages.create({
-    model: MODEL,
-    max_tokens: 8000,
+    ...llmParams,
     messages: [{ role: 'user', content: userContent }],
   });
 
@@ -342,8 +346,7 @@ async function runClaudeAnalysis(preprocessed, options = {}) {
     const ocrText = await ocrImageBuffer(preprocessed.images[0].buffer);
     if (ocrText.trim().length > 50) {
       const ocrResponse = await client.messages.create({
-        model: MODEL,
-        max_tokens: 8000,
+        ...llmParams,
         messages: [
           {
             role: 'user',
@@ -460,9 +463,9 @@ async function generatePiSheetFromRecognition(recognized, matchResult, locale = 
     },
   };
 
+  const llmParams = await visionLlmParams();
   const response = await client.messages.create({
-    model: MODEL,
-    max_tokens: 8000,
+    ...llmParams,
     system,
     messages: [
       {

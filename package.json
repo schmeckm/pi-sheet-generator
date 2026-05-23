@@ -14,7 +14,7 @@
     "docker:up": "docker compose --profile full up -d --build",
     "docker:down": "docker compose down",
     "docker:logs": "docker compose logs -f",
-    "docker:seed": "docker compose exec api npm run db:seed",
+    "docker:seed": "docker compose exec api npm run db:seed-deploy",
     "docker:seed-graph": "docker compose exec api node seeders/seed-graph.js",
     "db:sync": "npm run db:sync --prefix server",
     "db:seed": "npm run db:seed --prefix server",

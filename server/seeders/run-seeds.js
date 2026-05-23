@@ -1,14 +1,13 @@
+/** @deprecated Use seed-deploy.js — kept for scripts that still call run-seeds */
 require('dotenv').config({ path: require('path').resolve(__dirname, '../../.env') });
 
-const { initializeDatabase } = require('../config/database');
-const { seedAll } = require('./seed-xsteps');
+const { seedDeploy } = require('./seed-deploy');
+const { sequelize } = require('../config/database');
 
 async function run() {
   try {
-    await initializeDatabase();
-    console.log('Running database seeds...');
-    await seedAll();
-    console.log('All seeds completed successfully.');
+    await seedDeploy();
+    await sequelize.close();
     process.exit(0);
   } catch (err) {
     console.error('Seed failed:', err);

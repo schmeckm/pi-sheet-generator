@@ -82,7 +82,7 @@ const DEFAULTS = [
   },
   {
     key: 'llm_max_tokens_vision',
-    value: '2500',
+    value: '8000',
     description: 'Max output tokens for vision / document digitization',
   },
   {

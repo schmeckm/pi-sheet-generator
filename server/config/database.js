@@ -54,6 +54,30 @@ async function ensureXStepEmbeddingColumn() {
   return ensureEmbeddingColumn('xsteps');
 }
 
+/**
+ * XStep model expects sap_system + tags; partial deploys may skip the migration.
+ */
+async function ensureXStepSapMetadataColumns() {
+  const [tables] = await sequelize.query(
+    `SELECT 1 FROM information_schema.tables
+     WHERE table_schema = 'public' AND table_name = 'xsteps'`
+  );
+  if (tables.length === 0) return;
+
+  const [cols] = await sequelize.query(
+    `SELECT column_name FROM information_schema.columns
+     WHERE table_schema = 'public' AND table_name = 'xsteps'
+       AND column_name IN ('sap_system', 'tags')`
+  );
+  const present = new Set(cols.map((r) => r.column_name));
+  if (present.has('sap_system') && present.has('tags')) return;
+
+  const migration = require('../migrations/20250523000001-xstep-sap-system-tags');
+  const qi = sequelize.getQueryInterface();
+  await migration.up(qi, Sequelize);
+}
+
+
 async function ensureDocumentChunkEmbeddingColumn() {
   return ensureEmbeddingColumn('document_chunks');
 }
@@ -64,12 +88,14 @@ async function ensureDocumentChunkEmbeddingColumn() {
 async function initializeDatabase() {
   await sequelize.authenticate();
   await ensurePgVectorExtension();
+  await ensureXStepSapMetadataColumns();
 }
 
 module.exports = {
   sequelize,
   ensurePgVectorExtension,
   ensureXStepEmbeddingColumn,
+  ensureXStepSapMetadataColumns,
   ensureDocumentChunkEmbeddingColumn,
   initializeDatabase,
 };

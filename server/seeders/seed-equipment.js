@@ -109,22 +109,38 @@ const EQUIPMENT = [
   },
 ];
 
-async function main() {
-  await initializeDatabase();
+async function seedEquipment() {
+  let created = 0;
+  let updated = 0;
   for (const row of EQUIPMENT) {
-    const [record, created] = await EquipmentConfig.findOrCreate({
+    const [record, wasCreated] = await EquipmentConfig.findOrCreate({
       where: { equipment_id: row.equipment_id },
       defaults: row,
     });
-    if (!created) {
+    if (wasCreated) created += 1;
+    else {
       await record.update(row);
+      updated += 1;
     }
-    console.log(`${created ? 'Created' : 'Updated'} equipment ${row.equipment_id}`);
   }
+  const total = await EquipmentConfig.count();
+  console.log(
+    `Equipment seed: ${created} created, ${updated} updated (${total} total).`
+  );
+  return { created, updated, total };
+}
+
+async function main() {
+  await initializeDatabase();
+  await seedEquipment();
   await sequelize.close();
 }
 
-main().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+if (require.main === module) {
+  main().catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
+}
+
+module.exports = { EQUIPMENT, seedEquipment };

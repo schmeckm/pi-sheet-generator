@@ -79,7 +79,7 @@ const SEED_EDGES = [
   ...followEdges('Abfüllung', ['XS-AF-001', 'XS-AF-002', 'XS-AF-003', 'XS-AF-004']),
 ];
 
-async function main() {
+async function seedGraph() {
   await initializeDatabase();
 
   const removedVp = await ProcessGraphEdge.destroy({
@@ -108,11 +108,26 @@ async function main() {
     else skipped += 1;
   }
 
-  console.log(`Process graph seed: ${created} created, ${skipped} already present.`);
-  await sequelize.close();
+  const total = await ProcessGraphEdge.count();
+  console.log(
+    `Process graph seed: ${created} created, ${skipped} already present (${total} edges total).`
+  );
+  return { created, skipped, total };
 }
 
-main().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+async function main() {
+  try {
+    await seedGraph();
+    await sequelize.close();
+    process.exit(0);
+  } catch (err) {
+    console.error('Process graph seed failed:', err);
+    process.exit(1);
+  }
+}
+
+if (require.main === module) {
+  main();
+}
+
+module.exports = { SEED_EDGES, seedGraph };

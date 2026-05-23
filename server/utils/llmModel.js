@@ -6,11 +6,27 @@
 const settingsService = require('../services/settings.service');
 const { createTtlCache } = require('./ttlCache');
 
+/** Curated allowlist for admin settings (also merged with live API model list). */
+const ALLOWED_MODELS = [
+  'claude-sonnet-4-20250514',
+  'claude-haiku-4-20250514',
+  'claude-opus-4-20250514',
+  'claude-sonnet-4-6',
+  'claude-haiku-4-5-20251001',
+  'claude-3-5-haiku-latest',
+  'claude-3-5-sonnet-latest',
+];
+
 const DEFAULTS = {
   pi_sheet: { model: 'claude-sonnet-4-20250514', max_tokens: 2500 },
   qa: { model: 'claude-haiku-4-20250514', max_tokens: 1500 },
-  vision: { model: 'claude-sonnet-4-20250514', max_tokens: 2500 },
+  vision: { model: 'claude-sonnet-4-20250514', max_tokens: 8000 },
 };
+
+function isAllowedModel(modelId) {
+  const id = String(modelId || '').trim();
+  return id.length > 0 && (ALLOWED_MODELS.includes(id) || /^claude-[a-z0-9.-]+$/i.test(id));
+}
 
 const SETTING_KEYS = {
   pi_sheet: { model: 'llm_model_pi_sheet', tokens: 'llm_max_tokens_pi_sheet' },
@@ -58,4 +74,11 @@ function invalidate() {
   cache.invalidate();
 }
 
-module.exports = { getModelConfig, invalidate, DEFAULTS };
+module.exports = {
+  getModelConfig,
+  invalidate,
+  DEFAULTS,
+  ALLOWED_MODELS,
+  isAllowedModel,
+  SETTING_KEYS,
+};

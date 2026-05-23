@@ -27,6 +27,105 @@
       </section>
 
       <section class="sap-tile p-6">
+        <h2 class="text-lg font-semibold">{{ t('settings.llmTitle') }}</h2>
+        <p class="mt-1 text-sm text-[var(--sapContentLabelColor)]">{{ t('settings.llmHint') }}</p>
+
+        <div class="mt-4 flex flex-wrap gap-4 text-sm">
+          <span
+            class="rounded px-2 py-1"
+            :class="llmOverview?.api?.configured ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'"
+          >
+            {{
+              llmOverview?.api?.configured
+                ? t('settings.llmKeyOk', { hint: llmOverview.api.key_hint || '' })
+                : t('settings.llmKeyMissing')
+            }}
+          </span>
+          <span v-if="llmOverview?.api?.configured" class="text-[var(--sapContentLabelColor)]">
+            {{
+              llmOverview.api.reachable ? t('settings.llmReachable') : t('settings.llmUnreachable')
+            }}
+          </span>
+        </div>
+
+        <div class="mt-6 grid gap-4 lg:grid-cols-3">
+          <label class="block">
+            <span class="sap-label">{{ t('settings.llmModelPiSheet') }}</span>
+            <select v-model="form.llm_model_pi_sheet" class="sap-input">
+              <option v-for="m in modelOptions" :key="m" :value="m">{{ m }}</option>
+            </select>
+          </label>
+          <label class="block">
+            <span class="sap-label">{{ t('settings.llmModelQa') }}</span>
+            <select v-model="form.llm_model_qa" class="sap-input">
+              <option v-for="m in modelOptions" :key="m" :value="m">{{ m }}</option>
+            </select>
+          </label>
+          <label class="block">
+            <span class="sap-label">{{ t('settings.llmModelVision') }}</span>
+            <select v-model="form.llm_model_vision" class="sap-input">
+              <option v-for="m in modelOptions" :key="m" :value="m">{{ m }}</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <label class="block">
+            <span class="sap-label">{{ t('settings.llmMaxTokensPi') }}</span>
+            <input v-model.number="form.llm_max_tokens_pi_sheet" type="number" min="256" max="8000" class="sap-input" />
+          </label>
+          <label class="block">
+            <span class="sap-label">{{ t('settings.llmMaxTokensQa') }}</span>
+            <input v-model.number="form.llm_max_tokens_qa" type="number" min="256" max="8000" class="sap-input" />
+          </label>
+          <label class="block">
+            <span class="sap-label">{{ t('settings.llmMaxTokensVision') }}</span>
+            <input v-model.number="form.llm_max_tokens_vision" type="number" min="256" max="8000" class="sap-input" />
+          </label>
+          <label class="block">
+            <span class="sap-label">{{ t('settings.llmDailyBudget') }}</span>
+            <input v-model.number="form.llm_token_budget_daily_per_user" type="number" min="0" step="1000" class="sap-input" />
+            <span class="mt-1 block text-xs text-[var(--sapContentLabelColor)]">{{ t('settings.llmDailyBudgetHint') }}</span>
+          </label>
+        </div>
+
+        <div v-if="llmOverview?.budget" class="mt-6 rounded border border-[var(--sapGroup_ContentBorderColor)] p-4 text-sm">
+          <h3 class="font-semibold">{{ t('settings.llmUsageTitle') }}</h3>
+          <ul class="mt-2 space-y-1 text-[var(--sapContentLabelColor)]">
+            <li>
+              {{ t('settings.llmUsageYou') }}:
+              <strong class="text-[var(--sapTextColor)]">
+                <template v-if="llmOverview.budget.user.unlimited">{{ t('settings.llmUnlimited') }}</template>
+                <template v-else>
+                  {{ formatNum(llmOverview.budget.user.used) }} /
+                  {{ formatNum(llmOverview.budget.user.budget) }}
+                  ({{ t('settings.llmRemaining', { n: formatNum(llmOverview.budget.user.remaining) }) }})
+                </template>
+              </strong>
+            </li>
+            <li>
+              {{ t('settings.llmUsageOrg') }}:
+              <strong class="text-[var(--sapTextColor)]">
+                {{ formatNum(llmOverview.budget.organization_today?.total_tokens) }}
+                {{ t('settings.llmTokens') }}
+                ({{ llmOverview.budget.organization_today?.active_users || 0 }}
+                {{ t('settings.llmUsers') }})
+              </strong>
+            </li>
+          </ul>
+          <p class="mt-3 text-xs">{{ t('settings.llmAnthropicBalanceNote') }}</p>
+          <p
+            v-if="llmOverview.anthropic_account?.usage_last_7d?.available"
+            class="mt-2 text-xs text-[var(--sapTextColor)]"
+          >
+            {{ t('settings.llmAnthropicUsage7d', {
+              tokens: formatNum(llmOverview.anthropic_account.usage_last_7d.total_tokens),
+            }) }}
+          </p>
+        </div>
+      </section>
+
+      <section class="sap-tile p-6">
         <div class="flex flex-wrap items-center justify-between gap-4">
           <div>
             <h2 class="text-lg font-semibold">{{ t('settings.sapTitle') }}</h2>
@@ -85,7 +184,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { get, put, post } from '@/composables/useApi';
 import { useToast } from '@/composables/useToast';
@@ -103,6 +202,7 @@ const syncing = ref(false);
 const testMsg = ref('');
 const testOk = ref(false);
 const sapStatus = ref(null);
+const llmOverview = ref(null);
 
 const form = ref({
   sap_integration_enabled: false,
@@ -110,7 +210,30 @@ const form = ref({
   sap_connection_type: 'mock',
   sap_auto_sync: false,
   sap_sync_interval_minutes: 60,
+  llm_model_pi_sheet: 'claude-sonnet-4-20250514',
+  llm_model_qa: 'claude-haiku-4-20250514',
+  llm_model_vision: 'claude-sonnet-4-20250514',
+  llm_max_tokens_pi_sheet: 2500,
+  llm_max_tokens_qa: 1500,
+  llm_max_tokens_vision: 8000,
+  llm_token_budget_daily_per_user: 250000,
 });
+
+const modelOptions = computed(() => {
+  const fromApi = llmOverview.value?.models?.selectable;
+  if (Array.isArray(fromApi) && fromApi.length) return fromApi;
+  return [
+    form.value.llm_model_pi_sheet,
+    form.value.llm_model_qa,
+    form.value.llm_model_vision,
+  ].filter(Boolean);
+});
+
+function formatNum(n) {
+  const v = Number(n);
+  if (!Number.isFinite(v)) return '—';
+  return v.toLocaleString();
+}
 
 function loadLocaleFromUser() {
   const loc = auth.user?.preferred_locale;
@@ -131,7 +254,18 @@ async function load() {
   try {
     await auth.ensureProfile();
     loadLocaleFromUser();
-    const all = await get('/settings');
+    const [all, llm] = await Promise.all([get('/settings'), get('/settings/llm')]);
+    llmOverview.value = llm;
+    form.value.llm_model_pi_sheet =
+      all.llm_model_pi_sheet || llm?.models?.pi_sheet?.model || form.value.llm_model_pi_sheet;
+    form.value.llm_model_qa = all.llm_model_qa || llm?.models?.qa?.model || form.value.llm_model_qa;
+    form.value.llm_model_vision =
+      all.llm_model_vision || llm?.models?.vision?.model || form.value.llm_model_vision;
+    form.value.llm_max_tokens_pi_sheet = Number(all.llm_max_tokens_pi_sheet) || llm?.models?.pi_sheet?.max_tokens || 2500;
+    form.value.llm_max_tokens_qa = Number(all.llm_max_tokens_qa) || llm?.models?.qa?.max_tokens || 1500;
+    form.value.llm_max_tokens_vision = Number(all.llm_max_tokens_vision) || llm?.models?.vision?.max_tokens || 8000;
+    form.value.llm_token_budget_daily_per_user =
+      Number(all.llm_token_budget_daily_per_user) || llm?.budget?.daily_per_user || 250000;
     form.value.sap_integration_enabled = all.sap_integration_enabled === 'true';
     form.value.sap_mcp_url = all.sap_mcp_url || form.value.sap_mcp_url;
     form.value.sap_connection_type = all.sap_connection_type || 'mock';
@@ -153,6 +287,13 @@ async function saveAll() {
       sap_connection_type: form.value.sap_connection_type,
       sap_auto_sync: form.value.sap_auto_sync,
       sap_sync_interval_minutes: String(form.value.sap_sync_interval_minutes),
+      llm_model_pi_sheet: form.value.llm_model_pi_sheet,
+      llm_model_qa: form.value.llm_model_qa,
+      llm_model_vision: form.value.llm_model_vision,
+      llm_max_tokens_pi_sheet: String(form.value.llm_max_tokens_pi_sheet),
+      llm_max_tokens_qa: String(form.value.llm_max_tokens_qa),
+      llm_max_tokens_vision: String(form.value.llm_max_tokens_vision),
+      llm_token_budget_daily_per_user: String(form.value.llm_token_budget_daily_per_user),
     });
     for (const [key, value] of entries) {
       await put(`/settings/${key}`, { value });

@@ -10,6 +10,7 @@ const scripts = [
   'apply-graph-migration.js',
   'apply-graph-rag-migration.js',
   'apply-plant-migration.js',
+  'apply-sap-metadata-migration.js',
 ];
 
 const serverRoot = path.join(__dirname, '..');

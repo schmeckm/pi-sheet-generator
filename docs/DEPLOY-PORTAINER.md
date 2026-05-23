@@ -60,9 +60,19 @@ Repository auf **Public** stellen, damit Portainer ohne Login pullen kann — od
 **Demo-Login** (wenn `AUTO_SEED=true`):  
 `admin@pisheet.local` / `admin123`
 
-`AUTO_SEED` nach erstem erfolgreichen Start auf `false` setzen und Stack **Update** ausführen.
+`AUTO_SEED` nach erstem erfolgreichen Start auf `false` setzen und Stack **Update** ausführen (verhindert erneutes Überschreiben der Demo-XSteps).
 
-`AUTO_SEED` legt Users, XSteps, Settings und **Demo-Equipment** (3 Geräte, Simulation) an. Fehlen Geräte nach älterem Image: einmalig im API-Container `node seeders/seed-equipment.js` ausführen (siehe unten).
+Bei **jedem** API-Start läuft nach den Migrationen **`seed-deploy.js`** (idempotent):
+
+| Immer | Nur bei `AUTO_SEED=true` (oder leerer DB ohne User) |
+|-------|------------------------------------------------------|
+| System-Settings, Prozessgraph, Demo-Equipment (6 Geräte) | Demo-User, Prompt-Configs, 24 XSteps |
+
+Manuell im API-Container:
+
+```bash
+docker exec -it <api-container-name> node seeders/seed-deploy.js
+```
 
 ---
 
@@ -183,6 +193,7 @@ Danach:
 | `ENOTFOUND db` | Vollen Stack deployen; nicht nur API-Container isoliert starten |
 | CORS-Fehler | `CORS_ORIGINS` um Ihre URL ergänzen (z. B. `http://192.168.1.5:7004`) |
 | Keine KI-Antwort | `ANTHROPIC_API_KEY` in Stack-Env |
+| Prozessgraph / XSteps leer | API-Logs: `=== Deploy seed` / Fehlerzeilen; `docker exec … node seeders/seed-deploy.js`; Image `latest` pullen |
 
 ---
 

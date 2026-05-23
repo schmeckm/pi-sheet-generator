@@ -10,12 +10,8 @@ if ! npx sequelize-cli db:migrate; then
   node scripts/apply-pending-migrations.js || true
 fi
 
-if [ "${AUTO_SEED}" = "true" ]; then
-  echo "Seeding database (AUTO_SEED=true)..."
-  node seeders/seed-xsteps.js || true
-  node seeders/seed-equipment.js || true
-  node seeders/seed-graph.js || true
-fi
+echo "Deploy seed (settings, graph, equipment, demo data)..."
+node seeders/seed-deploy.js
 
 echo "Starting API server..."
 exec node index.js

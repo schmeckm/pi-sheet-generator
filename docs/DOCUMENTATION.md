@@ -243,7 +243,7 @@ flowchart TB
 | `SAP_MCP_ENABLED` | Optional | `true` für Live-Equipment über MCP |
 | `SAP_MCP_URL` | Optional | MCP-SSE-URL; Admin-Setting hat Vorrang |
 | `SAP_MCP_AUTH_TOKEN` | Optional | Bearer für geschützten MCP-Server |
-| `AUTO_SEED` | Docker | `true` = Demo-User/XSteps beim Container-Start |
+| `AUTO_SEED` | Docker | `true` = Demo-User/XSteps; immer: `seed-deploy.js` (Settings, Graph, Equipment) |
 | `VITE_DEV_PORT` / `VITE_API_URL` | Lokal | Vite (7002); API-Pfad `/api` mit Proxy |
 
 **Niemals committen:** `.env`, API-Keys, `login.json`.
