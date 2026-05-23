@@ -18,9 +18,12 @@
 
     <SkeletonBlock v-if="loading" :lines="10" wrapper-class="sap-tile p-6" />
 
-    <div v-else class="grid min-h-[calc(100vh-10rem)] gap-4 lg:grid-cols-[minmax(240px,280px)_1fr]">
+    <div v-else class="prompt-config__layout grid min-h-0 gap-4 lg:grid-cols-[minmax(240px,280px)_1fr]">
       <!-- Config list -->
-      <aside class="sap-tile flex flex-col overflow-hidden p-0">
+      <aside
+        class="sap-tile flex flex-col overflow-hidden p-0"
+        :class="isMobile && mobileView === 'detail' ? 'hidden lg:flex' : 'flex'"
+      >
         <div class="border-b border-[var(--sapNeutralBorderColor)] px-4 py-3">
           <p class="text-xs font-semibold uppercase tracking-wide text-[var(--sapContentLabelColor)]">
             {{ t('promptConfig.listTitle') }}
@@ -60,11 +63,24 @@
       </aside>
 
       <!-- Editor panel -->
-      <section v-if="active" class="sap-tile flex min-h-0 flex-col overflow-hidden p-0">
+      <section
+        v-if="active"
+        class="sap-tile flex min-h-0 flex-col overflow-hidden p-0"
+        :class="isMobile && mobileView === 'list' ? 'hidden lg:flex' : 'flex'"
+      >
         <div
           class="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--sapNeutralBorderColor)] px-4 py-3"
         >
-          <div class="min-w-0">
+          <div class="flex min-w-0 items-center gap-2">
+            <button
+              v-if="isMobile && mobileView === 'detail'"
+              type="button"
+              class="sap-btn sap-btn--transparent sap-touch-target !text-sm lg:!hidden"
+              @click="backToList"
+            >
+              ← {{ t('common.back') }}
+            </button>
+            <div class="min-w-0">
             <div class="flex flex-wrap items-center gap-2">
               <h2 class="truncate text-lg font-bold">{{ active.name }}</h2>
               <span
@@ -83,6 +99,7 @@
             <p class="mt-0.5 text-xs text-[var(--sapContentLabelColor)]">
               {{ t('promptConfig.meta', { chars: charCount, lines: lineCount }) }}
             </p>
+            </div>
           </div>
           <div class="flex flex-wrap gap-2">
             <button
@@ -274,12 +291,15 @@ import { useConfirm } from '@/composables/useConfirm';
 import SkeletonBlock from '@/components/shared/SkeletonBlock.vue';
 import PromptEditor from '@/components/admin/PromptEditor.vue';
 import PromptComparePanel from '@/components/admin/PromptComparePanel.vue';
+import { useBreakpoint, LG_DOWN } from '@/composables/useBreakpoint';
 import TokenUsageLine from '@/components/shared/TokenUsageLine.vue';
 
 const { t, locale } = useI18n();
 const auth = useAuthStore();
 const toast = useToast();
 const confirm = useConfirm();
+const { matches: isMobile } = useBreakpoint(LG_DOWN);
+const mobileView = ref('list');
 
 const prompts = ref([]);
 const loadError = ref('');
@@ -401,6 +421,11 @@ async function select(p, opts = {}) {
   testResult.value = '';
   panel.value = 'editor';
   loadHistory(p.id);
+  if (isMobile.value) mobileView.value = 'detail';
+}
+
+function backToList() {
+  mobileView.value = 'list';
 }
 
 async function revertEdits() {

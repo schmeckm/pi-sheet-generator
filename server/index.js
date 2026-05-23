@@ -32,6 +32,7 @@ const graphRoutes = require('./routes/graph.routes');
 const plantRoutes = require('./routes/plant.routes');
 const { attachEquipmentWebSocket, closeEquipmentWebSocket } = require('./websocket/equipment.ws');
 const equipmentGateway = require('./services/equipment/gateway.service');
+const { getHealth } = require('./services/health.service');
 
 const app = express();
 const PORT = process.env.PORT || 7000;
@@ -73,8 +74,19 @@ const chatLimiter = rateLimit({
   message: { error: 'Chat generation limit reached. Please try again later.' },
 });
 
-app.get('/api/health', (_req, res) => {
-  res.json({ status: 'ok', service: 'pi-sheet-generator' });
+app.get('/api/health', async (_req, res) => {
+  try {
+    const payload = await getHealth();
+    const code = payload.status === 'down' ? 503 : 200;
+    res.status(code).json(payload);
+  } catch (err) {
+    res.status(503).json({
+      status: 'down',
+      service: 'pi-sheet-generator',
+      error: err.message,
+      checks: { api: { ok: false } },
+    });
+  }
 });
 
 app.use('/api/auth/login', loginLimiter);

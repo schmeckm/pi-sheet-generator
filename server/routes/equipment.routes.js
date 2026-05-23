@@ -108,6 +108,14 @@ router.get('/debug/log', roles('admin'), async (req, res, next) => {
   }
 });
 
+router.get('/status-summary', async (_req, res, next) => {
+  try {
+    res.json(await gateway.getStatusSummary());
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.get('/:id/status', async (req, res, next) => {
   try {
     const config = await gateway.findConfigById(req.params.id);

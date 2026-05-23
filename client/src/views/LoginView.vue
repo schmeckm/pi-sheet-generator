@@ -1,5 +1,5 @@
 <template>
-  <div class="sap-login-page sap-shell--joule flex min-h-screen flex-col bg-[var(--sapBackgroundColor)]">
+  <div class="sap-login-page sap-shell--joule flex h-full max-h-[100dvh] flex-col overflow-auto bg-[var(--sapBackgroundColor)]">
     <header class="sap-shell-bar !shadow-none">
       <div class="sap-shell-bar__brand">
         <div class="sap-shell-bar__logo">SAP</div>

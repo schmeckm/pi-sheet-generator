@@ -113,7 +113,7 @@
       </form>
     </div>
 
-    <div v-if="suggestions.length" class="sap-tile mb-6 overflow-x-auto">
+    <div v-if="suggestions.length" class="sap-tile mb-6">
       <h2 class="mb-2 p-4 pb-0 text-sm font-semibold">
         {{ t('graph.suggestionsTitle') }}
         <span class="ml-2 rounded bg-amber-100 px-2 py-0.5 text-xs text-amber-900">
@@ -121,6 +121,34 @@
         </span>
       </h2>
       <p class="px-4 pb-2 text-xs text-[var(--sapContentLabelColor)]">{{ t('graph.suggestionsHint') }}</p>
+      <div class="space-y-3 p-3 md:hidden">
+        <article v-for="s in suggestions" :key="s.id" class="sap-mobile-card">
+          <p class="text-xs text-[var(--sapContentLabelColor)]">
+            {{ s.document?.title || s.document?.filename || '—' }}
+          </p>
+          <div class="sap-mobile-card__row">
+            <span class="sap-mobile-card__label">{{ t('graph.colType') }}</span>
+            <span>{{ t(`graph.edgeTypes.${s.edge_type}`, s.edge_type) }}</span>
+          </div>
+          <div class="sap-mobile-card__row">
+            <span class="sap-mobile-card__label">{{ t('graph.colFrom') }}</span>
+            <span class="font-mono text-xs break-all">{{ s.from_ref }}</span>
+          </div>
+          <div class="sap-mobile-card__row">
+            <span class="sap-mobile-card__label">{{ t('graph.colTo') }}</span>
+            <span class="font-mono text-xs break-all">{{ s.to_ref }}</span>
+          </div>
+          <div class="sap-mobile-card__actions">
+            <button type="button" class="sap-btn sap-btn--emphasized !min-h-11 !text-sm" @click="approveSuggestion(s)">
+              {{ t('graph.approveSuggestion') }}
+            </button>
+            <button type="button" class="sap-btn sap-btn--transparent !min-h-11 !text-sm" @click="rejectSuggestion(s)">
+              {{ t('graph.rejectSuggestion') }}
+            </button>
+          </div>
+        </article>
+      </div>
+      <div class="hidden overflow-x-auto md:block">
       <table class="w-full min-w-[800px] text-left text-sm">
         <thead>
           <tr class="border-b text-[var(--sapContentLabelColor)]">
@@ -162,6 +190,7 @@
           </tr>
         </tbody>
       </table>
+      </div>
     </div>
 
     <h2 v-if="!loading" class="mb-2 text-sm font-semibold">{{ t('graph.confirmedEdges') }}</h2>
@@ -172,7 +201,33 @@
       {{ t('graph.empty') }}
     </div>
 
-    <div v-else class="sap-tile overflow-x-auto">
+    <div v-else class="sap-tile overflow-hidden">
+      <div class="space-y-3 p-3 md:hidden">
+        <article v-for="row in edges" :key="row.id" class="sap-mobile-card">
+          <div class="sap-mobile-card__row">
+            <span class="sap-mobile-card__label">{{ t('graph.colProcess') }}</span>
+            <span>{{ row.process_type }}</span>
+          </div>
+          <div class="sap-mobile-card__row">
+            <span class="sap-mobile-card__label">{{ t('graph.colType') }}</span>
+            <span>{{ t(`graph.edgeTypes.${row.edge_type}`, row.edge_type) }}</span>
+          </div>
+          <div class="sap-mobile-card__row">
+            <span class="sap-mobile-card__label">{{ t('graph.colFrom') }}</span>
+            <span class="font-mono text-xs break-all">{{ row.from_ref }}</span>
+          </div>
+          <div class="sap-mobile-card__row">
+            <span class="sap-mobile-card__label">{{ t('graph.colTo') }}</span>
+            <span class="font-mono text-xs break-all">{{ row.to_ref }}</span>
+          </div>
+          <div class="sap-mobile-card__actions">
+            <button type="button" class="sap-btn sap-btn--negative !min-h-11 !text-sm" @click="removeEdge(row)">
+              {{ t('graph.deleteEdge') }}
+            </button>
+          </div>
+        </article>
+      </div>
+      <div class="hidden overflow-x-auto md:block">
       <table class="w-full min-w-[720px] text-left text-sm">
         <thead>
           <tr class="border-b text-[var(--sapContentLabelColor)]">
@@ -205,6 +260,7 @@
           </tr>
         </tbody>
       </table>
+      </div>
     </div>
   </div>
 </template>

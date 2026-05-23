@@ -68,7 +68,66 @@
 
     <div v-if="loading" class="mt-8 text-slate-500">{{ t('common.loading') }}</div>
 
-    <div v-else class="mt-8 overflow-x-auto rounded-lg border bg-white shadow-sm">
+    <div v-else class="mt-8 sap-tile overflow-hidden">
+      <div v-if="!documents.length" class="p-8 text-center text-sm text-slate-500">
+        {{ t('knowledge.empty') }}
+      </div>
+      <template v-else>
+        <div class="space-y-3 p-3 md:hidden">
+          <article v-for="doc in documents" :key="doc.id" class="sap-mobile-card">
+            <p class="font-medium text-slate-800">
+              {{ doc.title }}
+              <span
+                v-if="isDuplicateTitle(doc)"
+                class="ml-1 inline-flex rounded bg-amber-100 px-1.5 py-0.5 text-xs text-amber-900"
+              >
+                {{ t('knowledge.duplicateHint') }}
+              </span>
+            </p>
+            <p class="mt-1 text-xs text-slate-500">{{ doc.filename }}</p>
+            <div class="sap-mobile-card__row">
+              <span class="sap-mobile-card__label">{{ t('knowledge.colUploaded') }}</span>
+              <span>{{ formatDate(doc.created_at) }}</span>
+            </div>
+            <div class="sap-mobile-card__row">
+              <span class="sap-mobile-card__label">{{ t('knowledge.colType') }}</span>
+              <span class="uppercase">{{ doc.file_type }}</span>
+            </div>
+            <div class="sap-mobile-card__row">
+              <span class="sap-mobile-card__label">{{ t('knowledge.colCategory') }}</span>
+              <select
+                :value="doc.category || ''"
+                class="sap-input !text-sm"
+                @change="updateCategory(doc, $event.target.value)"
+              >
+                <option value="">{{ t('knowledge.none') }}</option>
+                <option v-for="c in categories" :key="c" :value="c">{{ c }}</option>
+              </select>
+            </div>
+            <div class="sap-mobile-card__row">
+              <span class="sap-mobile-card__label">{{ t('knowledge.processType') }}</span>
+              <span>{{ doc.process_type || '—' }}</span>
+            </div>
+            <div class="sap-mobile-card__row">
+              <span class="sap-mobile-card__label">{{ t('knowledge.colStatus') }}</span>
+              <span
+                class="inline-flex rounded-full px-2 py-0.5 text-xs font-medium"
+                :class="statusClass(doc.status)"
+              >
+                {{ t(`knowledge.status.${doc.status}`) }}
+              </span>
+            </div>
+            <p v-if="doc.status === 'error' && doc.error_message" class="text-xs text-red-600">
+              {{ doc.error_message }}
+            </p>
+            <div class="sap-mobile-card__actions">
+              <button type="button" class="sap-btn sap-btn--transparent !min-h-11 !text-sm text-red-700" @click="confirmDelete(doc)">
+                {{ t('knowledge.delete') }}
+              </button>
+            </div>
+          </article>
+        </div>
+        <div class="hidden overflow-x-auto md:block">
       <table class="min-w-full text-left text-sm">
         <thead class="border-b bg-slate-50 text-slate-600">
           <tr>
@@ -132,13 +191,10 @@
               </button>
             </td>
           </tr>
-          <tr v-if="!documents.length">
-            <td colspan="10" class="px-4 py-8 text-center text-slate-500">
-              {{ t('knowledge.empty') }}
-            </td>
-          </tr>
         </tbody>
       </table>
+        </div>
+      </template>
     </div>
   </div>
 </template>

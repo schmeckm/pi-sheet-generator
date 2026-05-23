@@ -2,39 +2,32 @@
   <footer class="sap-status-bar" role="contentinfo" :aria-label="t('statusBar.ariaLabel')">
     <div class="sap-status-bar__group">
       <span
-        class="sap-status-bar__chip"
-        :class="apiOnline ? 'sap-status-bar__chip--ok' : 'sap-status-bar__chip--err'"
-        :title="apiTitle"
+        class="sap-status-bar__chip sap-status-bar__chip--health"
+        :class="healthChipClass"
+        :title="healthTitle"
       >
         <span class="sap-status-bar__dot" />
-        API · {{ apiOnline ? t('statusBar.online') : t('statusBar.offline') }}
+        {{ t('statusBar.health') }} · {{ healthLabel }}
       </span>
 
-      <template v-if="auth.isAdmin">
-        <span class="sap-status-bar__sep" aria-hidden="true">·</span>
-        <span class="sap-status-bar__chip" :title="t('statusBar.equipmentTooltip')">
-          <svg class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-            <path d="M4 4h4v4H4zM12 4h4v4h-4zM4 12h4v4H4zM12 12h4v4h-4z" />
-          </svg>
-          EQ
-          <span class="text-green-300">{{ equipmentOnline }}</span>
-          <span class="text-[var(--sapContentLabelColor)]">/</span>
-          <span class="text-red-300">{{ equipmentOffline }}</span>
-          <span v-if="equipmentSim" class="text-amber-300">· SIM {{ equipmentSim }}</span>
-        </span>
+      <span class="sap-status-bar__sep" aria-hidden="true">·</span>
+      <span
+        class="sap-status-bar__chip"
+        :class="dbOnline ? 'sap-status-bar__chip--ok' : 'sap-status-bar__chip--err'"
+        :title="dbTitle"
+      >
+        {{ dbOnline ? t('statusBar.dbOk') : t('statusBar.dbDown') }}
+      </span>
 
-        <span v-if="protocolChips.length" class="sap-status-bar__sep" aria-hidden="true">·</span>
-        <span
-          v-for="p in protocolChips"
-          :key="p.key"
-          class="sap-status-bar__chip"
-          :class="p.online ? 'sap-status-bar__chip--ok' : 'sap-status-bar__chip--muted'"
-          :title="p.tooltip"
-        >
-          <span class="sap-status-bar__dot" />
-          {{ p.label }}
-        </span>
-      </template>
+      <span class="sap-status-bar__sep" aria-hidden="true">·</span>
+      <span
+        class="sap-status-bar__chip"
+        :class="llmOnline ? 'sap-status-bar__chip--ok' : 'sap-status-bar__chip--warn'"
+        :title="llmTitle"
+      >
+        {{ llmOnline ? t('statusBar.llmOk') : t('statusBar.llmMissing') }}
+      </span>
+
     </div>
 
     <div class="sap-status-bar__group sap-status-bar__group--end">
@@ -60,7 +53,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { get } from '@/composables/useApi';
 import { useAuthStore } from '@/stores/auth';
@@ -68,62 +61,57 @@ import { useAuthStore } from '@/stores/auth';
 const { t, locale } = useI18n();
 const auth = useAuthStore();
 
-const apiOnline = ref(false);
+const health = ref(null);
 const apiCheckedAt = ref(null);
-const equipmentList = ref([]);
 const clock = ref('');
 const now = ref(new Date());
 
 let healthTimer = null;
-let equipmentTimer = null;
 let clockTimer = null;
 
-const PROTOCOL_LABELS = {
-  opcua: 'OPC UA',
-  mqtt: 'MQTT',
-  uns_sparkplug: 'UNS',
-  simulation: 'SIM',
-};
-
-const equipmentOnline = computed(
-  () => equipmentList.value.filter((e) => e.status?.online).length
-);
-const equipmentOffline = computed(
-  () => equipmentList.value.length - equipmentOnline.value
-);
-const equipmentSim = computed(
-  () =>
-    equipmentList.value.filter(
-      (e) => e.connection_type === 'simulation' || e.status?.fallback
-    ).length
-);
-
-const protocolChips = computed(() => {
-  const buckets = new Map();
-  for (const eq of equipmentList.value) {
-    const type = eq.connection_type;
-    if (!type || type === 'simulation') continue;
-    if (!buckets.has(type)) buckets.set(type, { total: 0, online: 0 });
-    const b = buckets.get(type);
-    b.total += 1;
-    if (eq.status?.online) b.online += 1;
-  }
-  return [...buckets.entries()].map(([key, val]) => ({
-    key,
-    label: `${PROTOCOL_LABELS[key] || key.toUpperCase()} ${val.online}/${val.total}`,
-    online: val.online > 0,
-    tooltip: t('statusBar.protocolTooltip', {
-      protocol: PROTOCOL_LABELS[key] || key,
-      online: val.online,
-      total: val.total,
-    }),
-  }));
+const healthStatus = computed(() => {
+  if (!health.value) return 'unknown';
+  return health.value.status || 'unknown';
 });
 
-const apiTitle = computed(() =>
-  apiCheckedAt.value
-    ? t('statusBar.apiTooltip', { time: formatTime(apiCheckedAt.value) })
-    : t('statusBar.apiTooltipPending')
+const dbOnline = computed(() => health.value?.checks?.database?.ok === true);
+const llmOnline = computed(() => health.value?.checks?.llm?.ok === true);
+
+const healthLabel = computed(() => {
+  const map = {
+    healthy: t('statusBar.healthHealthy'),
+    degraded: t('statusBar.healthDegraded'),
+    down: t('statusBar.healthDown'),
+  };
+  return map[healthStatus.value] || t('statusBar.healthUnknown');
+});
+
+const healthChipClass = computed(() => {
+  if (healthStatus.value === 'healthy') return 'sap-status-bar__chip--ok';
+  if (healthStatus.value === 'degraded') return 'sap-status-bar__chip--warn';
+  if (healthStatus.value === 'down') return 'sap-status-bar__chip--err';
+  return 'sap-status-bar__chip--muted';
+});
+
+const healthTitle = computed(() => {
+  if (!apiCheckedAt.value) return t('statusBar.healthTooltipPending');
+  return t('statusBar.healthTooltip', {
+    db: dbOnline.value ? t('statusBar.dbOk') : t('statusBar.dbDown'),
+    llm: llmOnline.value ? t('statusBar.llmOk') : t('statusBar.llmMissing'),
+    time: formatTime(apiCheckedAt.value),
+  });
+});
+
+const dbTitle = computed(() =>
+  health.value?.checks?.database?.latencyMs != null
+    ? `${t('statusBar.dbOk')} · ${health.value.checks.database.latencyMs} ms`
+    : dbOnline.value
+      ? t('statusBar.dbOk')
+      : t('statusBar.dbDown')
+);
+
+const llmTitle = computed(() =>
+  llmOnline.value ? t('statusBar.llmOk') : t('statusBar.llmMissing')
 );
 
 const nowTitle = computed(() => now.value.toLocaleString(localeTag.value));
@@ -143,53 +131,23 @@ function updateClock() {
 
 async function pollHealth() {
   try {
-    await get('/health');
-    apiOnline.value = true;
+    health.value = await get('/health');
   } catch {
-    apiOnline.value = false;
+    health.value = { status: 'down', checks: { database: { ok: false }, llm: { ok: false } } };
   } finally {
     apiCheckedAt.value = new Date();
   }
 }
 
-async function pollEquipment() {
-  if (!auth.isAdmin) {
-    equipmentList.value = [];
-    return;
-  }
-  try {
-    const data = await get('/equipment');
-    equipmentList.value = Array.isArray(data) ? data : [];
-  } catch {
-    equipmentList.value = [];
-  }
-}
-
-watch(
-  () => auth.isAuthenticated,
-  (val) => {
-    if (val) pollEquipment();
-    else equipmentList.value = [];
-  }
-);
-
-watch(
-  () => auth.isAdmin,
-  () => pollEquipment()
-);
-
 onMounted(() => {
   updateClock();
   pollHealth();
-  pollEquipment();
   healthTimer = setInterval(pollHealth, 15000);
-  equipmentTimer = setInterval(pollEquipment, 20000);
   clockTimer = setInterval(updateClock, 30000);
 });
 
 onUnmounted(() => {
   if (healthTimer) clearInterval(healthTimer);
-  if (equipmentTimer) clearInterval(equipmentTimer);
   if (clockTimer) clearInterval(clockTimer);
 });
 </script>
@@ -197,7 +155,7 @@ onUnmounted(() => {
 <style scoped>
 .sap-status-bar {
   flex-shrink: 0;
-  height: var(--sapStatusBar_Height, 1.5rem);
+  height: var(--sapStatusBar_Height, 1.75rem);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -208,7 +166,6 @@ onUnmounted(() => {
   border-top: 1px solid var(--sapShellBorderColor, rgba(255, 255, 255, 0.1));
   font-size: 0.6875rem;
   line-height: 1;
-  z-index: 60;
   user-select: none;
 }
 
@@ -230,15 +187,23 @@ onUnmounted(() => {
   align-items: center;
   gap: 0.25rem;
   padding: 0 0.375rem;
-  height: 1.125rem;
+  height: 1.25rem;
   border-radius: 9999px;
   font-weight: 600;
   letter-spacing: 0.02em;
   white-space: nowrap;
 }
 
+.sap-status-bar__chip--health {
+  font-weight: 700;
+}
+
 .sap-status-bar__chip--ok {
   color: #c6f6d5;
+}
+
+.sap-status-bar__chip--warn {
+  color: #fef08a;
 }
 
 .sap-status-bar__chip--err {
@@ -264,6 +229,10 @@ onUnmounted(() => {
 
 .sap-status-bar__chip--ok .sap-status-bar__dot {
   background: #68d391;
+}
+
+.sap-status-bar__chip--warn .sap-status-bar__dot {
+  background: #facc15;
 }
 
 .sap-status-bar__sep {

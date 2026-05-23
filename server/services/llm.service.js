@@ -450,7 +450,7 @@ async function requireActivePromptConfig(options = {}) {
   return promptConfig;
 }
 
-async function buildPiSheetRequestParams(systemPrompt, userContent, includeMcp) {
+async function buildPiSheetRequestParams(systemPrompt, userContent, includeMcp, maxTokensOverride) {
   return buildClaudeRequestParams(
     { systemPrompt, userContent },
     {
@@ -458,6 +458,7 @@ async function buildPiSheetRequestParams(systemPrompt, userContent, includeMcp) 
       includeEquipmentTools: false,
       includeGraphTools: false,
       mode: 'pi_sheet',
+      maxTokensOverride,
     }
   );
 }
@@ -547,20 +548,47 @@ async function generatePISheet(userPrompt, userId, options = {}) {
   const hadMcp = Boolean(requestParams.mcp_servers?.length);
   let response;
   let usage = null;
-  try {
-    ({ response, usage } = await runToolLoop(client, requestParams));
-  } catch (err) {
-    if (hadMcp && isMcpRetryable(err)) {
-      console.warn('[llm] Request failed (MCP-retryable), retry without MCP:', err.message);
-      requestParams = await buildPiSheetRequestParams(systemPrompt, userContent, false);
-      ({ response, usage } = await runToolLoop(client, requestParams));
-    } else {
+  const maxRetryTokens = 8000;
+
+  const runGeneration = async (params) => {
+    try {
+      return await runToolLoop(client, params);
+    } catch (err) {
+      if (hadMcp && isMcpRetryable(err)) {
+        console.warn('[llm] Request failed (MCP-retryable), retry without MCP:', err.message);
+        const fallbackParams = await buildPiSheetRequestParams(systemPrompt, userContent, false);
+        return runToolLoop(client, fallbackParams);
+      }
       throw mapLlmError(err);
     }
-  }
+  };
 
-  const text = extractTextFromResponse(response);
-  const parsed = validatePiSheet(parseLlmJson(text), text, { allowedEquipmentIds });
+  ({ response, usage } = await runGeneration(requestParams));
+
+  let text = extractTextFromResponse(response);
+  let parsed;
+  try {
+    parsed = validatePiSheet(parseLlmJson(text, { stopReason: response.stop_reason }), text, {
+      allowedEquipmentIds,
+    });
+  } catch (parseErr) {
+    const shouldRetryForTokens =
+      parseErr.code === 'PI_JSON_PARSE' &&
+      requestParams.max_tokens < maxRetryTokens;
+    if (shouldRetryForTokens) {
+      console.warn(
+        `[llm] PI JSON parse failed at ${requestParams.max_tokens} tokens, retrying with ${maxRetryTokens}`
+      );
+      requestParams = await buildPiSheetRequestParams(systemPrompt, userContent, false, maxRetryTokens);
+      ({ response, usage } = await runGeneration(requestParams));
+      text = extractTextFromResponse(response);
+      parsed = validatePiSheet(parseLlmJson(text, { stopReason: response.stop_reason }), text, {
+        allowedEquipmentIds,
+      });
+    } else {
+      throw parseErr;
+    }
+  }
   const piSheet = await savePiSheet(parsed, userPrompt, userId, {
     locale: options.locale,
     contextXstepIds: xsteps.map((x) => x.xstep_id),
@@ -828,7 +856,11 @@ async function finalizeFromMessage(finalMessage, userPrompt, userId, options = {
 
   const meta = options.contextMeta || {};
   const allowedEquipmentIds = meta.allowedEquipmentIds || [];
-  const parsed = validatePiSheet(parseLlmJson(text), text, { allowedEquipmentIds });
+  const parsed = validatePiSheet(
+    parseLlmJson(text, { stopReason: finalMessage.stop_reason }),
+    text,
+    { allowedEquipmentIds }
+  );
 
   // Use xstepIds from build phase if available, only fall back to a fresh
   // search when an external caller invoked finalize directly.

@@ -1,5 +1,50 @@
 <template>
-  <div class="overflow-x-auto rounded-lg border bg-white shadow-sm">
+  <div class="rounded-lg border bg-white shadow-sm">
+    <!-- Mobile cards -->
+    <div v-if="xsteps.length" class="space-y-3 p-3 md:hidden">
+      <article
+        v-for="x in pageItems"
+        :key="x.id"
+        class="sap-mobile-card"
+      >
+        <div class="flex items-start justify-between gap-2">
+          <div class="min-w-0">
+            <p class="font-mono text-xs text-[var(--sapContentLabelColor)]">{{ x.xstep_id }}</p>
+            <p class="font-semibold">{{ x.name }}</p>
+          </div>
+          <input
+            type="checkbox"
+            class="sap-touch-target mt-1"
+            :checked="selected.includes(x.id)"
+            @change="toggle(x.id)"
+          />
+        </div>
+        <div class="mt-2 flex flex-wrap gap-1">
+          <span class="rounded px-2 py-0.5 text-xs text-white" :class="categoryClass(x.category)">
+            {{ x.category }}
+          </span>
+          <span v-if="x.sap_system" class="rounded px-2 py-0.5 text-xs font-semibold uppercase text-white" :class="sapSystemClass(x.sap_system)">
+            {{ x.sap_system }}
+          </span>
+          <span v-if="x.gmp_relevant" class="rounded bg-red-100 px-2 text-xs text-red-800">GMP</span>
+        </div>
+        <div class="sap-mobile-card__row">
+          <span class="sap-mobile-card__label">{{ t('repository.process') }}</span>
+          <span>{{ x.process_type }}</span>
+        </div>
+        <div class="sap-mobile-card__actions">
+          <button type="button" class="sap-btn sap-btn--transparent !min-h-11 !text-sm" @click="$emit('edit', x)">
+            {{ t('repository.edit') }}
+          </button>
+          <button type="button" class="sap-btn sap-btn--transparent !min-h-11 !text-sm text-red-600" @click="$emit('delete', x)">
+            {{ t('repository.delete') }}
+          </button>
+        </div>
+      </article>
+    </div>
+
+    <!-- Desktop table -->
+    <div class="hidden overflow-x-auto md:block">
     <table class="w-full text-left text-sm">
       <thead class="border-b bg-gray-50 text-xs uppercase text-gray-500">
         <tr>
@@ -74,6 +119,7 @@
         </tr>
       </tbody>
     </table>
+    </div>
 
     <div v-if="!xsteps.length" class="p-10 text-center">
       <p class="text-[var(--sapContentLabelColor)]">{{ emptyMessage || t('repository.empty') }}</p>

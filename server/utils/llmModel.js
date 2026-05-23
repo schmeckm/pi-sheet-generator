@@ -18,7 +18,7 @@ const ALLOWED_MODELS = [
 ];
 
 const DEFAULTS = {
-  pi_sheet: { model: 'claude-sonnet-4-20250514', max_tokens: 2500 },
+  pi_sheet: { model: 'claude-sonnet-4-20250514', max_tokens: 8000 },
   qa: { model: 'claude-haiku-4-20250514', max_tokens: 1500 },
   vision: { model: 'claude-sonnet-4-20250514', max_tokens: 8000 },
 };

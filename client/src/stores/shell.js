@@ -6,6 +6,7 @@ export const useShellStore = defineStore('shell', () => {
   const chatHistoryOpen = ref(false);
   const chatPreviewOpen = ref(false);
   const adminNavOpen = ref(false);
+  const primaryNavOpen = ref(false);
 
   function toggleChatHistory() {
     chatHistoryOpen.value = !chatHistoryOpen.value;
@@ -24,13 +25,19 @@ export const useShellStore = defineStore('shell', () => {
     adminNavOpen.value = false;
   }
 
+  function closePrimaryNav() {
+    primaryNavOpen.value = false;
+  }
+
   return {
     chatHistoryOpen,
     chatPreviewOpen,
     adminNavOpen,
+    primaryNavOpen,
     toggleChatHistory,
     toggleChatPreview,
     closeChatPanels,
     closeAdminNav,
+    closePrimaryNav,
   };
 });

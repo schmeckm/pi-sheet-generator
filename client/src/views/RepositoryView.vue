@@ -12,8 +12,8 @@
     </div>
 
     <div class="mb-4 flex flex-wrap gap-2">
-      <input v-model="search" class="sap-input max-w-xs" :placeholder="t('repository.search')" @keyup.enter="reload" />
-      <select v-model="filterProcess" class="sap-input max-w-[160px]" @change="reload">
+      <input v-model="search" class="sap-input w-full sm:max-w-xs" :placeholder="t('repository.search')" @keyup.enter="reload" />
+      <select v-model="filterProcess" class="sap-input w-full sm:max-w-[160px]" @change="reload">
         <option value="">{{ t('repository.allProcesses') }}</option>
         <option v-for="p in processTypes" :key="p" :value="p">{{ p }}</option>
       </select>

@@ -20,8 +20,17 @@
 
     <div v-if="loading" class="text-[var(--sapContentLabelColor)]">{{ t('common.loading') }}</div>
 
-    <div v-else class="sap-tile overflow-x-auto">
-      <table class="w-full min-w-[720px] text-left text-sm">
+    <div v-else class="sap-tile">
+      <div class="space-y-3 p-3 md:hidden">
+        <article v-for="row in items" :key="row.id" class="sap-mobile-card">
+          <p class="font-mono text-xs text-[var(--sapContentLabelColor)]">{{ formatDate(row.created_at) }}</p>
+          <p class="mt-1 font-semibold">{{ row.user?.email || '—' }}</p>
+          <p class="mt-1 font-mono text-xs">{{ row.action }}</p>
+          <p class="mt-1 text-xs text-[var(--sapContentLabelColor)]">{{ row.entity_type }} {{ row.entity_id?.slice(0, 8) }}</p>
+        </article>
+      </div>
+      <div class="hidden overflow-x-auto md:block">
+        <table class="w-full min-w-[720px] text-left text-sm">
         <thead>
           <tr class="border-b text-[var(--sapContentLabelColor)]">
             <th class="p-3">{{ t('audit.colTime') }}</th>
@@ -45,6 +54,7 @@
           </tr>
         </tbody>
       </table>
+      </div>
       <div class="flex items-center justify-between border-t p-3 text-sm">
         <span>{{ t('audit.pageInfo', { page, total: Math.ceil(total / limit) }) }}</span>
         <div class="flex gap-2">

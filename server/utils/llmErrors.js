@@ -288,7 +288,73 @@ function validatePiSheet(parsed, rawText = '', options = {}) {
   return parsed;
 }
 
-function parseLlmJson(text) {
+function extractJsonCandidate(text) {
+  const trimmed = String(text || '').trim();
+  const codeBlock = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if (codeBlock) return codeBlock[1].trim();
+  const jsonMatch = trimmed.match(/\{[\s\S]*/);
+  return jsonMatch ? jsonMatch[0] : trimmed;
+}
+
+function looksLikeTruncatedJsonError(message) {
+  const msg = String(message || '').toLowerCase();
+  return (
+    msg.includes('unterminated string') ||
+    msg.includes('unexpected end of json') ||
+    msg.includes('expected double-quoted property name') ||
+    msg.includes('unexpected token')
+  );
+}
+
+/** Best-effort salvage when the model hit max_tokens mid-JSON. */
+function repairTruncatedJson(text) {
+  let candidate = extractJsonCandidate(text);
+  if (!candidate.startsWith('{')) return null;
+
+  candidate = candidate.replace(/,\s*"[^"]*":\s*"[^"]*$/s, '');
+  candidate = candidate.replace(/,\s*"[^"]*":\s*[\[{][^\}\]]*$/s, '');
+  candidate = candidate.replace(/,\s*"[^"]*":\s*[\d.]+$/s, '');
+  candidate = candidate.replace(/,\s*"[^"]*"\s*$/s, '');
+  candidate = candidate.replace(/,\s*\{[^}]*$/s, '');
+
+  const quoteCount = (candidate.match(/(?<!\\)"/g) || []).length;
+  if (quoteCount % 2 !== 0) candidate += '"';
+
+  const stack = [];
+  let inString = false;
+  let escape = false;
+  for (const ch of candidate) {
+    if (escape) {
+      escape = false;
+      continue;
+    }
+    if (ch === '\\' && inString) {
+      escape = true;
+      continue;
+    }
+    if (ch === '"') {
+      inString = !inString;
+      continue;
+    }
+    if (inString) continue;
+    if (ch === '{' || ch === '[') stack.push(ch);
+    if (ch === '}' || ch === ']') stack.pop();
+  }
+  while (stack.length) {
+    const open = stack.pop();
+    candidate += open === '{' ? '}' : ']';
+  }
+
+  candidate = candidate.replace(/,\s*([}\]])/g, '$1');
+
+  try {
+    return JSON.parse(candidate);
+  } catch {
+    return null;
+  }
+}
+
+function parseLlmJson(text, options = {}) {
   const trimmed = String(text || '').trim();
   if (!trimmed) {
     throw new LlmError(
@@ -305,20 +371,23 @@ function parseLlmJson(text) {
     );
   }
 
+  const candidate = extractJsonCandidate(trimmed);
+
   try {
-    return JSON.parse(trimmed);
+    return JSON.parse(candidate);
   } catch (firstErr) {
-    try {
-      const codeBlock = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/);
-      if (codeBlock) {
-        return JSON.parse(codeBlock[1].trim());
-      }
-      const jsonMatch = trimmed.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        return JSON.parse(jsonMatch[0]);
-      }
-    } catch {
-      throwPiJsonParseError(firstErr);
+    const repaired = repairTruncatedJson(trimmed);
+    if (repaired) return repaired;
+
+    if (
+      options.stopReason === 'max_tokens' ||
+      looksLikeTruncatedJsonError(firstErr?.message)
+    ) {
+      throw new LlmError(
+        'PI_TRUNCATED',
+        'The PI Sheet response appears truncated (token limit). Try a shorter prompt.',
+        422
+      );
     }
     throwPiJsonParseError(firstErr);
   }
@@ -340,6 +409,7 @@ module.exports = {
   mapLlmError,
   isMcpRetryable,
   parseLlmJson,
+  repairTruncatedJson,
   validatePiSheet,
   toErrorPayload,
   VALID_CATEGORIES,

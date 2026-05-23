@@ -64,6 +64,40 @@
       </div>
 
       <div class="sap-tile overflow-hidden">
+        <div class="space-y-3 p-3 md:hidden">
+          <article
+            v-for="row in items"
+            :key="row.equipment_id"
+            class="sap-mobile-card"
+            @click="toggleExpand(row.equipment_id)"
+          >
+            <div class="flex items-center justify-between gap-2">
+              <span class="font-mono text-xs font-semibold">{{ row.equipment_id }}</span>
+              <span
+                class="inline-block h-2 w-2 rounded-full"
+                :class="row.status?.online ? 'bg-green-500' : 'bg-red-500'"
+              />
+            </div>
+            <p class="mt-1 font-medium">{{ row.name }}</p>
+            <p class="text-xs text-[var(--sapContentLabelColor)]">{{ row.location || '—' }}</p>
+            <div class="sap-mobile-card__actions" @click.stop>
+              <button type="button" class="sap-btn sap-btn--transparent !min-h-11 !text-sm" @click="openEdit(row)">
+                {{ t('equipmentPage.edit') }}
+              </button>
+              <button type="button" class="sap-btn sap-btn--transparent !min-h-11 !text-sm" @click="runTest(row)">
+                {{ t('equipmentPage.test') }}
+              </button>
+              <button type="button" class="sap-btn sap-btn--transparent !min-h-11 !text-sm text-red-700" @click="remove(row)">
+                {{ t('equipmentPage.delete') }}
+              </button>
+            </div>
+            <div v-if="expandedId === row.equipment_id" class="mt-3 border-t border-[var(--sapNeutralBorderColor)] pt-3" @click.stop>
+              <p class="mb-2 text-xs font-semibold">{{ t('equipmentPage.liveTest') }}</p>
+              <EquipmentLivePanel :equipment-id="row.equipment_id" :name="row.name" />
+            </div>
+          </article>
+        </div>
+        <div class="hidden md:block">
         <table class="w-full text-sm">
           <thead class="border-b bg-[var(--sapList_HeaderBackground)] text-left text-xs">
             <tr>
@@ -129,6 +163,7 @@
             </template>
           </tbody>
         </table>
+        </div>
       </div>
 
       <p v-if="testMessage" class="mt-3 text-sm" :class="testOk ? 'text-green-700' : 'text-red-700'">

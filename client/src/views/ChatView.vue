@@ -70,7 +70,7 @@
         class="flex w-full min-w-[280px] flex-col border-l border-[var(--sapNeutralBorderColor)] bg-[var(--sapGroupContentBackground)] transition-transform lg:w-[min(42%,480px)] lg:max-w-[480px] lg:shrink-0"
         :class="
           shell.chatPreviewOpen
-            ? 'fixed inset-y-[var(--sapShell_Height)] right-0 z-30 max-w-md shadow-lg lg:relative lg:inset-auto lg:z-0 lg:flex lg:max-w-[480px]'
+            ? 'fixed top-[var(--sapShell_Height)] bottom-[var(--sapFooter_Height)] right-0 z-30 max-w-md shadow-lg lg:relative lg:inset-auto lg:top-auto lg:bottom-auto lg:z-0 lg:flex lg:max-w-[480px]'
             : 'hidden lg:flex'
         "
       >

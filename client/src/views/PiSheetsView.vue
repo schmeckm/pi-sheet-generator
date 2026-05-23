@@ -25,8 +25,28 @@
     <div v-else-if="!sheets.length" class="sap-tile p-8 text-center text-sm text-[var(--sapContentLabelColor)]">
       {{ t('piSheets.empty') }}
     </div>
-
-    <div v-else class="sap-tile overflow-x-auto">
+    <div v-else class="sap-tile">
+      <div class="space-y-3 p-3 md:hidden">
+        <article v-for="row in sheets" :key="row.id" class="sap-mobile-card">
+          <p class="font-semibold">{{ localizeText(row.title) }}</p>
+          <div class="mt-2"><PISheetStatusBadge :status="row.status" />
+          </div>
+          <div class="sap-mobile-card__row">
+            <span class="sap-mobile-card__label">{{ t('piSheets.colProcess') }}</span>
+            <span>{{ localizeProcessType(row.process_type) || '—' }}</span>
+          </div>
+          <div class="sap-mobile-card__row">
+            <span class="sap-mobile-card__label">{{ t('piSheets.colUpdated') }}</span>
+            <span>{{ formatDate(row.updated_at) }}</span>
+          </div>
+          <div class="sap-mobile-card__actions">
+            <button type="button" class="sap-btn sap-btn--emphasized !min-h-11 !text-sm" @click="openDetail(row)">
+              {{ t('piSheets.review') }}
+            </button>
+          </div>
+        </article>
+      </div>
+      <div class="hidden overflow-x-auto md:block">
       <table class="w-full min-w-[640px] text-left text-sm">
         <thead>
           <tr class="border-b text-[var(--sapContentLabelColor)]">
@@ -59,6 +79,7 @@
           </tr>
         </tbody>
       </table>
+      </div>
     </div>
 
     <div
@@ -67,7 +88,7 @@
       @click.self="detail = null"
     >
       <aside
-        class="flex h-full w-full max-w-lg flex-col border-l bg-[var(--sapGroupContentBackground)] shadow-xl"
+        class="fixed top-[var(--sapShell_Height)] bottom-[var(--sapFooter_Height)] right-0 flex w-full max-w-lg flex-col border-l bg-[var(--sapGroupContentBackground)] shadow-xl md:relative md:inset-auto md:h-full"
       >
         <div class="sap-object-header flex items-center justify-between gap-2 !py-3">
           <h2 class="min-w-0 flex-1 truncate text-sm font-semibold">{{ localizeText(detail.title) }}</h2>

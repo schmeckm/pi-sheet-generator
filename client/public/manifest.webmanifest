@@ -1,0 +1,18 @@
+{
+  "name": "PI Sheet Generator",
+  "short_name": "PI Sheet",
+  "description": "LLM-powered PI Sheet generator for pharmaceutical manufacturing",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f5f6f7",
+  "theme_color": "#5d36ff",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/vite.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

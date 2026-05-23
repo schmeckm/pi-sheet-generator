@@ -434,6 +434,34 @@ class EquipmentGateway {
     });
   }
 
+  /** Read-only summary for the global protocol status bar (all authenticated users). */
+  async getStatusSummary() {
+    const list = await this.getEquipmentList();
+    const protocols = {};
+    let online = 0;
+    let simulation = 0;
+
+    for (const eq of list) {
+      if (eq.status?.online) online += 1;
+      if (eq.connection_type === 'simulation' || eq.status?.fallback) simulation += 1;
+
+      const type = eq.connection_type;
+      if (!type || type === 'simulation') continue;
+      if (!protocols[type]) protocols[type] = { total: 0, online: 0 };
+      protocols[type].total += 1;
+      if (eq.status?.online) protocols[type].online += 1;
+    }
+
+    return {
+      total: list.length,
+      online,
+      offline: list.length - online,
+      simulation,
+      protocols,
+      debugLines: this.globalDebugLog.length,
+    };
+  }
+
   async getEquipmentParameters(equipmentId) {
     const config = await this.findConfig(equipmentId);
     if (!config) throw new Error('Equipment not found');

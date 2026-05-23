@@ -72,7 +72,7 @@ const DEFAULTS = [
   },
   {
     key: 'llm_max_tokens_pi_sheet',
-    value: '2500',
+    value: '8000',
     description: 'Max output tokens for PI Sheet generation',
   },
   {
@@ -104,10 +104,12 @@ async function seedSettings() {
       defaults: row,
     });
     if (!created) {
-      await SystemSetting.update(
-        { description: row.description },
-        { where: { key: row.key } }
-      );
+      const updates = { description: row.description };
+      if (row.key === 'llm_max_tokens_pi_sheet') {
+        const current = await SystemSetting.findOne({ where: { key: row.key } });
+        if (current?.value === '2500') updates.value = row.value;
+      }
+      await SystemSetting.update(updates, { where: { key: row.key } });
     }
   }
   console.log(`System settings seeded: ${DEFAULTS.length} keys`);
