@@ -6,7 +6,6 @@
       <AssistantRobot size="sm" orb animated />
       <div>
         <h1 class="text-sm font-semibold text-joule-text">{{ t('joule.title') }}</h1>
-        <p class="text-xs text-joule-text-secondary">{{ t('joule.subtitle') }}</p>
       </div>
     </div>
 

@@ -1,5 +1,27 @@
 <template>
-  <div class="my-4">
+  <div v-if="!zoomable && type === 'image'" class="my-4">
+    <div
+      class="overflow-hidden rounded-lg border border-[var(--sapNeutralBorderColor)] bg-white p-4"
+    >
+      <img
+        v-if="src && !imageMissing"
+        :src="src"
+        :alt="alt"
+        class="mx-auto block w-full max-w-full"
+        draggable="false"
+        @error="imageMissing = true"
+      />
+      <p
+        v-if="imageMissing"
+        class="text-sm text-[var(--sapContentLabelColor)]"
+      >
+        {{ t('help.imageMissing', { path: src }) }}
+      </p>
+    </div>
+    <p v-if="caption" class="mt-2 text-xs text-[var(--sapContentLabelColor)]">{{ caption }}</p>
+  </div>
+
+  <div v-else class="my-4">
     <div
       class="flex flex-wrap items-center gap-2 rounded-t-lg border border-b-0 border-[var(--sapNeutralBorderColor)] bg-slate-50 px-3 py-2"
       role="toolbar"
@@ -147,6 +169,7 @@ const props = defineProps({
   content: { type: String, default: '' },
   caption: { type: String, default: '' },
   initialScale: { type: Number, default: 1.25 },
+  zoomable: { type: Boolean, default: true },
 });
 
 const { t } = useI18n();

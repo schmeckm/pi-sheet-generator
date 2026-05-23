@@ -153,7 +153,7 @@ const shellTitle = computed(() => {
 });
 
 const shellSubtitle = computed(() => {
-  if (isChat.value) return t('joule.subtitle');
+  if (isChat.value) return '';
   if (isAdminLayout.value) {
     return auth.isAdmin ? t('shell.adminSubtitle') : t('shell.promptSubtitle');
   }

@@ -41,7 +41,7 @@
             :src="section.image"
             :alt="sectionImageAlt(section)"
             :caption="sectionImageCaption(section)"
-            :initial-scale="1.15"
+            :zoomable="section.imageZoomable !== false"
           />
 
           <HelpSectionBlock

@@ -8,12 +8,9 @@ export const aiSkillGovernanceBilingualSections = [
     titleEn: 'AI skill governance & GMP validation',
     bilingual: true,
     image: '/help/ai-skill-governance.png',
+    imageZoomable: false,
     imageAltDe: 'Infografik: KI-Skill-Governance — Was die Validierung für GMP-Compliance berücksichtigen muss',
     imageAltEn: 'Infographic: AI skill governance — what validation must consider for GMP compliance',
-    imageCaptionDe:
-      'Übersichtsgrafik (zoomen: +/−, Mausrad, Vollbild). Datei: client/public/help/ai-skill-governance.png',
-    imageCaptionEn:
-      'Overview diagram (zoom: +/−, mouse wheel, fullscreen). File: client/public/help/ai-skill-governance.png',
     locales: {
       de: {
         paragraphs: [

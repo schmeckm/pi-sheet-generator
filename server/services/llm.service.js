@@ -798,12 +798,21 @@ async function generatePISheetStream(userPrompt, userId, options = {}) {
     mode: 'pi_sheet',
   });
 
+  options.onProgress?.({ phase: 'searching' });
   const ctx = await buildMessages(
     userPrompt,
     promptConfig.system_prompt,
     options.locale,
     'pi_sheet'
   );
+  options.onProgress?.({
+    phase: 'context',
+    stats: {
+      xsteps: ctx.xsteps.length,
+      docs: ctx.docChunks.length,
+      equipment: ctx.equipmentRows.length,
+    },
+  });
   const { userContent, systemPrompt, equipmentRows, xsteps, sapPath } = ctx;
 
   const buildParams = (includeMcp) =>

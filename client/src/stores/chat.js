@@ -34,6 +34,8 @@ function portalLocale() {
 
 }
 
+const THINKING_PHASES = ['searching', 'context', 'generating', 'structuring'];
+
 
 
 /** Normalize Sequelize / API shapes for PISheetPreview. */
@@ -103,6 +105,12 @@ export const useChatStore = defineStore('chat', () => {
   const requestMode = ref('qa');
 
   const thinkingPhase = ref('searching');
+
+  const thinkingStartedAt = ref(null);
+
+  const stepStartedAt = ref([]);
+
+  const searchStats = ref(null);
 
   const activeTools = ref([]);
 
@@ -220,43 +228,70 @@ export const useChatStore = defineStore('chat', () => {
 
 
 
+  function resetThinkingTimers() {
+    const now = Date.now();
+    thinkingStartedAt.value = now;
+    stepStartedAt.value = [now];
+    searchStats.value = null;
+  }
+
+  function setThinkingPhase(phase, { fromServer = false } = {}) {
+    const idx = THINKING_PHASES.indexOf(phase);
+    if (idx < 0) return;
+    const prevIdx = THINKING_PHASES.indexOf(thinkingPhase.value);
+    if (!fromServer && idx <= prevIdx) return;
+    if (fromServer && idx < prevIdx) return;
+
+    const now = Date.now();
+    if (idx > prevIdx) {
+      while (stepStartedAt.value.length <= idx) {
+        stepStartedAt.value.push(now);
+      }
+      stepStartedAt.value[idx] = now;
+    }
+    thinkingPhase.value = phase;
+  }
+
   // Fallback heuristic when the server has not yet emitted a status event.
   function advanceThinkingPhase(elapsedMs, mode) {
 
     if (mode === 'pi_sheet') {
 
-      if (elapsedMs > 8000) thinkingPhase.value = 'structuring';
+      if (elapsedMs > 8000) setThinkingPhase('structuring');
 
-      else if (elapsedMs > 5000) thinkingPhase.value = 'generating';
+      else if (elapsedMs > 5000) setThinkingPhase('generating');
 
-      else if (elapsedMs > 2000) thinkingPhase.value = 'context';
+      else if (elapsedMs > 2000) setThinkingPhase('context');
 
-      else thinkingPhase.value = 'searching';
+      else setThinkingPhase('searching');
 
       return;
 
     }
 
-    if (elapsedMs > 6000) thinkingPhase.value = 'structuring';
+    if (elapsedMs > 6000) setThinkingPhase('structuring');
 
-    else if (elapsedMs > 2500) thinkingPhase.value = 'generating';
+    else if (elapsedMs > 2500) setThinkingPhase('generating');
 
-    else if (elapsedMs > 800) thinkingPhase.value = 'context';
+    else if (elapsedMs > 800) setThinkingPhase('context');
 
-    else thinkingPhase.value = 'searching';
+    else setThinkingPhase('searching');
 
   }
 
   // Authoritative status from server overrides the heuristic.
   function applyServerStatus(status) {
+    if (status?.stats) searchStats.value = status.stats;
     if (!status?.phase) return;
     const map = {
+      searching: 'searching',
+      context: 'context',
       generating: 'generating',
-      tools: 'context',
+      tools: 'generating',
       finalizing: 'structuring',
     };
     const mapped = map[status.phase];
-    if (mapped) thinkingPhase.value = mapped;
+    if (mapped) setThinkingPhase(mapped, { fromServer: true });
   }
 
 
@@ -303,6 +338,8 @@ export const useChatStore = defineStore('chat', () => {
     isGenerating.value = true;
 
     activeTools.value = [];
+
+    resetThinkingTimers();
 
     thinkingPhase.value = 'searching';
 
@@ -584,6 +621,12 @@ export const useChatStore = defineStore('chat', () => {
     requestMode,
 
     thinkingPhase,
+
+    thinkingStartedAt,
+
+    stepStartedAt,
+
+    searchStats,
 
     activeTools,
 

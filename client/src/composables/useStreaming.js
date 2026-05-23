@@ -242,7 +242,7 @@ function normalizeStreamResult(data) {
 export function streamChatViaGenerate(prompt, opts = {}) {
   const { locale = 'de' } = opts;
   const controller = new AbortController();
-  opts.onStatus?.({ phase: 'generating' });
+  opts.onStatus?.({ phase: 'searching' });
   const promise = postGenerate(prompt, locale, controller.signal)
     .then((result) => {
       const mode = result.requestMode || (result.type === 'pi_sheet' ? 'pi_sheet' : 'qa');

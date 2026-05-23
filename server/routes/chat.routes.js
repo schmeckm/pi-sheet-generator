@@ -108,7 +108,7 @@ router.get('/token-budget', async (req, res, next) => {
   }
 });
 
-function attachStreamHandlers(res, stream, { prompt, userId, locale, streamId, requestId }) {
+function attachStreamHandlers(res, stream, { prompt, userId, locale, streamId, requestId }, sseSession = null) {
   let finishing = false;
 
   const stopClientStream = () => {
@@ -116,7 +116,7 @@ function attachStreamHandlers(res, stream, { prompt, userId, locale, streamId, r
     stream.removeAllListeners('tools');
   };
 
-  const sse = createSseSession(res, () => {
+  const onClientGone = () => {
     stopClientStream();
     if (streamId) ACTIVE_STREAMS.delete(streamId);
     try {
@@ -124,7 +124,9 @@ function attachStreamHandlers(res, stream, { prompt, userId, locale, streamId, r
     } catch {
       /* ignore */
     }
-  });
+  };
+
+  const sse = sseSession || createSseSession(res, onClientGone);
 
   sse.writeEvent({
     type: 'meta',
@@ -174,6 +176,38 @@ function attachStreamHandlers(res, stream, { prompt, userId, locale, streamId, r
       }
     })();
   });
+}
+
+async function startPiSheetStream(res, { prompt, userId, locale, streamId, requestId, role }) {
+  beginSseResponse(res);
+
+  let streamRef = null;
+  const sse = createSseSession(res, () => {
+    if (streamId) ACTIVE_STREAMS.delete(streamId);
+    try {
+      streamRef?.abort?.();
+    } catch {
+      /* ignore */
+    }
+  });
+
+  sse.writeEvent({ type: 'status', phase: 'searching' });
+
+  const stream = await llmService.generatePISheetStream(prompt, userId, {
+    locale,
+    requestId,
+    role,
+    onProgress: (status) => sse.writeEvent({ type: 'status', ...status }),
+  });
+  streamRef = stream;
+  ACTIVE_STREAMS.set(streamId, stream);
+
+  attachStreamHandlers(
+    res,
+    stream,
+    { prompt, userId, locale, streamId, requestId },
+    sse
+  );
 }
 
 function attachQaStreamHandlers(res, stream, locale = 'de', { streamId, requestId, userId } = {}) {
@@ -256,27 +290,22 @@ router.post('/stream', chatLimiter, async (req, res, next) => {
     const { error, value } = promptSchema.validate(req.body);
     if (error) return res.status(400).json({ error: error.details[0].message });
 
-    beginSseResponse(res);
-
     // C4: server is the single source of truth for the mode.
     const resolvedMode = llmService.resolveChatMode(value.prompt);
     const streamId = req.requestId;
 
     if (resolvedMode === 'pi_sheet') {
-      const stream = await llmService.generatePISheetStream(value.prompt, req.user.id, {
-        locale: value.locale,
-        requestId: req.requestId,
-        role: req.user.role,
-      });
-      ACTIVE_STREAMS.set(streamId, stream);
-      attachStreamHandlers(res, stream, {
+      await startPiSheetStream(res, {
         prompt: value.prompt,
         userId: req.user.id,
         locale: value.locale,
         streamId,
         requestId: req.requestId,
+        role: req.user.role,
       });
     } else {
+      beginSseResponse(res);
+
       const stream = await llmService.generateAnswerChatStream(value.prompt, req.user.id, {
         locale: value.locale,
         requestId: req.requestId,
@@ -299,22 +328,14 @@ router.post('/generate-stream', chatLimiter, async (req, res, next) => {
     const { error, value } = promptSchema.validate(req.body);
     if (error) return res.status(400).json({ error: error.details[0].message });
 
-    beginSseResponse(res);
-
-    const stream = await llmService.generatePISheetStream(value.prompt, req.user.id, {
-      locale: value.locale,
-      requestId: req.requestId,
-      role: req.user.role,
-    });
     const streamId = req.requestId;
-    ACTIVE_STREAMS.set(streamId, stream);
-
-    attachStreamHandlers(res, stream, {
+    await startPiSheetStream(res, {
       prompt: value.prompt,
       userId: req.user.id,
       locale: value.locale,
       streamId,
       requestId: req.requestId,
+      role: req.user.role,
     });
   } catch (err) {
     respondLlmError(res, err, req.body?.locale || 'de', next);

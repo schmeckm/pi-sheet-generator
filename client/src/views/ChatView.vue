@@ -52,6 +52,9 @@
               :phase="chat.thinkingPhase"
               :mode="chat.requestMode"
               :active-tools="chat.activeTools"
+              :started-at="chat.thinkingStartedAt"
+              :step-started-at="chat.stepStartedAt"
+              :search-stats="chat.searchStats"
             />
           </div>
         </div>
