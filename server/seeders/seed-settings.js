@@ -57,17 +57,17 @@ const DEFAULTS = [
   },
   {
     key: 'llm_model_pi_sheet',
-    value: 'claude-sonnet-4-20250514',
+    value: 'claude-sonnet-4-6',
     description: 'Anthropic model used for PI Sheet generation',
   },
   {
     key: 'llm_model_qa',
-    value: 'claude-haiku-4-20250514',
+    value: 'claude-haiku-4-5-20251001',
     description: 'Anthropic model used for QA / equipment chat (cheaper, faster)',
   },
   {
     key: 'llm_model_vision',
-    value: 'claude-sonnet-4-20250514',
+    value: 'claude-sonnet-4-6',
     description: 'Anthropic model used for vision / document digitization',
   },
   {
@@ -108,6 +108,14 @@ async function seedSettings() {
       if (row.key === 'llm_max_tokens_pi_sheet') {
         const current = await SystemSetting.findOne({ where: { key: row.key } });
         if (current?.value === '2500') updates.value = row.value;
+      }
+      if (row.key === 'llm_model_pi_sheet' || row.key === 'llm_model_vision') {
+        const current = await SystemSetting.findOne({ where: { key: row.key } });
+        if (current?.value === 'claude-sonnet-4-20250514') updates.value = row.value;
+      }
+      if (row.key === 'llm_model_qa') {
+        const current = await SystemSetting.findOne({ where: { key: row.key } });
+        if (current?.value === 'claude-haiku-4-20250514') updates.value = row.value;
       }
       await SystemSetting.update(updates, { where: { key: row.key } });
     }

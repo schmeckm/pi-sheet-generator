@@ -37,7 +37,7 @@
                 : 'bg-[var(--sapHighlightColor)] text-[var(--sapSelectedColor)]'
           "
         >
-          {{ auth.user?.role }}
+          {{ roleLabel(auth.user?.role) }}
         </span>
         <button
           type="button"
@@ -64,6 +64,7 @@ import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { useAuthStore } from '@/stores/auth';
 import { usePrimaryNav } from '@/composables/usePrimaryNav';
+import { useRoleLabel } from '@/composables/useRoleLabel';
 import LanguageSwitcher from '@/components/shared/LanguageSwitcher.vue';
 
 defineProps({
@@ -76,6 +77,7 @@ const { t } = useI18n();
 const auth = useAuthStore();
 const router = useRouter();
 const { links } = usePrimaryNav();
+const { roleLabel } = useRoleLabel();
 
 function logout() {
   auth.logout();

@@ -39,6 +39,13 @@ function mapAnthropicError(err) {
       503
     );
   }
+  if (status >= 500) {
+    return new LlmError(
+      'LLM_SERVER_ERROR',
+      'The AI service returned a temporary error. Please try again shortly.',
+      503
+    );
+  }
   if (status === 401 || msg.includes('authentication') || msg.includes('invalid api key')) {
     return new LlmError(
       'LLM_AUTH_FAILED',
@@ -118,6 +125,19 @@ function mapLlmError(err) {
       'LLM_TOOL_LOOP',
       'Equipment tool loop exceeded maximum rounds',
       504
+    );
+  }
+  if (
+    err?.name === 'SequelizeConnectionError' ||
+    err?.name === 'SequelizeConnectionAcquireTimeoutError' ||
+    err?.name === 'SequelizeTimeoutError' ||
+    err?.name === 'SequelizeDatabaseError'
+  ) {
+    return new LlmError(
+      'DATABASE_UNAVAILABLE',
+      'Database temporarily unavailable. Please try again shortly.',
+      503,
+      err.message
     );
   }
 

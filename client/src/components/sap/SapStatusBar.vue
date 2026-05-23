@@ -38,7 +38,7 @@
           />
         </svg>
         {{ auth.user.name || auth.user.email }}
-        <span class="sap-status-bar__role">{{ auth.user.role }}</span>
+        <span class="sap-status-bar__role">{{ roleLabel(auth.user.role) }}</span>
       </span>
       <span class="sap-status-bar__sep" aria-hidden="true">·</span>
       <span class="sap-status-bar__chip sap-status-bar__chip--muted">
@@ -57,9 +57,11 @@ import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { get } from '@/composables/useApi';
 import { useAuthStore } from '@/stores/auth';
+import { useRoleLabel } from '@/composables/useRoleLabel';
 
 const { t, locale } = useI18n();
 const auth = useAuthStore();
+const { roleLabel } = useRoleLabel();
 
 const health = ref(null);
 const apiCheckedAt = ref(null);

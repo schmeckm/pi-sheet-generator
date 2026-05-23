@@ -81,6 +81,7 @@ router.post('/generate', chatLimiter, async (req, res, next) => {
     }
     res.json(result);
   } catch (err) {
+    console.error(`[chat/generate] ${req.requestId}`, err?.code || err?.name, err?.message);
     respondLlmError(res, err, req.body?.locale || 'de', next);
   }
 });

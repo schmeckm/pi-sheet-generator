@@ -593,6 +593,14 @@ async function generatePISheet(userPrompt, userId, options = {}) {
     locale: options.locale,
     contextXstepIds: xsteps.map((x) => x.xstep_id),
     usage,
+  }).catch((err) => {
+    console.error('[llm] savePiSheet failed:', err.message);
+    throw new LlmError(
+      'PI_SAVE_FAILED',
+      'PI Sheet was generated but could not be saved. Please try again.',
+      503,
+      err.message
+    );
   });
   await trackTokenUsage(userId, usage);
   return {

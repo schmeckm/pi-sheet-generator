@@ -10,9 +10,9 @@ export default {
     admin: 'Admin',
     chat: 'Chat',
     digitalize: '📷 Digitalisieren',
-    roleAdmin: 'admin',
-    roleOperator: 'operator',
-    rolePromptEditor: 'prompt_editor',
+    roleAdmin: 'Administrator',
+    roleOperator: 'Operator',
+    rolePromptEditor: 'Prompt-Editor',
     cancel: 'Abbrechen',
     confirm: 'Bestätigen',
     menu: 'Menü',
@@ -28,19 +28,20 @@ export default {
     backToCopilot: 'Zum PI Assistenten',
     primaryNavTitle: 'Navigation',
     primaryNavAria: 'Hauptnavigation',
+    adminNavAria: 'Administrationsnavigation',
   },
   statusBar: {
     ariaLabel: 'Systemstatus',
     online: 'Online',
     offline: 'Offline',
-    health: 'Health',
+    health: 'Status',
     healthHealthy: 'OK',
     healthDegraded: 'Eingeschränkt',
     healthDown: 'Ausfall',
     healthUnknown: 'Unbekannt',
     healthTooltip:
       'Gesamtstatus · DB {db} · LLM {llm} · Letzte Prüfung {time}',
-    healthTooltipPending: 'Health-Status wird geprüft…',
+    healthTooltipPending: 'Systemstatus wird geprüft…',
     dbOk: 'DB OK',
     dbDown: 'DB offline',
     llmOk: 'LLM OK',
@@ -69,11 +70,11 @@ export default {
     rateLimited: 'Zu viele Anmeldeversuche. Bitte eine Minute warten.',
   },
   nav: {
-    dashboard: 'Dashboard',
+    dashboard: 'Übersicht',
     repository: 'Repository',
-    upload: 'Upload',
+    upload: 'Hochladen',
     knowledge: 'Wissensbasis',
-    promptConfig: 'Prompt Config',
+    promptConfig: 'Prompt-Konfiguration',
     help: 'Hilfe & Architektur',
     equipment: 'Equipment',
     settings: 'Einstellungen',
@@ -95,7 +96,7 @@ export default {
   },
   joule: {
     title: 'PI Sheet Assistent',
-    subtitle: 'Powered by XStep Repository · GMP-aware',
+    subtitle: 'Basierend auf XStep Repository · GMP-konform',
     newChat: 'Neues Gespräch',
     clearChatTitle: 'Gespräch beenden?',
     clearChatMessage:
@@ -235,6 +236,8 @@ export default {
         'Zu viele Anfragen an die KI. Bitte kurz warten und erneut versuchen.',
       LLM_OVERLOADED:
         'Der KI-Dienst ist überlastet. Bitte in Kürze erneut versuchen.',
+      LLM_SERVER_ERROR:
+        'Der KI-Dienst meldet einen temporären Fehler. Bitte erneut versuchen.',
       LLM_TIMEOUT:
         'Die KI-Anfrage hat das Zeitlimit überschritten. Bitte erneut versuchen.',
       LLM_NETWORK:
@@ -261,6 +264,10 @@ export default {
         'Die KI hat die Erstellung eines PI Sheets für diese Anfrage abgelehnt.',
       PI_TRUNCATED:
         'Die Antwort wurde abgeschnitten (Token-Limit). Bitte kürzere Anfrage stellen.',
+      PI_SAVE_FAILED:
+        'Das PI Sheet wurde erzeugt, konnte aber nicht gespeichert werden. Bitte erneut versuchen.',
+      DATABASE_UNAVAILABLE:
+        'Die Datenbank ist vorübergehend nicht erreichbar. Bitte kurz warten und erneut versuchen.',
     },
     resultCard: {
       label: 'PI Sheet erstellt',

@@ -10,11 +10,11 @@
           {{ message.content }}
         </p>
 
-        <details v-if="isUser && message.userPrompt" class="mt-2 text-xs">
-          <summary class="cursor-pointer text-[var(--sapLinkColor)]">
+        <details v-if="isUser && message.userPrompt" class="sap-joule-user-prompt-details mt-2 text-xs">
+          <summary class="cursor-pointer">
             {{ t('chat.showUserPrompt') }}
           </summary>
-          <p class="mt-2 whitespace-pre-wrap text-[var(--sapContentLabelColor)]">
+          <p class="mt-2 whitespace-pre-wrap">
             {{ message.userPrompt }}
           </p>
         </details>

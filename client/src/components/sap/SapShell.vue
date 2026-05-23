@@ -146,6 +146,9 @@ const isChat = computed(() => route.name === 'chat');
 
 const shellTitle = computed(() => {
   if (isChat.value) return t('joule.title');
+  if (isAdminLayout.value) {
+    return auth.isAdmin ? t('shell.adminArea') : t('shell.promptArea');
+  }
   return t('common.appName');
 });
 

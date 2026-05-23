@@ -1,12 +1,15 @@
 const { sequelize } = require('../config/database');
+const { withTimeout } = require('../utils/withTimeout');
+
+const DB_HEALTH_TIMEOUT_MS = 5000;
 
 async function checkDatabase() {
   const started = Date.now();
   try {
-    await sequelize.authenticate();
+    await withTimeout(sequelize.authenticate(), DB_HEALTH_TIMEOUT_MS, 'Database health check');
     return { ok: true, latencyMs: Date.now() - started };
   } catch (err) {
-    return { ok: false, error: err.message };
+    return { ok: false, error: err.message, latencyMs: Date.now() - started };
   }
 }
 

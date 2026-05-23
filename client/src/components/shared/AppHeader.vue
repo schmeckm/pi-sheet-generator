@@ -40,7 +40,7 @@
         class="rounded-full px-2 py-0.5 text-xs"
         :class="auth.isAdmin ? 'bg-amber-600' : auth.isPromptEditor ? 'bg-sky-700' : 'bg-slate-600'"
       >
-        {{ auth.user?.role }}
+        {{ roleLabel(auth.user?.role) }}
       </span>
       <button
         type="button"
@@ -58,10 +58,12 @@ import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { useAuthStore } from '@/stores/auth';
 import LanguageSwitcher from '@/components/shared/LanguageSwitcher.vue';
+import { useRoleLabel } from '@/composables/useRoleLabel';
 
 const { t } = useI18n();
 const auth = useAuthStore();
 const router = useRouter();
+const { roleLabel } = useRoleLabel();
 
 function logout() {
   auth.logout();

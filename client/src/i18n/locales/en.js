@@ -10,9 +10,9 @@ export default {
     admin: 'Admin',
     chat: 'Chat',
     digitalize: '📷 Digitize',
-    roleAdmin: 'admin',
-    roleOperator: 'operator',
-    rolePromptEditor: 'prompt_editor',
+    roleAdmin: 'Admin',
+    roleOperator: 'Operator',
+    rolePromptEditor: 'Prompt editor',
     cancel: 'Cancel',
     confirm: 'Confirm',
     menu: 'Menu',
@@ -28,6 +28,7 @@ export default {
     backToCopilot: 'Back to PI Assistant',
     primaryNavTitle: 'Navigation',
     primaryNavAria: 'Main navigation',
+    adminNavAria: 'Admin navigation',
   },
   statusBar: {
     ariaLabel: 'System status',
@@ -235,6 +236,8 @@ export default {
         'Too many AI requests. Please wait and try again.',
       LLM_OVERLOADED:
         'The AI service is overloaded. Please try again shortly.',
+      LLM_SERVER_ERROR:
+        'The AI service returned a temporary error. Please try again shortly.',
       LLM_TIMEOUT:
         'The AI request timed out. Please try again.',
       LLM_NETWORK:
@@ -261,6 +264,10 @@ export default {
         'The AI declined to create a PI Sheet for this request.',
       PI_TRUNCATED:
         'The response was truncated (token limit). Try a shorter prompt.',
+      PI_SAVE_FAILED:
+        'The PI Sheet was generated but could not be saved. Please try again.',
+      DATABASE_UNAVAILABLE:
+        'The database is temporarily unavailable. Please wait and try again.',
     },
     resultCard: {
       label: 'PI Sheet created',

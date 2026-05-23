@@ -1,5 +1,5 @@
 <template>
-  <nav class="sap-side-nav" aria-label="Admin navigation">
+  <nav class="sap-side-nav" :aria-label="t('shell.adminNavAria')">
     <p class="sap-side-nav__group-title">{{ navGroupTitle }}</p>
     <router-link
       v-for="item in items"

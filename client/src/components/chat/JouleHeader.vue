@@ -33,7 +33,7 @@
         class="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
         :class="auth.isAdmin ? 'bg-amber-100 text-amber-800' : 'bg-joule-highlight text-joule-primary-hover'"
       >
-        {{ auth.user?.role }}
+        {{ roleLabel(auth.user?.role) }}
       </span>
       <button
         type="button"
@@ -60,6 +60,7 @@ import { useI18n } from 'vue-i18n';
 import { useAuthStore } from '@/stores/auth';
 import LanguageSwitcher from '@/components/shared/LanguageSwitcher.vue';
 import AssistantRobot from '@/components/chat/AssistantRobot.vue';
+import { useRoleLabel } from '@/composables/useRoleLabel';
 
 defineProps({
   showHistory: { type: Boolean, default: false },
@@ -70,6 +71,7 @@ defineEmits(['toggle-history', 'toggle-preview']);
 const { t } = useI18n();
 const auth = useAuthStore();
 const router = useRouter();
+const { roleLabel } = useRoleLabel();
 
 function logout() {
   auth.logout();

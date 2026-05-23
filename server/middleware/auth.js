@@ -19,7 +19,13 @@ async function authMiddleware(req, res, next) {
     }
     req.user = user.toJSON();
     next();
-  } catch {
+  } catch (err) {
+    if (err?.name === 'TokenExpiredError' || err?.name === 'JsonWebTokenError') {
+      return res.status(401).json({ error: 'Invalid or expired token' });
+    }
+    if (String(err?.name || '').startsWith('Sequelize')) {
+      return res.status(503).json({ error: 'Service temporarily unavailable' });
+    }
     return res.status(401).json({ error: 'Invalid or expired token' });
   }
 }

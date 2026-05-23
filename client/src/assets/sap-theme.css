@@ -668,6 +668,18 @@ html {
   border-radius: 1rem 1rem 0.25rem 1rem;
 }
 
+.sap-joule-bubble--user .sap-joule-user-prompt-details summary {
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.sap-joule-bubble--user .sap-joule-user-prompt-details summary:hover {
+  color: #fff;
+}
+
+.sap-joule-bubble--user .sap-joule-user-prompt-details p {
+  color: rgba(255, 255, 255, 0.9);
+}
+
 .sap-joule-bubble--assistant {
   margin-right: auto;
   color: var(--sapJouleAssistantText);
