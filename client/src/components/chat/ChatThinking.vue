@@ -1,6 +1,7 @@
 <template>
-  <div class="mb-4 flex justify-start">
-    <div class="sap-joule-bubble sap-joule-bubble--assistant max-w-[min(100%,20rem)]">
+  <div class="mb-4 flex items-start gap-3 justify-start">
+    <AssistantRobot size="sm" orb animated active class="mt-0.5 shrink-0" />
+    <div class="sap-joule-bubble sap-joule-bubble--assistant min-w-0 max-w-[min(100%,20rem)] flex-1">
       <p class="sap-joule-accent text-xs font-semibold">{{ assistantLabel }}</p>
       <p class="mt-1 text-sm">{{ currentLabel }}</p>
       <p v-if="activeTools?.length" class="mt-1 text-[11px] text-[var(--sapContentLabelColor)]">
@@ -42,6 +43,7 @@
 <script setup>
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import AssistantRobot from '@/components/chat/AssistantRobot.vue';
 
 const props = defineProps({
   phase: {

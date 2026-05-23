@@ -65,6 +65,9 @@
         </div>
       </main>
     </div>
+
+    <EquipmentDebugDock v-if="auth.isAuthenticated && auth.isAdmin" />
+    <SapStatusBar v-if="auth.isAuthenticated" />
   </div>
 </template>
 
@@ -74,6 +77,8 @@ import { useRoute } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import SapShellBar from './SapShellBar.vue';
 import SapSideNavigation from './SapSideNavigation.vue';
+import SapStatusBar from './SapStatusBar.vue';
+import EquipmentDebugDock from '@/components/equipment/EquipmentDebugDock.vue';
 import { useShellStore } from '@/stores/shell';
 import { useAuthStore } from '@/stores/auth';
 import { useNewChat } from '@/composables/useNewChat';

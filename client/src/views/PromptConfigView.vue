@@ -146,7 +146,10 @@
                 class="rounded-lg border border-[var(--sapNeutralBorderColor)] p-3 text-sm"
               >
                 <div class="flex flex-wrap items-center justify-between gap-2">
-                  <span class="font-medium text-[var(--sapTextColor)]">{{ formatDate(h.created_at) }}</span>
+                  <span class="font-medium text-[var(--sapTextColor)]">
+                    {{ t('promptConfig.versionLabel', { n: h.version_number || '?' }) }}
+                    · {{ formatDate(h.created_at) }}
+                  </span>
                   <span class="text-xs text-[var(--sapContentLabelColor)]">
                     {{ h.user?.name || h.user?.email || '—' }}
                   </span>
@@ -158,7 +161,7 @@
                   {{ t('promptConfig.historyChars', { n: h.char_count || 0 }) }}
                 </p>
                 <button
-                  v-if="h.previous_prompt"
+                  v-if="h.system_prompt"
                   type="button"
                   class="sap-btn sap-btn--transparent mt-2 !py-1 text-xs"
                   @click="restoreFromHistory(h)"
@@ -168,6 +171,14 @@
               </li>
             </ul>
           </div>
+
+          <PromptComparePanel
+            v-show="panel === 'compare'"
+            :prompt-id="active.id"
+            :versions="history"
+            :locale="locale === 'en' ? 'en' : 'de'"
+            class="min-h-0 flex-1"
+          />
 
           <div v-show="panel === 'test'" class="min-h-0 flex-1 space-y-4 overflow-y-auto">
             <p class="text-sm text-[var(--sapContentLabelColor)]">{{ t('promptConfig.testHint') }}</p>
@@ -262,6 +273,7 @@ import { useToast } from '@/composables/useToast';
 import { useConfirm } from '@/composables/useConfirm';
 import SkeletonBlock from '@/components/shared/SkeletonBlock.vue';
 import PromptEditor from '@/components/admin/PromptEditor.vue';
+import PromptComparePanel from '@/components/admin/PromptComparePanel.vue';
 import TokenUsageLine from '@/components/shared/TokenUsageLine.vue';
 
 const { t, locale } = useI18n();
@@ -290,6 +302,7 @@ const newName = ref('');
 const tabs = computed(() => [
   { id: 'editor', label: t('promptConfig.tabEditor') },
   { id: 'history', label: t('promptConfig.tabHistory') },
+  { id: 'compare', label: t('promptConfig.tabCompare') },
   { id: 'test', label: t('promptConfig.tabTest') },
 ]);
 
@@ -353,7 +366,7 @@ async function load() {
 
 async function loadHistory(id) {
   try {
-    history.value = await get(`/admin/prompts/${id}/history`);
+    history.value = await get(`/admin/prompts/${id}/versions`);
   } catch {
     history.value = [];
   }
@@ -449,7 +462,8 @@ async function createNew() {
 }
 
 async function restoreFromHistory(entry) {
-  if (!entry?.previous_prompt) return;
+  const text = entry?.system_prompt || entry?.previous_prompt;
+  if (!text) return;
   if (panel.value !== 'editor') panel.value = 'editor';
   if (isDirty.value) {
     const ok = await confirm.confirm({
@@ -460,7 +474,7 @@ async function restoreFromHistory(entry) {
     });
     if (!ok) return;
   }
-  editPrompt.value = entry.previous_prompt;
+  editPrompt.value = text;
   toast.success(t('promptConfig.restoredHint'));
 }
 
@@ -471,11 +485,16 @@ async function runTest() {
   testResultMode.value = '';
   testUsage.value = null;
   try {
-    const res = await post(`/admin/prompts/${active.value.id}/test`, {
+    const payload = {
       test_prompt: testPrompt.value,
       mode: testMode.value,
       locale: locale.value === 'en' ? 'en' : 'de',
-    });
+    };
+    // B4: when the editor has unsaved changes, test against the draft.
+    if (isDirty.value && editPrompt.value && editPrompt.value.trim().length >= 20) {
+      payload.system_prompt_override = editPrompt.value;
+    }
+    const res = await post(`/admin/prompts/${active.value.id}/test`, payload);
     testResultMode.value = res.mode || 'pi_sheet';
     testUsage.value = res.usage || res.piSheet?.llm_usage || null;
     if (res.mode === 'qa') {

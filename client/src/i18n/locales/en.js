@@ -26,6 +26,15 @@ export default {
     promptSubtitle: 'Edit and test the system prompt',
     backToCopilot: 'Back to PI Assistant',
   },
+  statusBar: {
+    ariaLabel: 'System status',
+    online: 'Online',
+    offline: 'Offline',
+    apiTooltip: 'API reachable · Last check {time}',
+    apiTooltipPending: 'Checking API status…',
+    equipmentTooltip: 'Equipment online/offline · simulations',
+    protocolTooltip: '{protocol}: {online}/{total} connected',
+  },
   login: {
     subtitle: 'Pharma Manufacturing',
     signInTitle: 'Sign in',
@@ -172,6 +181,8 @@ export default {
     minChars: 'At least 10 characters',
     charCount: '{count} / 2000',
     gmpDisclaimer: 'AI-generated drafts — always approve through Production and QA (GMP).',
+    tokenBudget: 'AI tokens today: {used}{limit}',
+    tokenBudgetUnlimited: 'AI tokens today: {used} (unlimited)',
     sheetCreated:
       'I created the PI Sheet “{title}” with {count} process steps. See the preview on the right — please review all GMP-relevant steps before release.',
     sheetCreatedShort: 'PI Sheet “{title}” created ({count} steps).',
@@ -180,6 +191,8 @@ export default {
     generateFailedToast:
       'The AI could not generate a PI Sheet. Please rephrase your request.',
     loadSheetFailed: 'Could not load PI Sheet.',
+    stop: 'Stop',
+    stopped: 'Generation cancelled.',
     contextTrimmed:
       'Some context was shortened due to model limits ({sections}). Results may be less precise.',
     errors: {
@@ -203,6 +216,9 @@ export default {
         'SAP MCP connection failed. Retrying without SAP context.',
       LLM_TOOL_LOOP: 'Too many tool calls. Please simplify your request.',
       LLM_GENERIC: 'An unexpected AI error occurred.',
+      LLM_ABORTED: 'Generation was cancelled.',
+      LLM_TOKEN_BUDGET:
+        'Daily AI token limit reached ({used} / {budget}). Try again tomorrow or contact an administrator.',
       PROMPT_CONFIG_MISSING:
         'No active prompt configuration. Contact an administrator.',
       PI_JSON_PARSE:
@@ -410,6 +426,15 @@ export default {
     prev: 'Previous',
     next: 'Next',
     pageOf: 'Page {page} / {total}',
+    sapSystem: 'SAP path',
+    sapSystemAll: 'All SAP paths',
+    sapSystemEwm: 'EWM / Handling Unit',
+    sapSystemMm: 'MM / MIGO',
+    sapSystemNone: 'Neutral (no WM)',
+    sapSystemUnspecified: 'Unspecified',
+    tags: 'Tags',
+    tagsPlaceholder: 'e.g. handling-unit, goods-receipt',
+    tagsFilterPlaceholder: 'Tag filter (comma-separated)',
   },
   upload: {
     subtitle: 'Import XSteps from CSV, Excel, JSON, XML, or ZIP',
@@ -470,7 +495,19 @@ export default {
     meta: '{chars} characters · {lines} lines',
     tabEditor: 'System prompt',
     tabHistory: 'History',
+    tabCompare: 'A/B compare',
     tabTest: 'Test',
+    versionLabel: 'v{n}',
+    compareTitle: 'Compare two versions',
+    compareHint: 'Pick two saved versions, view the diff, and optionally run a parallel API test.',
+    compareVersionA: 'Version A',
+    compareVersionB: 'Version B',
+    compareDiffStats: '+{adds} / −{removes} lines · {same} unchanged',
+    compareRunAb: 'Run A/B test',
+    compareRunning: 'Testing both versions…',
+    compareResultA: 'Result A (v{n})',
+    compareResultB: 'Result B (v{n})',
+    compareSelectTwo: 'Please select two different versions.',
     systemPromptLabel: 'System prompt (instructions for the AI)',
     hintsTitle: 'Tips',
     hint1:

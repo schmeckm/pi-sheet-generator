@@ -17,6 +17,18 @@
         <option value="">{{ t('repository.allProcesses') }}</option>
         <option v-for="p in processTypes" :key="p" :value="p">{{ p }}</option>
       </select>
+      <select v-model="filterSapSystem" class="sap-input max-w-[180px]" @change="reload">
+        <option value="">{{ t('repository.sapSystemAll') }}</option>
+        <option v-for="opt in sapSystemOptions" :key="opt.value" :value="opt.value">
+          {{ opt.label }}
+        </option>
+      </select>
+      <input
+        v-model="filterTags"
+        class="sap-input max-w-[200px]"
+        :placeholder="t('repository.tagsFilterPlaceholder')"
+        @keyup.enter="reload"
+      />
       <select v-model="filterGmp" class="sap-input max-w-[120px]" @change="reload">
         <option value="">{{ t('repository.gmpAll') }}</option>
         <option value="true">GMP</option>
@@ -79,6 +91,23 @@
             <span class="sap-label">{{ t('repository.process') }}</span>
             <input v-model="form.process_type" class="sap-input" required />
           </label>
+          <label class="block">
+            <span class="sap-label">{{ t('repository.sapSystem') }}</span>
+            <select v-model="form.sap_system" class="sap-input">
+              <option :value="null">{{ t('repository.sapSystemUnspecified') }}</option>
+              <option v-for="opt in sapSystemOptions" :key="opt.value" :value="opt.value">
+                {{ opt.label }}
+              </option>
+            </select>
+          </label>
+          <label class="block">
+            <span class="sap-label">{{ t('repository.tags') }}</span>
+            <input
+              v-model="tagsInput"
+              class="sap-input"
+              :placeholder="t('repository.tagsPlaceholder')"
+            />
+          </label>
           <label class="block sm:col-span-2">
             <span class="sap-label">{{ t('repository.description') }}</span>
             <textarea v-model="form.description" class="sap-textarea" rows="2" />
@@ -110,7 +139,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRepositoryStore } from '@/stores/repository';
 import { useToast } from '@/composables/useToast';
@@ -126,6 +155,8 @@ const confirm = useConfirm();
 const search = ref('');
 const filterProcess = ref('');
 const filterGmp = ref('');
+const filterSapSystem = ref('');
+const filterTags = ref('');
 const selected = ref([]);
 const modalOpen = ref(false);
 const editing = ref(false);
@@ -133,6 +164,13 @@ const editId = ref(null);
 
 const processTypes = ['Verpackung', 'Abfüllung', 'Granulation', 'Tablettierung', 'Coating'];
 const categories = ['Warenbewegung', 'Rückmeldung', 'Prozess', 'Qualität', 'Dokumentation'];
+
+const sapSystemOptions = computed(() => [
+  { value: 'ewm', label: t('repository.sapSystemEwm') },
+  { value: 'mm', label: t('repository.sapSystemMm') },
+  { value: 'none', label: t('repository.sapSystemNone') },
+  { value: 'unspecified', label: t('repository.sapSystemUnspecified') },
+]);
 
 const emptyForm = () => ({
   xstep_id: '',
@@ -142,6 +180,8 @@ const emptyForm = () => ({
   description: '',
   instruction_template: '',
   params: [],
+  sap_system: null,
+  tags: [],
   gmp_relevant: false,
   signature_required: false,
   is_active: true,
@@ -149,11 +189,23 @@ const emptyForm = () => ({
 
 const form = ref(emptyForm());
 
+const tagsInput = computed({
+  get: () => (Array.isArray(form.value.tags) ? form.value.tags.join(', ') : ''),
+  set: (val) => {
+    form.value.tags = String(val || '')
+      .split(/[,;|]+/)
+      .map((t) => t.trim().toLowerCase())
+      .filter(Boolean);
+  },
+});
+
 function reload() {
   const params = { limit: 500, page: 1 };
   if (search.value) params.search = search.value;
   if (filterProcess.value) params.process_type = filterProcess.value;
   if (filterGmp.value) params.gmp_relevant = filterGmp.value;
+  if (filterSapSystem.value) params.sap_system = filterSapSystem.value;
+  if (filterTags.value.trim()) params.tags = filterTags.value.trim();
   repo.loadXSteps(params);
 }
 
@@ -167,7 +219,12 @@ function openCreate() {
 function openEdit(row) {
   editing.value = true;
   editId.value = row.id;
-  form.value = { ...row, params: row.params || [] };
+  form.value = {
+    ...row,
+    params: row.params || [],
+    tags: Array.isArray(row.tags) ? [...row.tags] : [],
+    sap_system: row.sap_system || null,
+  };
   modalOpen.value = true;
 }
 

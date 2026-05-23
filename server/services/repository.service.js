@@ -4,6 +4,16 @@ const { logAudit } = require('./audit.service');
 const embeddingService = require('./embedding.service');
 
 const CATEGORIES = ['Warenbewegung', 'Rückmeldung', 'Prozess', 'Qualität', 'Dokumentation'];
+const SAP_SYSTEMS = ['ewm', 'mm', 'none'];
+
+function normalizeTagList(value) {
+  if (value === undefined || value === null || value === '') return null;
+  const list = Array.isArray(value) ? value : String(value).split(/[,;\s]+/);
+  const tags = list
+    .map((t) => String(t).trim().toLowerCase())
+    .filter(Boolean);
+  return tags.length ? tags : null;
+}
 
 async function findAll(filters = {}) {
   const {
@@ -11,6 +21,8 @@ async function findAll(filters = {}) {
     category,
     gmp_relevant,
     is_active,
+    sap_system,
+    tags,
     search,
     page = 1,
     limit = 50,
@@ -25,6 +37,12 @@ async function findAll(filters = {}) {
   if (is_active !== undefined && is_active !== '') {
     where.is_active = is_active === 'true' || is_active === true;
   }
+  if (sap_system) {
+    if (sap_system === 'unspecified') where.sap_system = { [Op.is]: null };
+    else if (SAP_SYSTEMS.includes(sap_system)) where.sap_system = sap_system;
+  }
+  const tagList = normalizeTagList(tags);
+  if (tagList) where.tags = { [Op.contains]: tagList };
   if (search) {
     where[Op.or] = [
       { name: { [Op.iLike]: `%${search}%` } },
@@ -116,6 +134,8 @@ async function bulkAction(action, ids, userId) {
 
 module.exports = {
   CATEGORIES,
+  SAP_SYSTEMS,
+  normalizeTagList,
   findAll,
   findById,
   create,

@@ -1,6 +1,7 @@
 <template>
   <div
-    class="fixed bottom-0 left-0 right-0 z-40 border-t border-[var(--sapNeutralBorderColor)] bg-gray-900 text-gray-100 shadow-lg"
+    v-if="auth.isAdmin"
+    class="relative z-40 flex-shrink-0 border-t border-[var(--sapNeutralBorderColor)] bg-gray-900 text-gray-100 shadow-lg"
     :class="expanded ? 'h-56' : 'h-9'"
   >
     <button
@@ -8,8 +9,20 @@
       class="flex w-full items-center justify-between px-4 py-2 text-left text-xs font-semibold"
       @click="expanded = !expanded"
     >
-      <span>{{ t('equipment.debugTitle') }} (OPC UA / MQTT / UNS)</span>
-      <span class="text-[var(--sapContentLabelColor)]">{{ lines.length }} {{ t('equipment.debugLines') }}</span>
+      <span class="flex items-center gap-2">
+        <span class="inline-flex items-center gap-1">
+          <span
+            class="h-1.5 w-1.5 rounded-full"
+            :class="lines.length ? 'bg-green-400' : 'bg-gray-500'"
+          />
+          {{ t('equipment.debugTitle') }}
+        </span>
+        <span class="text-gray-400">(OPC UA · MQTT · UNS)</span>
+      </span>
+      <span class="text-[var(--sapContentLabelColor)]">
+        {{ lines.length }} {{ t('equipment.debugLines') }}
+        <span class="ml-2 text-gray-500">{{ expanded ? '▾' : '▴' }}</span>
+      </span>
     </button>
     <div v-if="expanded" class="h-[calc(100%-2.25rem)] overflow-y-auto px-3 pb-2 font-mono text-[10px] leading-relaxed">
       <p v-if="!lines.length" class="text-gray-500">{{ t('equipment.debugEmpty') }}</p>
@@ -31,9 +44,10 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { get } from '@/composables/useApi';
+import { useAuthStore } from '@/stores/auth';
 
 const props = defineProps({
   equipmentId: { type: String, default: '' },
@@ -41,6 +55,7 @@ const props = defineProps({
 });
 
 const { t, locale } = useI18n();
+const auth = useAuthStore();
 const expanded = ref(false);
 const lines = ref([]);
 let timer = null;
@@ -57,24 +72,42 @@ function truncate(s, max = 120) {
 }
 
 async function poll() {
+  if (!auth.isAdmin) {
+    lines.value = [];
+    return;
+  }
   try {
     const params = { limit: 60 };
     if (props.equipmentId) params.equipment_id = props.equipmentId;
     const data = await get('/equipment/debug/log', { params });
     lines.value = data.items || [];
   } catch {
-    /* ignore when not admin */
+    /* ignore when not admin or endpoint unavailable */
   }
 }
 
-onMounted(() => {
-  poll();
-  timer = setInterval(poll, props.pollMs);
-});
+function startTimer() {
+  stopTimer();
+  if (auth.isAdmin) {
+    poll();
+    timer = setInterval(poll, props.pollMs);
+  }
+}
 
-onUnmounted(() => {
-  if (timer) clearInterval(timer);
-});
+function stopTimer() {
+  if (timer) {
+    clearInterval(timer);
+    timer = null;
+  }
+}
+
+watch(
+  () => auth.isAdmin,
+  () => startTimer()
+);
+
+onMounted(startTimer);
+onUnmounted(stopTimer);
 
 defineExpose({ refresh: poll });
 </script>

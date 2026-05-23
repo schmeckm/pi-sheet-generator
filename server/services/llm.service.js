@@ -1,11 +1,12 @@
 const { EventEmitter } = require('events');
 const { getAnthropicClient } = require('../config/anthropic');
-const { PromptConfig, PISheet, PISheetStep, EquipmentConfig } = require('../models');
+const { PISheet, PISheetStep, EquipmentConfig } = require('../models');
 const embeddingService = require('./embedding.service');
 const knowledgeService = require('./knowledge.service');
 const graphService = require('./graph.service');
 const { logAudit } = require('./audit.service');
 const settingsService = require('./settings.service');
+const promptConfigService = require('./promptConfig.service');
 const {
   EQUIPMENT_TOOL_DEFINITIONS,
   executeEquipmentToolSafe,
@@ -21,16 +22,23 @@ const { addUsage, extractUsageFromResponse } = require('../utils/llmUsage');
 const {
   LlmError,
   mapLlmError,
+  isMcpRetryable,
   parseLlmJson,
   validatePiSheet,
 } = require('../utils/llmErrors');
 const { trimBuildContext } = require('../utils/llmContext');
 const { withTimeout } = require('../utils/withTimeout');
+const { getModelConfig } = require('../utils/llmModel');
+const {
+  detectSapPath,
+  filterXStepsBySapPath,
+  sapPathPromptHint,
+} = require('../utils/sapPathHints');
+const tokenBudget = require('./tokenBudget.service');
 
-const MODEL = 'claude-sonnet-4-20250514';
 const MCP_BETA = 'mcp-client-2025-11-20';
 const SAP_MCP_SERVER_NAME = 'sap-mcp';
-const LLM_REQUEST_TIMEOUT_MS = 120000;
+const LLM_REQUEST_TIMEOUT_MS = 150_000;
 
 const PROCESS_TYPES = ['Verpackung', 'Abfüllung', 'Granulation', 'Tablettierung', 'Coating'];
 
@@ -49,6 +57,8 @@ function formatXStepsContext(xsteps) {
       name: x.name,
       category: x.category,
       process_type: x.process_type,
+      sap_system: x.sap_system || null,
+      tags: Array.isArray(x.tags) ? x.tags : [],
       description: x.description,
       instruction_template: x.instruction_template,
       params: x.params,
@@ -130,16 +140,60 @@ function formatDocumentChunksContext(chunks, locale = 'de') {
   return JSON.stringify(items, null, 2);
 }
 
-async function buildMessages(userPrompt, systemPrompt, locale = 'de') {
-  const { documentContextAppend, equipmentContextAppend, mcpContextAppend, graphContextAppend, labels } =
-    getLlmLocaleConfig(locale);
+/**
+ * Build messages for the LLM.
+ *
+ * `mode`:
+ *   - 'pi_sheet': full RAG (xsteps, docs, graph, equipment) + EWM/MM filter
+ *   - 'qa':      minimal context — tools fetch live data, no RAG embedding cost
+ */
+async function buildMessages(userPrompt, systemPrompt, locale = 'de', mode = 'pi_sheet') {
+  const localeCfg = getLlmLocaleConfig(locale);
+  const {
+    documentContextAppend,
+    equipmentContextAppend,
+    mcpContextAppend,
+    graphContextAppend,
+    labels,
+  } = localeCfg;
+
+  const sapOn = await isSapMcpEnabled();
+  const mcpAppend = sapOn ? mcpContextAppend : '';
+
+  if (mode === 'qa') {
+    // QA-Modus: kein RAG, kein Embedding, keine Graph-Berechnung.
+    // Equipment-Daten kommen über Tools (list_equipment, get_equipment_config, ...).
+    const extendedSystem = applyLocaleToSystemPrompt(
+      `${systemPrompt}${mcpAppend}`,
+      locale
+    );
+    return {
+      xsteps: [],
+      graphCtx: { chain: [], requirements: [] },
+      docChunks: [],
+      equipmentRows: [],
+      userContent: `${labels.userRequest}: ${userPrompt}`,
+      systemPrompt: extendedSystem,
+      contextTrimmed: false,
+      trimmedSections: [],
+      sapPath: 'auto',
+    };
+  }
+
   const processType = inferProcessType(userPrompt);
+  const sapPath = detectSapPath(userPrompt);
+
   const [rawXsteps, docChunks, equipmentRows] = await Promise.all([
     retrieveXSteps(userPrompt, processType),
     retrieveDocumentChunks(userPrompt, processType),
     retrieveEquipmentContext(),
   ]);
-  const { xsteps, graphCtx } = await graphService.mergeXStepsWithGraph(rawXsteps, processType);
+
+  const filteredXsteps = filterXStepsBySapPath(rawXsteps, sapPath);
+  const { xsteps, graphCtx } = await graphService.mergeXStepsWithGraph(
+    filteredXsteps,
+    processType
+  );
 
   let xstepsJSON = formatXStepsContext(xsteps);
   let graphJSON = graphService.formatGraphContext(graphCtx, locale);
@@ -155,20 +209,23 @@ async function buildMessages(userPrompt, systemPrompt, locale = 'de') {
   docsJSON = trimmed.docsJSON;
   equipmentJSON = trimmed.equipmentJSON;
 
-  const sapOn = await isSapMcpEnabled();
-  const mcpAppend = sapOn ? mcpContextAppend : '';
+  const pathHint = sapPathPromptHint(sapPath, locale);
   const extendedSystem = applyLocaleToSystemPrompt(
-    `${systemPrompt}${graphContextAppend}${documentContextAppend}${equipmentContextAppend}${mcpAppend}`,
+    `${systemPrompt}${graphContextAppend}${documentContextAppend}${equipmentContextAppend}${mcpAppend}${
+      pathHint ? `\n\n${pathHint}` : ''
+    }`,
     locale
   );
 
-  const userContent = [
+  const userParts = [
     `${labels.processGraph}:\n${graphJSON}`,
     `${labels.xsteps}:\n${xstepsJSON}`,
     `${labels.documents}: ${docsJSON}`,
     `${labels.equipment}:\n${equipmentJSON}`,
-    `${labels.userRequest}: ${userPrompt}`,
-  ].join('\n\n');
+  ];
+  if (pathHint) userParts.push(pathHint);
+  userParts.push(`${labels.userRequest}: ${userPrompt}`);
+  const userContent = userParts.join('\n\n');
 
   return {
     xsteps,
@@ -179,6 +236,7 @@ async function buildMessages(userPrompt, systemPrompt, locale = 'de') {
     systemPrompt: extendedSystem,
     contextTrimmed: trimmed.contextTrimmed,
     trimmedSections: trimmed.trimmedSections,
+    sapPath,
   };
 }
 
@@ -277,12 +335,9 @@ async function runToolLoop(client, requestParams, maxRounds = 6) {
         callAnthropic(() => client.beta.messages.create({ ...params, betas: [MCP_BETA] }))
     : (params) => callAnthropic(() => client.messages.create(params));
 
-  const defaultTools = [...EQUIPMENT_TOOL_DEFINITIONS, ...GRAPH_TOOL_DEFINITIONS];
-  let params = { ...requestParams };
-  if (!params.tools?.length) {
-    params.tools = defaultTools;
-  }
-  let response = await createMessage(params);
+  // FIX A1: do NOT inject default tools when the caller explicitly omitted them
+  // (e.g. PI-sheet generation must reply with JSON, not with tool_use blocks).
+  let response = await createMessage(requestParams);
   let usage = extractUsageFromResponse(response);
   let rounds = 0;
 
@@ -303,9 +358,8 @@ async function runToolLoop(client, requestParams, maxRounds = 6) {
       });
     }
 
-    params = {
+    const nextParams = {
       ...requestParams,
-      tools: requestParams.tools?.length ? requestParams.tools : defaultTools,
       messages: [
         ...requestParams.messages,
         { role: 'assistant', content: response.content },
@@ -313,7 +367,7 @@ async function runToolLoop(client, requestParams, maxRounds = 6) {
       ],
     };
 
-    response = await createMessage(params);
+    response = await createMessage(nextParams);
     usage = addUsage(usage, response);
     rounds += 1;
   }
@@ -348,7 +402,19 @@ async function buildMcpConnectorParams() {
 }
 
 async function buildClaudeRequestParams({ systemPrompt, userContent }, options = {}) {
-  const { includeMcp = true, includeEquipmentTools = true, includeGraphTools = false } = options;
+  const {
+    includeMcp = true,
+    includeEquipmentTools = true,
+    includeGraphTools = false,
+    mode = 'pi_sheet',
+    modelOverride,
+    maxTokensOverride,
+  } = options;
+
+  const cfg = await getModelConfig(mode);
+  const model = modelOverride || cfg.model;
+  const max_tokens = maxTokensOverride || cfg.max_tokens;
+
   const mcp = includeMcp ? await buildMcpConnectorParams() : {};
   const { tools: mcpTools, ...mcpRest } = mcp;
   const tools = [
@@ -357,8 +423,8 @@ async function buildClaudeRequestParams({ systemPrompt, userContent }, options =
     ...(mcpTools || []),
   ];
   return {
-    model: MODEL,
-    max_tokens: 4000,
+    model,
+    max_tokens,
     system: systemPrompt,
     messages: [{ role: 'user', content: userContent }],
     ...(tools.length ? { tools } : {}),
@@ -377,7 +443,7 @@ function requireAnthropicClient() {
 async function requireActivePromptConfig(options = {}) {
   const promptConfig =
     options.promptConfig ||
-    (await PromptConfig.findOne({ where: { is_active: true } }));
+    (await promptConfigService.getForMode(options.mode || 'pi_sheet'));
   if (!promptConfig) {
     throw mapLlmError(new Error('No active prompt configuration found'));
   }
@@ -387,7 +453,12 @@ async function requireActivePromptConfig(options = {}) {
 async function buildPiSheetRequestParams(systemPrompt, userContent, includeMcp) {
   return buildClaudeRequestParams(
     { systemPrompt, userContent },
-    { includeMcp, includeEquipmentTools: false }
+    {
+      includeMcp,
+      includeEquipmentTools: false,
+      includeGraphTools: false,
+      mode: 'pi_sheet',
+    }
   );
 }
 
@@ -445,12 +516,32 @@ async function savePiSheet(parsed, userPrompt, userId, options = {}) {
   });
 }
 
-async function generatePISheet(userPrompt, userId, options = {}) {
-  const client = requireAnthropicClient();
-  const promptConfig = await requireActivePromptConfig(options);
+async function guardTokenBudget(userId, options = {}) {
+  await tokenBudget.assertWithinBudget(userId, options.role);
+}
 
-  const ctx = await buildMessages(userPrompt, promptConfig.system_prompt, options.locale);
-  const { userContent, systemPrompt, xsteps } = ctx;
+async function trackTokenUsage(userId, usage) {
+  await tokenBudget.recordUsage(userId, usage);
+}
+
+async function generatePISheet(userPrompt, userId, options = {}) {
+  await guardTokenBudget(userId, options);
+  const client = requireAnthropicClient();
+  const promptConfig = await requireActivePromptConfig({
+    ...options,
+    mode: 'pi_sheet',
+  });
+
+  const ctx = await buildMessages(
+    userPrompt,
+    promptConfig.system_prompt,
+    options.locale,
+    'pi_sheet'
+  );
+  const { userContent, systemPrompt, xsteps, equipmentRows } = ctx;
+  const allowedEquipmentIds = equipmentRows.map(
+    (r) => (r.dataValues || r).equipment_id
+  );
 
   let requestParams = await buildPiSheetRequestParams(systemPrompt, userContent, true);
   const hadMcp = Boolean(requestParams.mcp_servers?.length);
@@ -459,8 +550,8 @@ async function generatePISheet(userPrompt, userId, options = {}) {
   try {
     ({ response, usage } = await runToolLoop(client, requestParams));
   } catch (err) {
-    if (hadMcp) {
-      console.warn('[llm] Request failed, retry without MCP:', err.message);
+    if (hadMcp && isMcpRetryable(err)) {
+      console.warn('[llm] Request failed (MCP-retryable), retry without MCP:', err.message);
       requestParams = await buildPiSheetRequestParams(systemPrompt, userContent, false);
       ({ response, usage } = await runToolLoop(client, requestParams));
     } else {
@@ -469,13 +560,20 @@ async function generatePISheet(userPrompt, userId, options = {}) {
   }
 
   const text = extractTextFromResponse(response);
-  const parsed = validatePiSheet(parseLlmJson(text), text);
+  const parsed = validatePiSheet(parseLlmJson(text), text, { allowedEquipmentIds });
   const piSheet = await savePiSheet(parsed, userPrompt, userId, {
     locale: options.locale,
     contextXstepIds: xsteps.map((x) => x.xstep_id),
     usage,
   });
-  return { piSheet, usage, contextTrimmed: ctx.contextTrimmed, trimmedSections: ctx.trimmedSections };
+  await trackTokenUsage(userId, usage);
+  return {
+    piSheet,
+    usage,
+    contextTrimmed: ctx.contextTrimmed,
+    trimmedSections: ctx.trimmedSections,
+    sapPath: ctx.sapPath,
+  };
 }
 
 function resolveChatMode(userPrompt) {
@@ -484,50 +582,60 @@ function resolveChatMode(userPrompt) {
 
 async function buildAnswerChatRequest(userPrompt, options = {}) {
   const client = requireAnthropicClient();
-  const promptConfig = await requireActivePromptConfig(options);
+  const promptConfig = await requireActivePromptConfig({ ...options, mode: 'qa' });
 
   const qaSystem = applyLocaleToSystemPrompt(
     `${promptConfig.system_prompt}
 
 [Laufzeit — Modus 2 aktiv]
-Diese Anfrage ist eine Informationsfrage, kein PI-Sheet-Auftrag. Befolge Abschnitt „Modus 2“ im System-Prompt: natürliche Sprache, Equipment-Tools nutzen, kein JSON.
+Diese Anfrage ist eine Informationsfrage, kein PI-Sheet-Auftrag. Befolge Abschnitt „Modus 2": natürliche Sprache, Equipment- und Graph-Tools nutzen, kein JSON.
 
-Effizienz: Bei Fragen zu aktiven/inaktiven Geräten oder Waagen reicht in der Regel ein Aufruf von list_equipment (z. B. active_only, equipment_type scale). Keine OPC/MQTT-Verbindungen, kein search_industrial_namespace und kein read_equipment_value, außer der Nutzer fragt explizit nach Live-Werten, Namespace oder Nodes.
-
-Prozessgraph: Bei Fragen zu Schrittfolge, Standard-XSteps oder Equipment-Zuordnung pro Prozess (z. B. Verpackung) nutze get_process_chain oder get_step_requirements.`,
+Effizienz:
+- Aktive/inaktive Geräte oder Waagen → list_equipment (active_only, equipment_type scale).
+- Schrittfolge, Standard-XSteps, Equipment-Zuordnung pro Prozess → get_process_chain oder get_step_requirements.
+- KEINE OPC/MQTT-Verbindungen, kein search_industrial_namespace, kein read_equipment_value außer der Nutzer fragt ausdrücklich nach Live-Werten, Namespace oder Nodes.`,
     options.locale
   );
 
-  const { userContent } = await buildMessages(userPrompt, promptConfig.system_prompt, options.locale);
-  const requestParams = await buildClaudeRequestParams(
-    { systemPrompt: qaSystem, userContent },
-    { includeMcp: false, includeGraphTools: true }
+  const ctx = await buildMessages(
+    userPrompt,
+    promptConfig.system_prompt,
+    options.locale,
+    'qa'
   );
-  return { client, requestParams };
+  const requestParams = await buildClaudeRequestParams(
+    { systemPrompt: qaSystem, userContent: ctx.userContent },
+    {
+      includeMcp: false,
+      includeEquipmentTools: true,
+      includeGraphTools: true,
+      mode: 'qa',
+    }
+  );
+  return { client, requestParams, ctx };
 }
 
 async function answerChat(userPrompt, userId, options = {}) {
+  await guardTokenBudget(userId, options);
   const { client, requestParams } = await buildAnswerChatRequest(userPrompt, options);
   const { response, usage } = await runToolLoop(client, requestParams);
   const text = extractTextFromResponse(response);
+  await trackTokenUsage(userId, usage);
   return { type: 'text', message: text.trim() || 'Keine Antwort.', usage };
 }
 
 async function completeChat(userPrompt, userId, options = {}) {
   const requestMode = resolveChatMode(userPrompt);
   if (requestMode === 'pi_sheet') {
-    const { piSheet, usage, contextTrimmed, trimmedSections } = await generatePISheet(
-      userPrompt,
-      userId,
-      options
-    );
+    const result = await generatePISheet(userPrompt, userId, options);
     return {
       type: 'pi_sheet',
       requestMode,
-      piSheet,
-      usage,
-      contextTrimmed,
-      trimmedSections,
+      piSheet: result.piSheet,
+      usage: result.usage,
+      contextTrimmed: result.contextTrimmed,
+      trimmedSections: result.trimmedSections,
+      sapPath: result.sapPath,
     };
   }
   const answer = await answerChat(userPrompt, userId, options);
@@ -538,19 +646,36 @@ function createLlmStreamEmitter(client, requestParams, maxRounds = 6, retry = nu
   const emitter = new EventEmitter();
   let finalMessage = null;
   let totalUsage = null;
+  let aborted = false;
+  let activeStream = null;
+
+  emitter.abort = () => {
+    aborted = true;
+    try {
+      activeStream?.controller?.abort?.();
+    } catch {
+      /* ignore */
+    }
+  };
 
   const runOnce = async (params) => {
     let messages = [...params.messages];
     let rounds = 0;
 
     while (rounds < maxRounds) {
+      if (aborted) throw new LlmError('LLM_ABORTED', 'Generation aborted by user', 499);
       const msg = await callAnthropic(async () => {
         const stream = client.messages.stream({
           ...params,
           messages,
         });
+        activeStream = stream;
         stream.on('text', (text) => emitter.emit('text', text));
-        return stream.finalMessage();
+        try {
+          return await stream.finalMessage();
+        } finally {
+          activeStream = null;
+        }
       });
 
       totalUsage = addUsage(totalUsage, msg);
@@ -594,10 +719,16 @@ function createLlmStreamEmitter(client, requestParams, maxRounds = 6, retry = nu
     try {
       await runOnce(requestParams);
     } catch (err) {
-      if (retry?.withMcpFallback && !retry.attempted) {
+      const mapped = mapLlmError(err);
+      if (
+        retry?.withMcpFallback &&
+        !retry.attempted &&
+        isMcpRetryable(mapped) &&
+        !aborted
+      ) {
         retry.attempted = true;
         try {
-          console.warn('[llm] Stream failed with MCP, retry without:', err.message);
+          console.warn('[llm] Stream failed (MCP-retryable), retry without MCP:', err.message);
           const fallbackParams = await retry.buildParams(false);
           await runOnce(fallbackParams);
           return;
@@ -606,7 +737,7 @@ function createLlmStreamEmitter(client, requestParams, maxRounds = 6, retry = nu
           return;
         }
       }
-      emitter.emit('error', mapLlmError(err));
+      emitter.emit('error', mapped);
     }
   })();
 
@@ -624,11 +755,20 @@ function createLlmStreamEmitter(client, requestParams, maxRounds = 6, retry = nu
 }
 
 async function generatePISheetStream(userPrompt, userId, options = {}) {
+  await guardTokenBudget(userId, options);
   const client = requireAnthropicClient();
-  const promptConfig = await requireActivePromptConfig(options);
+  const promptConfig = await requireActivePromptConfig({
+    ...options,
+    mode: 'pi_sheet',
+  });
 
-  const ctx = await buildMessages(userPrompt, promptConfig.system_prompt, options.locale);
-  const { userContent, systemPrompt } = ctx;
+  const ctx = await buildMessages(
+    userPrompt,
+    promptConfig.system_prompt,
+    options.locale,
+    'pi_sheet'
+  );
+  const { userContent, systemPrompt, equipmentRows, xsteps, sapPath } = ctx;
 
   const buildParams = (includeMcp) =>
     buildPiSheetRequestParams(systemPrompt, userContent, includeMcp);
@@ -643,12 +783,23 @@ async function generatePISheetStream(userPrompt, userId, options = {}) {
   emitter.contextMeta = {
     contextTrimmed: ctx.contextTrimmed,
     trimmedSections: ctx.trimmedSections,
+    sapPath,
+    allowedEquipmentIds: equipmentRows.map(
+      (r) => (r.dataValues || r).equipment_id
+    ),
+    xstepIds: xsteps.map((x) => x.xstep_id),
+    stats: {
+      xsteps: xsteps.length,
+      docs: ctx.docChunks.length,
+      equipment: equipmentRows.length,
+    },
   };
 
   return emitter;
 }
 
-async function generateAnswerChatStream(userPrompt, options = {}) {
+async function generateAnswerChatStream(userPrompt, userId, options = {}) {
+  await guardTokenBudget(userId, options);
   const { client, requestParams } = await buildAnswerChatRequest(userPrompt, options);
   return createLlmStreamEmitter(client, requestParams, 4);
 }
@@ -665,6 +816,7 @@ async function finalizeStream(stream, userPrompt, userId, options = {}) {
   return finalizeFromMessage(finalMessage, userPrompt, userId, {
     ...options,
     usage: stream.getUsage?.() || extractUsageFromResponse(finalMessage),
+    contextMeta: stream.contextMeta,
   });
 }
 
@@ -673,22 +825,35 @@ async function finalizeFromMessage(finalMessage, userPrompt, userId, options = {
     .filter((b) => b.type === 'text')
     .map((b) => b.text)
     .join('\n');
-  const parsed = validatePiSheet(parseLlmJson(text), text);
-  const processType = parsed.process_type || inferProcessType(userPrompt);
-  const rawXsteps = await retrieveXSteps(userPrompt, processType);
+
+  const meta = options.contextMeta || {};
+  const allowedEquipmentIds = meta.allowedEquipmentIds || [];
+  const parsed = validatePiSheet(parseLlmJson(text), text, { allowedEquipmentIds });
+
+  // Use xstepIds from build phase if available, only fall back to a fresh
+  // search when an external caller invoked finalize directly.
+  let contextXstepIds = meta.xstepIds;
+  if (!contextXstepIds) {
+    const processType = parsed.process_type || inferProcessType(userPrompt);
+    const rawXsteps = await retrieveXSteps(userPrompt, processType);
+    contextXstepIds = rawXsteps.map((x) => x.xstep_id);
+  }
+
   const usage =
     options.usage ||
     extractUsageFromResponse(finalMessage) ||
     null;
   const piSheet = await savePiSheet(parsed, userPrompt, userId, {
     locale: options.locale,
-    contextXstepIds: rawXsteps.map((x) => x.xstep_id),
+    contextXstepIds,
     usage,
   });
   return { piSheet, usage };
 }
 
 module.exports = {
+  guardTokenBudget,
+  trackTokenUsage,
   generatePISheet,
   generatePISheetStream,
   generateAnswerChatStream,
@@ -705,4 +870,5 @@ module.exports = {
   savePiSheet,
   mapLlmError,
   LlmError,
+  detectSapPath,
 };

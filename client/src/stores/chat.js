@@ -10,7 +10,7 @@ import { useShellStore } from '@/stores/shell';
 
 import { getChatRequestMode } from '@/utils/chatIntent';
 import { resolveChatError, contextTrimmedMessage } from '@/utils/chatErrors';
-import { streamChatGenerate, streamChatQa } from '@/composables/useStreaming';
+import { streamChat, abortChatStream } from '@/composables/useStreaming';
 import { useToast } from '@/composables/useToast';
 
 
@@ -104,6 +104,12 @@ export const useChatStore = defineStore('chat', () => {
   const history = ref([]);
 
   const activeHistoryId = ref(null);
+
+  const activeStreamId = ref(null);
+
+  const tokenBudget = ref(null);
+
+  let activeStreamHandle = null;
 
 
 
@@ -209,6 +215,7 @@ export const useChatStore = defineStore('chat', () => {
 
 
 
+  // Fallback heuristic when the server has not yet emitted a status event.
   function advanceThinkingPhase(elapsedMs, mode) {
 
     if (mode === 'pi_sheet') {
@@ -235,6 +242,18 @@ export const useChatStore = defineStore('chat', () => {
 
   }
 
+  // Authoritative status from server overrides the heuristic.
+  function applyServerStatus(status) {
+    if (!status?.phase) return;
+    const map = {
+      generating: 'generating',
+      tools: 'context',
+      finalizing: 'structuring',
+    };
+    const mapped = map[status.phase];
+    if (mapped) thinkingPhase.value = mapped;
+  }
+
 
 
   function applyServerMode(result) {
@@ -251,6 +270,14 @@ export const useChatStore = defineStore('chat', () => {
     toast.warning(contextTrimmedMessage(result.trimmedSections));
   }
 
+  async function refreshTokenBudget() {
+    try {
+      tokenBudget.value = await get('/chat/token-budget');
+    } catch {
+      tokenBudget.value = null;
+    }
+  }
+
   async function sendMessage(prompt) {
 
     messages.value.push({
@@ -263,8 +290,8 @@ export const useChatStore = defineStore('chat', () => {
 
     });
 
-
-
+    // Client guess only for the placeholder UX; server's meta event is
+    // authoritative (C4).
     const clientMode = getChatRequestMode(prompt);
 
     requestMode.value = clientMode;
@@ -274,6 +301,8 @@ export const useChatStore = defineStore('chat', () => {
     activeTools.value = [];
 
     thinkingPhase.value = 'searching';
+
+    activeStreamId.value = null;
 
     const started = Date.now();
 
@@ -313,29 +342,39 @@ export const useChatStore = defineStore('chat', () => {
       };
       const onMeta = (meta) => {
         if (meta.requestMode) requestMode.value = meta.requestMode;
+        if (meta.streamId) activeStreamId.value = meta.streamId;
         if (meta.contextTrimmed) {
           useToast().warning(contextTrimmedMessage(meta.trimmedSections));
         }
       };
+      const onStatus = (status) => applyServerStatus(status);
+      const onTools = (tools) => {
+        activeTools.value = tools || [];
+      };
 
-      let result;
-      if (clientMode === 'pi_sheet') {
-        result = await streamChatGenerate(prompt, { locale, onChunk, onMeta });
-      } else {
-        result = await streamChatQa(prompt, {
-          locale,
-          onChunk,
-          onMeta,
-          onTools: (tools) => {
-            activeTools.value = tools || [];
-          },
-        });
-      }
+      activeStreamHandle = streamChat(prompt, {
+        locale,
+        onChunk,
+        onMeta,
+        onStatus,
+        onTools,
+      });
+      const result = await activeStreamHandle;
 
       applyServerMode(result);
       applyStreamResult(result, assistantIdx);
       notifyContextTrimmed(result);
     } catch (err) {
+      if (err?.code === 'LLM_ABORTED' || /aborted/i.test(err?.message || '')) {
+        messages.value[assistantIdx] = {
+          role: 'assistant',
+          content: t('chat.stopped'),
+          streaming: false,
+          requestMode: requestMode.value,
+          timestamp: Date.now(),
+        };
+        return;
+      }
       const ok = await tryNonStreamGenerate(prompt, assistantIdx);
       if (!ok) {
         const message = resolveChatError(err);
@@ -356,8 +395,24 @@ export const useChatStore = defineStore('chat', () => {
 
       activeTools.value = [];
 
+      activeStreamHandle = null;
+
+      activeStreamId.value = null;
+
+      await refreshTokenBudget();
+
     }
 
+  }
+
+  function stopGeneration() {
+    if (!isGenerating.value) return;
+    try {
+      activeStreamHandle?.abort?.();
+    } catch {
+      /* ignore */
+    }
+    if (activeStreamId.value) abortChatStream(activeStreamId.value);
   }
 
 
@@ -513,6 +568,12 @@ export const useChatStore = defineStore('chat', () => {
     resetConversation,
 
     sendMessage,
+
+    stopGeneration,
+
+    tokenBudget,
+
+    refreshTokenBudget,
 
     loadHistory,
 

@@ -155,7 +155,32 @@ function detectRefusal(text) {
   return hints.some((h) => lower.includes(h)) && !/\{\s*"title"/.test(text);
 }
 
-function validatePiSheet(parsed, rawText = '') {
+const VALID_CATEGORIES = new Set([
+  'Warenbewegung',
+  'Rückmeldung',
+  'Qualität',
+  'Prozess',
+  'Dokumentation',
+]);
+
+const VALID_PARAM_TYPES = new Set([
+  'input',
+  'display',
+  'checkbox',
+  'scale',
+  'temperature',
+  'select',
+]);
+
+function clampConfidence(value) {
+  if (value == null) return value;
+  const n = Number(value);
+  if (!Number.isFinite(n)) return null;
+  if (n > 1 && n <= 100) return Math.round(n) / 100;
+  return Math.max(0, Math.min(1, n));
+}
+
+function validatePiSheet(parsed, rawText = '', options = {}) {
   if (!parsed || typeof parsed !== 'object') {
     throw new LlmError(
       'PI_INVALID_STRUCTURE',
@@ -177,6 +202,13 @@ function validatePiSheet(parsed, rawText = '') {
       422
     );
   }
+
+  const allowedEquipmentIds = new Set(
+    (options.allowedEquipmentIds || []).filter(Boolean)
+  );
+  const seenStepNrs = new Set();
+  const warnings = Array.isArray(parsed.warnings) ? [...parsed.warnings] : [];
+
   for (let i = 0; i < parsed.steps.length; i += 1) {
     const step = parsed.steps[i];
     if (!step || typeof step !== 'object') {
@@ -193,7 +225,48 @@ function validatePiSheet(parsed, rawText = '') {
         422
       );
     }
+
+    if (step.confidence != null) step.confidence = clampConfidence(step.confidence);
+
+    if (step.step_nr != null) {
+      const nr = Number(step.step_nr);
+      if (Number.isFinite(nr)) {
+        if (seenStepNrs.has(nr)) {
+          warnings.push(`Duplicate step_nr ${nr} normalized at index ${i}`);
+          step.step_nr = i + 1;
+        } else {
+          seenStepNrs.add(nr);
+        }
+      }
+    }
+
+    if (step.category && !VALID_CATEGORIES.has(step.category)) {
+      warnings.push(
+        `Step ${step.step_nr || i + 1}: unknown category "${step.category}" — kept as is, please review`
+      );
+    }
+
+    if (Array.isArray(step.params)) {
+      for (const p of step.params) {
+        if (!p || typeof p !== 'object') continue;
+        if (p.type && !VALID_PARAM_TYPES.has(p.type)) {
+          warnings.push(
+            `Step ${step.step_nr || i + 1}: parameter "${p.name || '?'}" has unknown type "${p.type}"`
+          );
+        }
+        const eqId = p?.equipment_config?.equipment_id;
+        if (eqId && allowedEquipmentIds.size && !allowedEquipmentIds.has(eqId)) {
+          warnings.push(
+            `Step ${step.step_nr || i + 1}: unknown equipment_id "${eqId}" — not in configured equipment`
+          );
+          delete p.equipment_config;
+        }
+      }
+    }
   }
+
+  parsed.warnings = warnings;
+  if (parsed.confidence != null) parsed.confidence = clampConfidence(parsed.confidence);
 
   const text = rawText || JSON.stringify(parsed);
   if (detectRefusal(text) && !parsed.steps?.length) {
@@ -269,4 +342,7 @@ module.exports = {
   parseLlmJson,
   validatePiSheet,
   toErrorPayload,
+  VALID_CATEGORIES,
+  VALID_PARAM_TYPES,
+  clampConfidence,
 };

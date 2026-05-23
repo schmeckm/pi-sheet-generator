@@ -13,6 +13,7 @@
         @input="autoResize"
       />
       <button
+        v-if="!disabled || !canStop"
         type="submit"
         class="sap-joule-send"
         :disabled="disabled || text.trim().length < 10"
@@ -27,10 +28,27 @@
           />
         </svg>
       </button>
+      <button
+        v-else
+        type="button"
+        class="sap-joule-send sap-joule-send--stop"
+        :title="t('chat.stop')"
+        @click="$emit('stop')"
+      >
+        <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <rect x="6" y="6" width="12" height="12" rx="2" />
+        </svg>
+      </button>
     </form>
     <p class="mx-auto mt-2 max-w-md text-center text-[10px] text-[var(--sapContentLabelColor)]">
       <span v-if="text.length > 0 && text.length < 10">{{ t('chat.minChars') }}</span>
       <span v-else>{{ t('chat.gmpDisclaimer') }}</span>
+    </p>
+    <p
+      v-if="tokenBudgetLine"
+      class="mx-auto mt-1 max-w-md text-center text-[10px] text-[var(--sapContentLabelColor)]"
+    >
+      {{ tokenBudgetLine }}
     </p>
   </div>
 </template>
@@ -40,8 +58,12 @@ import { ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 const { t } = useI18n();
-const emit = defineEmits(['send']);
-const props = defineProps({ disabled: { type: Boolean, default: false } });
+const emit = defineEmits(['send', 'stop']);
+const props = defineProps({
+  disabled: { type: Boolean, default: false },
+  canStop: { type: Boolean, default: false },
+  tokenBudgetLine: { type: String, default: '' },
+});
 
 const text = ref('');
 const textareaRef = ref(null);

@@ -55,6 +55,46 @@ const DEFAULTS = [
     value: 'CH01',
     description: 'Default plant code for new PI Sheets',
   },
+  {
+    key: 'llm_model_pi_sheet',
+    value: 'claude-sonnet-4-20250514',
+    description: 'Anthropic model used for PI Sheet generation',
+  },
+  {
+    key: 'llm_model_qa',
+    value: 'claude-haiku-4-20250514',
+    description: 'Anthropic model used for QA / equipment chat (cheaper, faster)',
+  },
+  {
+    key: 'llm_model_vision',
+    value: 'claude-sonnet-4-20250514',
+    description: 'Anthropic model used for vision / document digitization',
+  },
+  {
+    key: 'llm_max_tokens_pi_sheet',
+    value: '2500',
+    description: 'Max output tokens for PI Sheet generation',
+  },
+  {
+    key: 'llm_max_tokens_qa',
+    value: '1500',
+    description: 'Max output tokens for QA / equipment chat',
+  },
+  {
+    key: 'llm_max_tokens_vision',
+    value: '2500',
+    description: 'Max output tokens for vision / document digitization',
+  },
+  {
+    key: 'llm_token_budget_daily_per_user',
+    value: '250000',
+    description: 'Max LLM tokens per user per UTC day (0 = unlimited)',
+  },
+  {
+    key: 'llm_token_budget_admin_unlimited',
+    value: 'true',
+    description: 'Admins bypass daily token budget when true',
+  },
 ];
 
 async function seedSettings() {

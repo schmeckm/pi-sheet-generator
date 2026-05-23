@@ -4,7 +4,10 @@
     :class="[
       `assistant-robot--${size}`,
       sizeClasses,
-      { 'assistant-robot--animated': animated },
+      {
+        'assistant-robot--animated': animated,
+        'assistant-robot--active': active,
+      },
       orb
         ? 'sap-joule-orb rounded-full'
         : hero
@@ -20,50 +23,58 @@
       role="img"
       :aria-label="ariaLabel"
     >
-      <!-- Antenna -->
-      <line x1="32" y1="6" x2="32" y2="2" />
-      <circle cx="32" cy="1.5" r="1.5" fill="currentColor" stroke="none" />
+      <g class="assistant-robot__figure">
+        <g class="assistant-robot__antenna">
+          <line x1="32" y1="6" x2="32" y2="2" />
+          <circle cx="32" cy="1.5" r="1.5" fill="currentColor" stroke="none" />
+        </g>
 
-      <!-- Head -->
-      <rect x="22" y="6" width="20" height="14" rx="4" />
-      <circle cx="28" cy="13" r="1.75" fill="currentColor" stroke="none" />
-      <circle cx="36" cy="13" r="1.75" fill="currentColor" stroke="none" />
-      <path d="M27 16.5 Q32 18.5 37 16.5" />
+        <g class="assistant-robot__head">
+          <rect x="22" y="6" width="20" height="14" rx="4" />
+          <circle class="assistant-robot__eye" cx="28" cy="13" r="1.75" fill="currentColor" stroke="none" />
+          <circle class="assistant-robot__eye" cx="36" cy="13" r="1.75" fill="currentColor" stroke="none" />
+          <path d="M27 16.5 Q32 18.5 37 16.5" />
+        </g>
 
-      <!-- Body -->
-      <rect x="18" y="22" width="28" height="26" rx="4" />
-      <rect x="21" y="26" width="22" height="16" rx="2" class="assistant-robot__chest" />
+        <g class="assistant-robot__torso">
+          <rect x="18" y="22" width="28" height="26" rx="4" />
+          <rect x="21" y="26" width="22" height="16" rx="2" class="assistant-robot__chest" />
+          <text
+            x="32"
+            y="33.8"
+            text-anchor="middle"
+            class="assistant-robot__make"
+            fill="currentColor"
+            stroke="none"
+          >
+            MAKE
+          </text>
+          <text
+            x="32"
+            y="39"
+            text-anchor="middle"
+            class="assistant-robot__tagline"
+            fill="currentColor"
+            stroke="none"
+          >
+            make it happen
+          </text>
+        </g>
 
-      <text
-          x="32"
-          y="33.8"
-          text-anchor="middle"
-          class="assistant-robot__make"
-          fill="currentColor"
-          stroke="none"
-        >
-          MAKE
-        </text>
-        <text
-          x="32"
-          y="39"
-          text-anchor="middle"
-          class="assistant-robot__tagline"
-          fill="currentColor"
-          stroke="none"
-        >
-          make it happen
-        </text>
+        <g class="assistant-robot__arm assistant-robot__arm--left">
+          <path d="M18 28 L10 34 L10 38" />
+        </g>
+        <g class="assistant-robot__arm assistant-robot__arm--right">
+          <path d="M46 28 L54 34 L54 38" />
+        </g>
 
-      <!-- Arms -->
-      <path d="M18 28 L10 34 L10 38" />
-      <path d="M46 28 L54 34 L54 38" />
-
-      <!-- Legs -->
-      <path d="M24 48 L22 56" />
-      <path d="M40 48 L42 56" />
-      <line x1="19" y1="56" x2="25" y2="56" />
-      <line x1="37" y1="56" x2="43" y2="56" />
+        <g class="assistant-robot__legs">
+          <path d="M24 48 L22 56" />
+          <path d="M40 48 L42 56" />
+          <line x1="19" y1="56" x2="25" y2="56" />
+          <line x1="37" y1="56" x2="43" y2="56" />
+        </g>
+      </g>
     </svg>
   </div>
 </template>
@@ -80,7 +91,10 @@ const props = defineProps({
   },
   orb: { type: Boolean, default: false },
   hero: { type: Boolean, default: false },
+  /** Idle motion: bob, blink, gentle sway */
   animated: { type: Boolean, default: false },
+  /** Busy motion: arm wave, antenna wiggle, stronger bob (e.g. while thinking) */
+  active: { type: Boolean, default: false },
 });
 
 const { t } = useI18n();
@@ -158,35 +172,204 @@ const ariaLabel = computed(() => t('chat.assistantName'));
   letter-spacing: 0;
 }
 
-.assistant-robot--animated .assistant-robot__svg {
-  animation: assistant-robot-bob 1.4s ease-in-out infinite;
+/* SVG transforms need an explicit box — otherwise animations often do nothing */
+.assistant-robot--animated .assistant-robot__figure,
+.assistant-robot--animated .assistant-robot__eye,
+.assistant-robot--animated .assistant-robot__antenna,
+.assistant-robot--active .assistant-robot__figure,
+.assistant-robot--active .assistant-robot__arm--left,
+.assistant-robot--active .assistant-robot__arm--right,
+.assistant-robot--active .assistant-robot__antenna,
+.assistant-robot--active .assistant-robot__legs,
+.assistant-robot--active .assistant-robot__head {
+  transform-box: fill-box;
 }
 
-.assistant-robot--animated .assistant-robot__svg circle:nth-of-type(2),
-.assistant-robot--animated .assistant-robot__svg circle:nth-of-type(3) {
-  animation: assistant-robot-blink 3s step-end infinite;
+/* —— Idle animation —— */
+.assistant-robot--animated {
+  animation: assistant-robot-shell-bob 2.2s ease-in-out infinite;
 }
 
-@keyframes assistant-robot-bob {
+.assistant-robot--animated .assistant-robot__figure {
+  animation: assistant-robot-bob 2.2s ease-in-out infinite;
+  transform-origin: center center;
+}
+
+.assistant-robot--animated .assistant-robot__eye {
+  animation: assistant-robot-blink 3.5s step-end infinite;
+  transform-origin: center center;
+}
+
+.assistant-robot--animated .assistant-robot__antenna {
+  animation: assistant-robot-antenna-idle 2.4s ease-in-out infinite;
+  transform-origin: center top;
+}
+
+/* —— Active / thinking animation —— */
+.assistant-robot--active {
+  animation: assistant-robot-shell-bob-active 0.85s ease-in-out infinite;
+}
+
+.assistant-robot--active .assistant-robot__figure {
+  animation: assistant-robot-bob-active 0.85s ease-in-out infinite;
+  transform-origin: center center;
+}
+
+.assistant-robot--active .assistant-robot__arm--left {
+  animation: assistant-robot-arm-left 1s ease-in-out infinite;
+  transform-origin: right top;
+}
+
+.assistant-robot--active .assistant-robot__arm--right {
+  animation: assistant-robot-arm-right 1s ease-in-out infinite;
+  animation-delay: 0.5s;
+  transform-origin: left top;
+}
+
+.assistant-robot--active .assistant-robot__antenna {
+  animation: assistant-robot-antenna-active 0.45s ease-in-out infinite alternate;
+  transform-origin: center top;
+}
+
+.assistant-robot--active .assistant-robot__legs {
+  animation: assistant-robot-legs 0.85s ease-in-out infinite;
+  transform-origin: center top;
+}
+
+.assistant-robot--active .assistant-robot__head {
+  animation: assistant-robot-head-nod 1.7s ease-in-out infinite;
+  transform-origin: center bottom;
+}
+
+@keyframes assistant-robot-shell-bob {
   0%,
   100% {
     transform: translateY(0);
   }
   50% {
-    transform: translateY(-1px);
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes assistant-robot-shell-bob-active {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes assistant-robot-bob {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-1px) rotate(-2deg);
+  }
+}
+
+@keyframes assistant-robot-bob-active {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  25% {
+    transform: translateY(-2px) rotate(-3deg);
+  }
+  75% {
+    transform: translateY(-1px) rotate(3deg);
   }
 }
 
 @keyframes assistant-robot-blink {
   0%,
-  92%,
+  90%,
   100% {
     transform: scaleY(1);
-    transform-origin: center;
   }
-  94% {
-    transform: scaleY(0.15);
-    transform-origin: center;
+  93% {
+    transform: scaleY(0.12);
+  }
+}
+
+@keyframes assistant-robot-antenna-idle {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(8deg);
+  }
+}
+
+@keyframes assistant-robot-antenna-active {
+  from {
+    transform: rotate(-8deg);
+  }
+  to {
+    transform: rotate(8deg);
+  }
+}
+
+@keyframes assistant-robot-arm-left {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(-22deg);
+  }
+}
+
+@keyframes assistant-robot-arm-right {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(22deg);
+  }
+}
+
+@keyframes assistant-robot-legs {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(1px);
+  }
+}
+
+@keyframes assistant-robot-head-nod {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  40% {
+    transform: rotate(3deg);
+  }
+  60% {
+    transform: rotate(-2deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .assistant-robot--animated,
+  .assistant-robot--active,
+  .assistant-robot--animated .assistant-robot__figure,
+  .assistant-robot--animated .assistant-robot__eye,
+  .assistant-robot--animated .assistant-robot__antenna,
+  .assistant-robot--active .assistant-robot__figure,
+  .assistant-robot--active .assistant-robot__arm--left,
+  .assistant-robot--active .assistant-robot__arm--right,
+  .assistant-robot--active .assistant-robot__antenna,
+  .assistant-robot--active .assistant-robot__legs,
+  .assistant-robot--active .assistant-robot__head {
+    animation: none;
   }
 }
 </style>

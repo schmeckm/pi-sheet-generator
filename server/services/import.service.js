@@ -16,9 +16,50 @@ const COLUMN_ALIASES = {
   instruction_template: ['instruction_template', 'instruction', 'anweisung', 'arbeitsanweisung'],
   sap_transaction: ['sap_transaction', 'transaction', 'tcode', 'transaktion'],
   movement_type: ['movement_type', 'bewegungsart', 'bwart'],
+  sap_system: ['sap_system', 'system', 'lager_system', 'warehouse_system', 'ewm_mm', 'pfad', 'path'],
+  tags: ['tags', 'labels', 'schlagworte', 'merkmale'],
   gmp_relevant: ['gmp_relevant', 'gmp', 'gxp', 'gmp-relevant'],
   signature_required: ['signature_required', 'signatur', 'unterschrift', 'signature'],
 };
+
+const SAP_SYSTEM_ALIASES = {
+  ewm: 'ewm',
+  'sap-ewm': 'ewm',
+  'sap_ewm': 'ewm',
+  handling_unit: 'ewm',
+  'handling-unit': 'ewm',
+  hu: 'ewm',
+  scwm: 'ewm',
+  mm: 'mm',
+  'sap-mm': 'mm',
+  'sap_mm': 'mm',
+  migo: 'mm',
+  wm: 'mm',
+  none: 'none',
+  neutral: 'none',
+  confirmation: 'none',
+  rückmeldung: 'none',
+  ruckmeldung: 'none',
+};
+
+function normalizeSapSystem(val) {
+  if (val === undefined || val === null || val === '') return null;
+  const key = String(val).trim().toLowerCase();
+  return SAP_SYSTEM_ALIASES[key] || (['ewm', 'mm', 'none'].includes(key) ? key : null);
+}
+
+function normalizeTags(val) {
+  if (val === undefined || val === null || val === '') return [];
+  if (Array.isArray(val)) {
+    return val
+      .map((t) => String(t).trim().toLowerCase())
+      .filter(Boolean);
+  }
+  return String(val)
+    .split(/[,;|]+/)
+    .map((t) => t.trim().toLowerCase())
+    .filter(Boolean);
+}
 
 const importSessions = new Map();
 const SESSION_TTL_MS = 30 * 60 * 1000;
@@ -89,6 +130,8 @@ function normalizeXStepData(raw) {
     }
   }
   if (!Array.isArray(data.params)) data.params = [];
+  data.tags = normalizeTags(data.tags);
+  data.sap_system = normalizeSapSystem(data.sap_system);
   data.gmp_relevant = parseBool(data.gmp_relevant);
   data.signature_required = parseBool(data.signature_required);
   if (data.is_active !== undefined) data.is_active = parseBool(data.is_active);
@@ -278,6 +321,8 @@ module.exports = {
   applyMapping,
   autoMapColumns,
   normalizeXStepData,
+  normalizeSapSystem,
+  normalizeTags,
   COLUMN_ALIASES,
   REQUIRED_FIELDS,
   // legacy

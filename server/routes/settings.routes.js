@@ -1,6 +1,7 @@
 const express = require('express');
 const Joi = require('joi');
 const settingsService = require('../services/settings.service');
+const { invalidate: invalidateLlmModelCache } = require('../utils/llmModel');
 const sapService = require('../services/sap.service');
 const { authMiddleware } = require('../middleware/auth');
 const { roles } = require('../middleware/roles');
@@ -24,6 +25,9 @@ router.put('/:key', async (req, res, next) => {
     if (error) return res.status(400).json({ error: error.details[0].message });
 
     const row = await settingsService.set(req.params.key, value.value, req.user.id);
+    if (String(req.params.key).startsWith('llm_')) {
+      invalidateLlmModelCache();
+    }
     res.json(row);
   } catch (err) {
     next(err);

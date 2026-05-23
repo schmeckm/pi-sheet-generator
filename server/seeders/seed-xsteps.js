@@ -8,7 +8,7 @@ const bcrypt = require('bcryptjs');
 const { Op } = require('sequelize');
 const { sequelize, initializeDatabase } = require('../config/database');
 const { User, XStep, PromptConfig } = require('../models');
-const { DEFAULT_SYSTEM_PROMPT } = require('./default-system-prompt');
+const { DEFAULT_SYSTEM_PROMPT, DEFAULT_QA_SYSTEM_PROMPT } = require('./default-system-prompt');
 
 const ADMIN_EMAIL = 'admin@pisheet.local';
 const ADMIN_PASSWORD = 'admin123';
@@ -53,6 +53,8 @@ const SAMPLE_XSTEPS = [
       { name: 'Lagerort', type: 'input', required: true },
     ],
     sap_transaction: 'MIGO',
+    sap_system: 'mm',
+    tags: ['staging'],
     sort_order: 2,
   },
   {
@@ -72,6 +74,8 @@ const SAMPLE_XSTEPS = [
     ],
     sap_transaction: 'MIGO',
     movement_type: '311',
+    sap_system: 'mm',
+    tags: ['goods-receipt', 'movement-311'],
     sort_order: 3,
   },
   {
@@ -140,6 +144,8 @@ const SAMPLE_XSTEPS = [
       { name: 'Mengeneinheit', type: 'display', default_value: 'Stk' },
     ],
     sap_transaction: 'CO11N',
+    sap_system: 'none',
+    tags: ['confirmation'],
     sort_order: 7,
   },
   {
@@ -158,6 +164,8 @@ const SAMPLE_XSTEPS = [
     ],
     sap_transaction: 'MIGO',
     movement_type: '261',
+    sap_system: 'mm',
+    tags: ['goods-issue', 'movement-261'],
     sort_order: 8,
   },
   {
@@ -198,6 +206,8 @@ const SAMPLE_XSTEPS = [
       { name: 'Packen bestätigt', type: 'checkbox', required: true },
     ],
     sap_transaction: '/SCWM/PACK',
+    sap_system: 'ewm',
+    tags: ['handling-unit', 'pack'],
     sort_order: 10,
   },
   {
@@ -216,6 +226,8 @@ const SAMPLE_XSTEPS = [
       { name: 'Scan bestätigt', type: 'checkbox', required: true },
     ],
     sap_transaction: '/SCWM/PRDI',
+    sap_system: 'ewm',
+    tags: ['handling-unit', 'warehouse-task'],
     sort_order: 11,
   },
   {
@@ -236,6 +248,8 @@ const SAMPLE_XSTEPS = [
     ],
     sap_transaction: '/SCWM/MIGO',
     movement_type: '311',
+    sap_system: 'ewm',
+    tags: ['handling-unit', 'goods-receipt', 'movement-311'],
     sort_order: 12,
   },
   {
@@ -256,6 +270,8 @@ const SAMPLE_XSTEPS = [
     ],
     sap_transaction: '/SCWM/MIGO',
     movement_type: '261',
+    sap_system: 'ewm',
+    tags: ['handling-unit', 'goods-issue', 'movement-261'],
     sort_order: 13,
   },
   {
@@ -318,6 +334,8 @@ const SAMPLE_XSTEPS = [
       { name: 'Volumen', type: 'input', unit: 'L', required: true },
     ],
     sap_transaction: 'MIGO',
+    sap_system: 'mm',
+    tags: ['staging'],
     sort_order: 1,
   },
   {
@@ -367,6 +385,8 @@ const SAMPLE_XSTEPS = [
       { name: 'Ausschuss', type: 'input' },
     ],
     sap_transaction: 'CO11N',
+    sap_system: 'none',
+    tags: ['confirmation'],
     sort_order: 4,
   },
   // —— Granulation (5) ——
@@ -480,6 +500,8 @@ const SAMPLE_XSTEPS = [
       { name: 'Ausbeute', type: 'input', unit: 'kg', required: true },
     ],
     sap_transaction: 'CO11N',
+    sap_system: 'none',
+    tags: ['confirmation'],
     sort_order: 5,
   },
 ];
@@ -557,6 +579,26 @@ async function seedPromptConfig(adminId) {
   await PromptConfig.update({ is_active: false }, { where: { name: { [Op.ne]: 'default' } } });
   await PromptConfig.update({ is_active: true }, { where: { name: 'default' } });
   console.log('PromptConfig: default (active)');
+
+  const [, qaCreated] = await PromptConfig.findOrCreate({
+    where: { name: 'qa-default' },
+    defaults: {
+      name: 'qa-default',
+      system_prompt: DEFAULT_QA_SYSTEM_PROMPT,
+      is_active: false,
+      created_by: adminId,
+    },
+  });
+  const qaRow = await PromptConfig.findOne({ where: { name: 'qa-default' } });
+  const qaNeedsContent =
+    !qaRow?.system_prompt || String(qaRow.system_prompt).trim().length < 100;
+  if (!qaCreated || qaNeedsContent) {
+    await PromptConfig.update(
+      { system_prompt: DEFAULT_QA_SYSTEM_PROMPT, created_by: adminId },
+      { where: { name: 'qa-default' } }
+    );
+  }
+  console.log('PromptConfig: qa-default (QA mode, inactive)');
 }
 
 async function seedXSteps(adminUserId) {
@@ -564,6 +606,8 @@ async function seedXSteps(adminUserId) {
     const defaults = {
       ...row,
       params: row.params || [],
+      tags: row.tags || [],
+      sap_system: row.sap_system || null,
       gmp_relevant: row.gmp_relevant ?? false,
       signature_required: row.signature_required ?? false,
       is_active: true,

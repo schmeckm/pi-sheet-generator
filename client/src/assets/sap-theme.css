@@ -710,6 +710,15 @@ html {
   background: var(--sapJouleSendHover);
 }
 
+.sap-joule-send--stop {
+  background: #d63b3b !important;
+  box-shadow: 0 1px 4px rgba(214, 59, 59, 0.4) !important;
+}
+
+.sap-joule-send--stop:hover {
+  background: #b73030 !important;
+}
+
 .sap-shell--joule .sap-shell-bar__actions .sap-btn--transparent.sap-joule-shell-btn--active,
 .sap-shell--joule .sap-shell-bar__actions .sap-joule-shell-action:hover {
   border-color: var(--sapJoulePrimary) !important;

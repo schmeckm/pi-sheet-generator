@@ -1,13 +1,18 @@
 import { useAuthStore } from '@/stores/auth';
+import { api } from '@/composables/useApi';
 
 import { resolveChatError, resolveStreamError } from '@/utils/chatErrors';
 
 const baseURL = import.meta.env.VITE_API_URL || '/api';
+const STREAM_TIMEOUT_MS = 180_000;
 
-function parseSseStream(url, body, { onChunk, onTools, onMeta } = {}) {
+function parseSseStream(url, body, handlers = {}) {
   const auth = useAuthStore();
+  const { onChunk, onTools, onMeta, onStatus, signal: externalSignal } = handlers;
 
-  return new Promise((resolve, reject) => {
+  const controller = new AbortController();
+
+  const promise = new Promise((resolve, reject) => {
     let settled = false;
 
     function finishOk(payload) {
@@ -35,7 +40,8 @@ function parseSseStream(url, body, { onChunk, onTools, onMeta } = {}) {
       try {
         const data = JSON.parse(payload);
         if (data.type === 'meta') onMeta?.(data);
-        if (data.type === 'chunk') onChunk?.(data.text);
+        if (data.type === 'status') onStatus?.(data);
+        if (data.type === 'chunk') onChunk?.(data.text, data);
         if (data.type === 'tools') onTools?.(data.tools);
         if (data.type === 'complete') finishOk(data);
         if (data.type === 'error') finishErr({ message: data.message, code: data.code });
@@ -45,9 +51,13 @@ function parseSseStream(url, body, { onChunk, onTools, onMeta } = {}) {
       return false;
     }
 
+    if (externalSignal) {
+      if (externalSignal.aborted) controller.abort();
+      else externalSignal.addEventListener('abort', () => controller.abort(), { once: true });
+    }
+
     (async () => {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 120000);
+      const timeoutId = setTimeout(() => controller.abort(), STREAM_TIMEOUT_MS);
       try {
         const res = await fetch(url, {
           method: 'POST',
@@ -88,46 +98,95 @@ function parseSseStream(url, body, { onChunk, onTools, onMeta } = {}) {
         if (!settled) finishErr('Stream ended without result');
       } catch (err) {
         const msg =
-          err.name === 'AbortError' ? 'Request timed out after 120s' : err.message;
+          err.name === 'AbortError'
+            ? externalSignal?.aborted
+              ? 'Request aborted by user'
+              : `Request timed out after ${STREAM_TIMEOUT_MS / 1000}s`
+            : err.message;
         finishErr(msg);
       } finally {
         clearTimeout(timeoutId);
       }
     })();
   });
+
+  promise.controller = controller;
+  promise.abort = () => controller.abort();
+  return promise;
+}
+
+function withHandle(promise, normalizer) {
+  const wrapped = promise.then(normalizer);
+  wrapped.abort = promise.abort;
+  wrapped.controller = promise.controller;
+  return wrapped;
+}
+
+/** Unified streaming entry point — server decides mode via meta event. */
+export function streamChat(prompt, opts = {}) {
+  const url = `${baseURL.replace(/\/$/, '')}/chat/stream`;
+  const sse = parseSseStream(
+    url,
+    { prompt, locale: opts.locale || 'de' },
+    opts
+  );
+  return withHandle(sse, (data) => normalizeStreamResult(data));
 }
 
 /** SSE PI sheet generation stream. */
-export function streamChatGenerate(prompt, { locale = 'de', onChunk, onMeta } = {}) {
+export function streamChatGenerate(prompt, opts = {}) {
   const url = `${baseURL.replace(/\/$/, '')}/chat/generate-stream`;
-  return parseSseStream(url, { prompt, locale }, {
-    onChunk,
-    onMeta,
-    onTools: (tools) => onChunk?.(`\n🔧 ${tools?.join(', ')}\n`),
-  }).then((data) => {
-    const out = {
-      contextTrimmed: data.contextTrimmed,
-      trimmedSections: data.trimmedSections,
-    };
-    if (data.requestMode === 'qa' && data.message) {
-      return { ...out, text: data.message, requestMode: 'qa', usage: data.usage };
-    }
-    if (data.piSheet) {
-      return { ...out, piSheet: data.piSheet, requestMode: 'pi_sheet', usage: data.usage };
-    }
-    if (data.message) {
-      return { ...out, text: data.message, requestMode: data.requestMode || 'qa', usage: data.usage };
-    }
-    return { ...out, ...data };
-  });
+  const sse = parseSseStream(
+    url,
+    { prompt, locale: opts.locale || 'de' },
+    { ...opts, onTools: (tools) => opts.onChunk?.(`\n🔧 ${tools?.join(', ')}\n`) }
+  );
+  return withHandle(sse, (data) => normalizeStreamResult(data));
 }
 
 /** SSE equipment / Q&A stream. */
-export function streamChatQa(prompt, { locale = 'de', onChunk, onTools, onMeta } = {}) {
+export function streamChatQa(prompt, opts = {}) {
   const url = `${baseURL.replace(/\/$/, '')}/chat/qa-stream`;
-  return parseSseStream(url, { prompt, locale }, { onChunk, onTools, onMeta }).then((data) => ({
+  const sse = parseSseStream(
+    url,
+    { prompt, locale: opts.locale || 'de' },
+    opts
+  );
+  return withHandle(sse, (data) => ({
     text: data.message || '',
     requestMode: data.requestMode || 'qa',
     usage: data.usage,
   }));
+}
+
+function normalizeStreamResult(data) {
+  const out = {
+    contextTrimmed: data.contextTrimmed,
+    trimmedSections: data.trimmedSections,
+  };
+  if (data.requestMode === 'qa' && data.message) {
+    return { ...out, text: data.message, requestMode: 'qa', usage: data.usage };
+  }
+  if (data.piSheet) {
+    return { ...out, piSheet: data.piSheet, requestMode: 'pi_sheet', usage: data.usage };
+  }
+  if (data.message) {
+    return {
+      ...out,
+      text: data.message,
+      requestMode: data.requestMode || 'qa',
+      usage: data.usage,
+    };
+  }
+  return { ...out, ...data };
+}
+
+/** Best-effort server-side abort using a known streamId. */
+export async function abortChatStream(streamId) {
+  if (!streamId) return;
+  try {
+    await api.post(`/chat/abort/${streamId}`);
+  } catch {
+    /* ignore network errors */
+  }
 }

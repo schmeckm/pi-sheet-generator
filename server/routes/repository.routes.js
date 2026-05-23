@@ -24,6 +24,10 @@ const createSchema = Joi.object({
   params: Joi.array().items(Joi.object()).default([]),
   sap_transaction: Joi.string().allow('', null),
   movement_type: Joi.string().allow('', null),
+  sap_system: Joi.string()
+    .valid(...repositoryService.SAP_SYSTEMS)
+    .allow(null, ''),
+  tags: Joi.array().items(Joi.string().trim().lowercase()).default([]),
   gmp_relevant: Joi.boolean().default(false),
   signature_required: Joi.boolean().default(false),
   sort_order: Joi.number().integer().default(0),
@@ -53,7 +57,23 @@ router.post('/', roles('admin'), async (req, res, next) => {
 });
 
 const updateSchema = createSchema.fork(
-  ['xstep_id', 'name', 'category', 'process_type', 'description', 'instruction_template', 'params', 'sap_transaction', 'movement_type', 'gmp_relevant', 'signature_required', 'sort_order', 'is_active'],
+  [
+    'xstep_id',
+    'name',
+    'category',
+    'process_type',
+    'description',
+    'instruction_template',
+    'params',
+    'sap_transaction',
+    'movement_type',
+    'sap_system',
+    'tags',
+    'gmp_relevant',
+    'signature_required',
+    'sort_order',
+    'is_active',
+  ],
   (field) => field.optional()
 );
 

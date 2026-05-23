@@ -12,6 +12,8 @@ const defineWeighingRecord = require('./WeighingRecord');
 const defineSystemSetting = require('./SystemSetting');
 const defineProcessGraphEdge = require('./ProcessGraphEdge');
 const defineGraphEdgeSuggestion = require('./GraphEdgeSuggestion');
+const definePromptConfigVersion = require('./PromptConfigVersion');
+const defineLlmUsageDaily = require('./LlmUsageDaily');
 
 const User = defineUser(sequelize);
 const XStep = defineXStep(sequelize);
@@ -26,6 +28,8 @@ const WeighingRecord = defineWeighingRecord(sequelize);
 const SystemSetting = defineSystemSetting(sequelize);
 const ProcessGraphEdge = defineProcessGraphEdge(sequelize);
 const GraphEdgeSuggestion = defineGraphEdgeSuggestion(sequelize);
+const PromptConfigVersion = definePromptConfigVersion(sequelize);
+const LlmUsageDaily = defineLlmUsageDaily(sequelize);
 
 // User associations
 User.hasMany(XStep, { foreignKey: 'created_by', as: 'xsteps' });
@@ -40,6 +44,18 @@ PISheet.belongsTo(User, { foreignKey: 'approved_by', as: 'approver' });
 
 User.hasMany(PromptConfig, { foreignKey: 'created_by', as: 'promptConfigs' });
 PromptConfig.belongsTo(User, { foreignKey: 'created_by', as: 'creator' });
+
+PromptConfig.hasMany(PromptConfigVersion, {
+  foreignKey: 'prompt_config_id',
+  as: 'versions',
+  onDelete: 'CASCADE',
+});
+PromptConfigVersion.belongsTo(PromptConfig, { foreignKey: 'prompt_config_id', as: 'promptConfig' });
+User.hasMany(PromptConfigVersion, { foreignKey: 'created_by', as: 'promptVersions' });
+PromptConfigVersion.belongsTo(User, { foreignKey: 'created_by', as: 'creator' });
+
+User.hasMany(LlmUsageDaily, { foreignKey: 'user_id', as: 'llmUsageDaily' });
+LlmUsageDaily.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
 
 User.hasMany(AuditLog, { foreignKey: 'user_id', as: 'auditLogs' });
 AuditLog.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
@@ -112,4 +128,6 @@ module.exports = {
   SystemSetting,
   ProcessGraphEdge,
   GraphEdgeSuggestion,
+  PromptConfigVersion,
+  LlmUsageDaily,
 };

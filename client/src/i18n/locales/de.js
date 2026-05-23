@@ -26,6 +26,15 @@ export default {
     promptSubtitle: 'System-Prompt bearbeiten und testen',
     backToCopilot: 'Zum PI Assistenten',
   },
+  statusBar: {
+    ariaLabel: 'Systemstatus',
+    online: 'Online',
+    offline: 'Offline',
+    apiTooltip: 'API erreichbar · Letzte Prüfung {time}',
+    apiTooltipPending: 'API-Status wird geprüft…',
+    equipmentTooltip: 'Equipment online/offline · Simulationen',
+    protocolTooltip: '{protocol}: {online}/{total} verbunden',
+  },
   login: {
     subtitle: 'Pharma Manufacturing',
     signInTitle: 'Anmelden',
@@ -172,6 +181,8 @@ export default {
     minChars: 'Mindestens 10 Zeichen',
     charCount: '{count} / 2000',
     gmpDisclaimer: 'KI-generierte Entwürfe — immer durch Produktion und QA freigeben (GMP).',
+    tokenBudget: 'KI-Tokens heute: {used}{limit}',
+    tokenBudgetUnlimited: 'KI-Tokens heute: {used} (unbegrenzt)',
     sheetCreated:
       'Ich habe das PI Sheet „{title}" mit {count} Prozessschritten erstellt. Sie finden die Vorschau rechts — bitte prüfen Sie alle GMP-relevanten Schritte vor Freigabe.',
     sheetCreatedShort: 'PI Sheet „{title}" wurde erstellt ({count} Schritte).',
@@ -180,6 +191,8 @@ export default {
     generateFailedToast:
       'Die KI konnte kein PI Sheet generieren. Bitte formulieren Sie Ihre Anfrage anders.',
     loadSheetFailed: 'PI Sheet konnte nicht geladen werden.',
+    stop: 'Stoppen',
+    stopped: 'Generierung abgebrochen.',
     contextTrimmed:
       'Ein Teil des Kontexts wurde wegen des Modell-Limits gekürzt ({sections}). Ergebnisse können weniger präzise sein.',
     errors: {
@@ -203,6 +216,9 @@ export default {
         'SAP-MCP-Verbindung fehlgeschlagen. Erneuter Versuch ohne SAP-Kontext.',
       LLM_TOOL_LOOP: 'Zu viele Tool-Aufrufe. Bitte Anfrage vereinfachen.',
       LLM_GENERIC: 'Ein unerwarteter KI-Fehler ist aufgetreten.',
+      LLM_ABORTED: 'Die Generierung wurde abgebrochen.',
+      LLM_TOKEN_BUDGET:
+        'Tageslimit für KI-Tokens erreicht ({used} / {budget}). Bitte morgen erneut versuchen oder Administrator kontaktieren.',
       PROMPT_CONFIG_MISSING:
         'Keine aktive Prompt-Konfiguration. Administrator kontaktieren.',
       PI_JSON_PARSE:
@@ -410,6 +426,15 @@ export default {
     prev: 'Zurück',
     next: 'Weiter',
     pageOf: 'Seite {page} / {total}',
+    sapSystem: 'SAP-Pfad',
+    sapSystemAll: 'Alle SAP-Pfade',
+    sapSystemEwm: 'EWM / Handling Unit',
+    sapSystemMm: 'MM / MIGO',
+    sapSystemNone: 'Neutral (kein WM)',
+    sapSystemUnspecified: 'Unspezifiziert',
+    tags: 'Tags',
+    tagsPlaceholder: 'z. B. handling-unit, goods-receipt',
+    tagsFilterPlaceholder: 'Tag-Filter (Komma-getrennt)',
   },
   upload: {
     subtitle: 'XSteps aus CSV, Excel, JSON, XML oder ZIP importieren',
@@ -470,7 +495,19 @@ export default {
     meta: '{chars} Zeichen · {lines} Zeilen',
     tabEditor: 'System-Prompt',
     tabHistory: 'Verlauf',
+    tabCompare: 'A/B-Vergleich',
     tabTest: 'Test',
+    versionLabel: 'v{n}',
+    compareTitle: 'Zwei Versionen vergleichen',
+    compareHint: 'Wählen Sie zwei gespeicherte Versionen, sehen Sie den Diff und optional einen parallelen API-Test.',
+    compareVersionA: 'Version A',
+    compareVersionB: 'Version B',
+    compareDiffStats: '+{adds} / −{removes} Zeilen · {same} unverändert',
+    compareRunAb: 'A/B-Test ausführen',
+    compareRunning: 'Beide Versionen werden getestet…',
+    compareResultA: 'Ergebnis A (v{n})',
+    compareResultB: 'Ergebnis B (v{n})',
+    compareSelectTwo: 'Bitte zwei verschiedene Versionen wählen.',
     systemPromptLabel: 'System-Prompt (Anweisungen an die KI)',
     hintsTitle: 'Hinweise',
     hint1:

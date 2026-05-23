@@ -11,6 +11,7 @@ const morgan = require('morgan');
 const { rateLimit, ipKeyGenerator } = require('express-rate-limit');
 const { initializeDatabase } = require('./config/database');
 const { errorHandler } = require('./middleware/errorHandler');
+const { requestId } = require('./middleware/requestId');
 
 const authRoutes = require('./routes/auth.routes');
 const repositoryRoutes = require('./routes/repository.routes');
@@ -48,7 +49,9 @@ app.use(
     credentials: true,
   })
 );
-app.use(morgan('dev'));
+app.use(requestId);
+morgan.token('reqid', (req) => req.requestId || '-');
+app.use(morgan(':reqid :method :url :status :response-time ms'));
 app.use(express.json({ limit: '2mb' }));
 
 const loginLimiter = rateLimit({

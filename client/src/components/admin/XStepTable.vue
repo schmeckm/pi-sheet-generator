@@ -30,6 +30,28 @@
           </td>
           <td class="p-3">{{ x.process_type }}</td>
           <td class="p-3">
+            <span
+              v-if="x.sap_system"
+              class="rounded px-2 py-0.5 text-xs font-semibold uppercase text-white"
+              :class="sapSystemClass(x.sap_system)"
+              :title="sapSystemTitle(x.sap_system)"
+            >
+              {{ x.sap_system }}
+            </span>
+            <span v-else class="text-xs text-gray-400">—</span>
+          </td>
+          <td class="p-3">
+            <div class="flex flex-wrap gap-1">
+              <span
+                v-for="tag in (x.tags || [])"
+                :key="tag"
+                class="rounded bg-gray-100 px-1.5 py-0.5 font-mono text-[10px] text-gray-700"
+              >
+                {{ tag }}
+              </span>
+            </div>
+          </td>
+          <td class="p-3">
             <span v-if="x.gmp_relevant" class="rounded bg-red-100 px-2 text-xs text-red-800">GMP</span>
           </td>
           <td class="p-3">
@@ -112,6 +134,8 @@ const columns = computed(() => [
   { key: 'name', label: t('repository.name') },
   { key: 'category', label: t('repository.category') },
   { key: 'process_type', label: t('repository.process') },
+  { key: 'sap_system', label: t('repository.sapSystem') },
+  { key: 'tags', label: t('repository.tags') },
   { key: 'gmp_relevant', label: 'GMP' },
   { key: 'is_active', label: t('repository.active') },
   { key: 'version', label: 'Version' },
@@ -170,6 +194,21 @@ function categoryClass(cat) {
     Dokumentation: 'bg-purple-600',
   };
   return map[cat] || 'bg-gray-500';
+}
+
+function sapSystemClass(sys) {
+  const map = {
+    ewm: 'bg-indigo-600',
+    mm: 'bg-amber-600',
+    none: 'bg-slate-500',
+  };
+  return map[sys] || 'bg-gray-400';
+}
+
+function sapSystemTitle(sys) {
+  const key = `repository.sapSystem${sys.charAt(0).toUpperCase() + sys.slice(1)}`;
+  const translated = t(key);
+  return translated === key ? sys : translated;
 }
 
 function toggle(id) {

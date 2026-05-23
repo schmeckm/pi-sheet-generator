@@ -3,9 +3,14 @@ const { rateLimit, ipKeyGenerator } = require('express-rate-limit');
 const Joi = require('joi');
 const { PISheet } = require('../models');
 const llmService = require('../services/llm.service');
+const tokenBudget = require('../services/tokenBudget.service');
 const lifecycle = require('../services/lifecycle.service');
 const { authMiddleware } = require('../middleware/auth');
 const { toErrorPayload } = require('../utils/llmErrors');
+const { tag } = require('../middleware/requestId');
+
+// Track active streams per request id so the client can abort them.
+const ACTIVE_STREAMS = new Map();
 
 const router = express.Router();
 
@@ -60,6 +65,8 @@ router.post('/generate', chatLimiter, async (req, res, next) => {
 
     const result = await llmService.completeChat(value.prompt, req.user.id, {
       locale: value.locale,
+      requestId: req.requestId,
+      role: req.user.role,
     });
     if (result.piSheet?.toJSON) {
       result.piSheet = result.piSheet.toJSON();
@@ -73,7 +80,29 @@ router.post('/generate', chatLimiter, async (req, res, next) => {
   }
 });
 
-function attachStreamHandlers(res, stream, { prompt, userId, locale }) {
+// Allow the client to cancel a running stream.
+router.post('/abort/:id', (req, res) => {
+  const id = req.params.id;
+  const stream = ACTIVE_STREAMS.get(id);
+  if (!stream) return res.status(404).json({ error: 'Stream not found or already finished' });
+  try {
+    stream.abort?.();
+  } catch {
+    /* ignore */
+  }
+  res.json({ ok: true });
+});
+
+router.get('/token-budget', async (req, res, next) => {
+  try {
+    const status = await tokenBudget.getStatus(req.user.id, req.user.role);
+    res.json(status);
+  } catch (err) {
+    next(err);
+  }
+});
+
+function attachStreamHandlers(res, stream, { prompt, userId, locale, streamId, requestId }) {
   let closed = false;
   let finishing = false;
 
@@ -83,12 +112,15 @@ function attachStreamHandlers(res, stream, { prompt, userId, locale }) {
     stream.removeAllListeners('tools');
   };
 
-  res.on('error', () => {
+  const cleanup = () => {
     stopClientStream();
-  });
+    if (streamId) ACTIVE_STREAMS.delete(streamId);
+  };
 
+  res.on('error', cleanup);
   res.on('close', () => {
-    stopClientStream();
+    cleanup();
+    try { stream.abort?.(); } catch { /* ignore */ }
   });
 
   const writeEvent = (payload) => {
@@ -98,18 +130,22 @@ function attachStreamHandlers(res, stream, { prompt, userId, locale }) {
       if (typeof res.flush === 'function') res.flush();
       return true;
     } catch (err) {
-      stopClientStream();
+      cleanup();
       return false;
     }
   };
 
-  if (stream.contextMeta?.contextTrimmed) {
-    writeEvent({
-      type: 'meta',
-      contextTrimmed: true,
-      trimmedSections: stream.contextMeta.trimmedSections || [],
-    });
-  }
+  writeEvent({
+    type: 'meta',
+    requestMode: 'pi_sheet',
+    streamId,
+    requestId,
+    sapPath: stream.contextMeta?.sapPath,
+    stats: stream.contextMeta?.stats,
+    contextTrimmed: !!stream.contextMeta?.contextTrimmed,
+    trimmedSections: stream.contextMeta?.trimmedSections || [],
+  });
+  writeEvent({ type: 'status', phase: 'generating' });
 
   const finish = (payload) => {
     if (finishing) return;
@@ -123,19 +159,22 @@ function attachStreamHandlers(res, stream, { prompt, userId, locale }) {
         /* client gone */
       }
     }
-    stopClientStream();
+    cleanup();
   };
 
+  let tokenCount = 0;
   stream.on('text', (text) => {
-    writeEvent({ type: 'chunk', text });
+    tokenCount += String(text).length;
+    writeEvent({ type: 'chunk', text, chars: tokenCount });
   });
 
   stream.on('tools', (tools) => {
     writeEvent({ type: 'tools', tools });
+    writeEvent({ type: 'status', phase: 'tools' });
   });
 
   stream.on('error', (err) => {
-    console.error('[chat] stream error:', err.message);
+    console.error(tag({ requestId }, 'chat'), 'stream error:', err.message);
     finish(streamErrorEvent(err, locale));
   });
 
@@ -145,6 +184,7 @@ function attachStreamHandlers(res, stream, { prompt, userId, locale }) {
     writeEvent({ type: 'status', phase: 'finalizing' });
     try {
       const { piSheet, usage } = await llmService.finalizeStream(stream, prompt, userId, { locale });
+      await llmService.trackTokenUsage(userId, usage);
       const sheetJson =
         piSheet && typeof piSheet.toJSON === 'function' ? piSheet.toJSON() : piSheet;
       if (usage && sheetJson && !sheetJson.llm_usage) {
@@ -152,13 +192,13 @@ function attachStreamHandlers(res, stream, { prompt, userId, locale }) {
       }
       finish({ type: 'complete', piSheet: sheetJson, usage });
     } catch (err) {
-      console.error('[chat] finalize error:', err.message);
+      console.error(tag({ requestId }, 'chat'), 'finalize error:', err.message);
       finish(streamErrorEvent(err, locale));
     }
   });
 }
 
-function attachQaStreamHandlers(res, stream, locale = 'de') {
+function attachQaStreamHandlers(res, stream, locale = 'de', { streamId, requestId, userId } = {}) {
   let closed = false;
   let finishing = false;
 
@@ -170,8 +210,16 @@ function attachQaStreamHandlers(res, stream, locale = 'de') {
     stream.removeAllListeners('error');
   };
 
-  res.on('close', stop);
-  res.on('error', stop);
+  const cleanup = () => {
+    stop();
+    if (streamId) ACTIVE_STREAMS.delete(streamId);
+  };
+
+  res.on('close', () => {
+    cleanup();
+    try { stream.abort?.(); } catch { /* ignore */ }
+  });
+  res.on('error', cleanup);
 
   const writeEvent = (payload) => {
     if (closed || res.writableEnded || res.destroyed) return false;
@@ -180,7 +228,7 @@ function attachQaStreamHandlers(res, stream, locale = 'de') {
       if (typeof res.flush === 'function') res.flush();
       return true;
     } catch {
-      stop();
+      cleanup();
       return false;
     }
   };
@@ -197,27 +245,33 @@ function attachQaStreamHandlers(res, stream, locale = 'de') {
         /* client gone */
       }
     }
-    stop();
+    cleanup();
   };
 
-  writeEvent({ type: 'meta', requestMode: 'qa' });
+  writeEvent({ type: 'meta', requestMode: 'qa', streamId, requestId });
+  writeEvent({ type: 'status', phase: 'generating' });
 
   stream.on('text', (text) => writeEvent({ type: 'chunk', text }));
-  stream.on('tools', (tools) => writeEvent({ type: 'tools', tools }));
+  stream.on('tools', (tools) => {
+    writeEvent({ type: 'tools', tools });
+    writeEvent({ type: 'status', phase: 'tools' });
+  });
 
   stream.on('error', (err) => {
-    console.error('[chat] qa stream error:', err.message);
+    console.error(tag({ requestId }, 'chat'), 'qa stream error:', err.message);
     finish(streamErrorEvent(err, locale));
   });
 
   stream.on('end', async (finalMsg) => {
     if (finishing) return;
     finishing = true;
+    writeEvent({ type: 'status', phase: 'finalizing' });
     try {
       const { message, usage } = await llmService.finalizeAnswerStream(stream, finalMsg);
+      await llmService.trackTokenUsage(userId, usage);
       finish({ type: 'complete', requestMode: 'qa', message, usage });
     } catch (err) {
-      console.error('[chat] qa finalize error:', err.message);
+      console.error(tag({ requestId }, 'chat'), 'qa finalize error:', err.message);
       finish(streamErrorEvent(err, locale));
     }
   });
@@ -234,10 +288,65 @@ router.post('/qa-stream', chatLimiter, async (req, res, next) => {
     res.setHeader('X-Accel-Buffering', 'no');
     res.flushHeaders?.();
 
-    const stream = await llmService.generateAnswerChatStream(value.prompt, {
+    const stream = await llmService.generateAnswerChatStream(value.prompt, req.user.id, {
       locale: value.locale,
+      requestId: req.requestId,
+      role: req.user.role,
     });
-    attachQaStreamHandlers(res, stream, value.locale);
+    const streamId = req.requestId;
+    ACTIVE_STREAMS.set(streamId, stream);
+    attachQaStreamHandlers(res, stream, value.locale, {
+      streamId,
+      requestId: req.requestId,
+      userId: req.user.id,
+    });
+  } catch (err) {
+    respondLlmError(res, err, req.body?.locale || 'de', next);
+  }
+});
+
+router.post('/stream', chatLimiter, async (req, res, next) => {
+  try {
+    const { error, value } = promptSchema.validate(req.body);
+    if (error) return res.status(400).json({ error: error.details[0].message });
+
+    res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
+    res.setHeader('Cache-Control', 'no-cache, no-transform');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('X-Accel-Buffering', 'no');
+    res.flushHeaders?.();
+
+    // C4: server is the single source of truth for the mode.
+    const resolvedMode = llmService.resolveChatMode(value.prompt);
+    const streamId = req.requestId;
+
+    if (resolvedMode === 'pi_sheet') {
+      const stream = await llmService.generatePISheetStream(value.prompt, req.user.id, {
+        locale: value.locale,
+        requestId: req.requestId,
+        role: req.user.role,
+      });
+      ACTIVE_STREAMS.set(streamId, stream);
+      attachStreamHandlers(res, stream, {
+        prompt: value.prompt,
+        userId: req.user.id,
+        locale: value.locale,
+        streamId,
+        requestId: req.requestId,
+      });
+    } else {
+      const stream = await llmService.generateAnswerChatStream(value.prompt, req.user.id, {
+        locale: value.locale,
+        requestId: req.requestId,
+        role: req.user.role,
+      });
+      ACTIVE_STREAMS.set(streamId, stream);
+      attachQaStreamHandlers(res, stream, value.locale, {
+        streamId,
+        requestId: req.requestId,
+        userId: req.user.id,
+      });
+    }
   } catch (err) {
     respondLlmError(res, err, req.body?.locale || 'de', next);
   }
@@ -256,12 +365,18 @@ router.post('/generate-stream', chatLimiter, async (req, res, next) => {
 
     const stream = await llmService.generatePISheetStream(value.prompt, req.user.id, {
       locale: value.locale,
+      requestId: req.requestId,
+      role: req.user.role,
     });
+    const streamId = req.requestId;
+    ACTIVE_STREAMS.set(streamId, stream);
 
     attachStreamHandlers(res, stream, {
       prompt: value.prompt,
       userId: req.user.id,
       locale: value.locale,
+      streamId,
+      requestId: req.requestId,
     });
   } catch (err) {
     respondLlmError(res, err, req.body?.locale || 'de', next);

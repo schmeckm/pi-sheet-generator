@@ -2,7 +2,7 @@
   <div class="sap-joule-hero">
     <div class="sap-joule-welcome-card">
       <div class="sap-joule-welcome-card__icon">
-        <AssistantRobot class="sap-joule-hero__robot" size="hero" hero />
+        <AssistantRobot class="sap-joule-hero__robot" size="hero" hero animated />
       </div>
       <div class="sap-joule-welcome-card__text">
         <p class="sap-joule-welcome-card__hi">{{ hiLine }}</p>

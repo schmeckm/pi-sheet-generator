@@ -1,5 +1,5 @@
 <template>
-  <div class="pb-14">
+  <div>
     <div class="sap-object-header mb-4 !rounded-lg">
       <h1 class="text-xl font-bold">{{ t('equipmentPage.title') }}</h1>
       <p class="text-sm text-[var(--sapContentLabelColor)]">{{ t('equipmentPage.subtitle') }}</p>
@@ -225,7 +225,6 @@
       </form>
     </div>
 
-    <EquipmentDebugDock />
   </div>
 </template>
 
@@ -238,7 +237,6 @@ import { useConfirm } from '@/composables/useConfirm';
 import EquipmentConnectionBadge from '@/components/equipment/EquipmentConnectionBadge.vue';
 import EquipmentNamespaceSearch from '@/components/equipment/EquipmentNamespaceSearch.vue';
 import EquipmentLivePanel from '@/components/equipment/EquipmentLivePanel.vue';
-import EquipmentDebugDock from '@/components/equipment/EquipmentDebugDock.vue';
 import SkeletonBlock from '@/components/shared/SkeletonBlock.vue';
 
 const { t } = useI18n();

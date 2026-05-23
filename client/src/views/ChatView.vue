@@ -34,14 +34,21 @@
           <div v-if="!showWelcome" class="sap-joule-thread">
             <template v-for="(m, i) in chat.messages" :key="i">
               <ChatMessage
-                v-if="!(chat.isGenerating && i === chat.messages.length - 1 && m.streaming)"
+                v-if="
+                  !(
+                    chat.isGenerating &&
+                    i === chat.messages.length - 1 &&
+                    m.streaming &&
+                    !m.content
+                  )
+                "
                 :message="m"
                 @open-preview="openPreview"
               />
             </template>
 
             <ChatThinking
-              v-if="chat.isGenerating"
+              v-if="chat.isGenerating && !lastAssistantHasContent"
               :phase="chat.thinkingPhase"
               :mode="chat.requestMode"
               :active-tools="chat.activeTools"
@@ -49,7 +56,14 @@
           </div>
         </div>
 
-        <ChatInput ref="chatInputRef" :disabled="chat.isGenerating" @send="onSend" />
+        <ChatInput
+          ref="chatInputRef"
+          :disabled="chat.isGenerating"
+          :can-stop="chat.isGenerating"
+          :token-budget-line="tokenBudgetLine"
+          @send="onSend"
+          @stop="chat.stopGeneration()"
+        />
       </section>
 
       <aside
@@ -80,7 +94,7 @@
             v-if="chat.isGenerating && chat.requestMode === 'pi_sheet' && !chat.currentPiSheet"
             class="absolute inset-0 flex flex-col items-center justify-center gap-3 p-8"
           >
-            <AssistantRobot size="md" orb animated class="opacity-80" />
+            <AssistantRobot size="md" orb animated active class="opacity-80" />
             <p class="text-sm text-[var(--sapContentLabelColor)]">{{ t('joule.building') }}</p>
           </div>
           <PISheetPreview
@@ -128,6 +142,19 @@ const isMobile = ref(false);
 
 const showWelcome = computed(() => chat.messages.length === 0 && !chat.isGenerating);
 
+const tokenBudgetLine = computed(() => {
+  const b = chat.tokenBudget;
+  if (!b) return '';
+  const used = Number(b.used || 0).toLocaleString();
+  if (b.unlimited) return t('chat.tokenBudgetUnlimited', { used });
+  const limit = b.budget != null ? ` / ${Number(b.budget).toLocaleString()}` : '';
+  return t('chat.tokenBudget', { used, limit });
+});
+const lastAssistantHasContent = computed(() => {
+  const last = chat.messages[chat.messages.length - 1];
+  return Boolean(last?.role === 'assistant' && last?.content);
+});
+
 function checkMobile() {
   isMobile.value = window.innerWidth < 1024;
 }
@@ -148,6 +175,7 @@ async function openSheetFromQuery() {
 
 onMounted(async () => {
   chat.loadHistory();
+  chat.refreshTokenBudget();
   checkMobile();
   window.addEventListener('resize', checkMobile);
   await openSheetFromQuery();

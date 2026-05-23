@@ -47,6 +47,18 @@ module.exports = (sequelize) => {
         type: DataTypes.STRING(10),
         allowNull: true,
       },
+      sap_system: {
+        // Lager-/Warenwirtschaftspfad: 'ewm' (Handling-Unit), 'mm' (klassisches MIGO),
+        // 'none' (keine Warenbewegung, nur Rückmeldung/IPC/Dok.), null = unspezifiziert.
+        type: DataTypes.STRING(10),
+        allowNull: true,
+      },
+      tags: {
+        // Freie Metadaten-Tags (z.B. 'handling-unit', 'goods-receipt', 'reconciliation').
+        type: DataTypes.JSONB,
+        allowNull: false,
+        defaultValue: [],
+      },
       gmp_relevant: {
         type: DataTypes.BOOLEAN,
         allowNull: false,

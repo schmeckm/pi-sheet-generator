@@ -4,10 +4,13 @@ const { sequelize, XStep } = require('../models');
 function buildSearchText(xstep) {
   const params = Array.isArray(xstep.params) ? xstep.params : [];
   const paramNames = params.map((p) => p.name).filter(Boolean).join(', ');
+  const tags = Array.isArray(xstep.tags) ? xstep.tags.join(', ') : '';
   return [
     xstep.name,
     xstep.category,
     xstep.process_type,
+    xstep.sap_system ? `SAP-Pfad: ${xstep.sap_system}` : '',
+    tags ? `Tags: ${tags}` : '',
     xstep.description,
     paramNames ? `Parameter: ${paramNames}` : '',
     xstep.sap_transaction ? `SAP: ${xstep.sap_transaction}` : '',
