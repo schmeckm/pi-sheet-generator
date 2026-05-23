@@ -1,5 +1,5 @@
 <template>
-  <div class="flex h-full flex-col bg-[var(--sapGroupContentBackground)]">
+  <div class="flex h-full min-h-0 flex-col overflow-hidden bg-[var(--sapGroupContentBackground)]">
     <PISheetWorkflow
       v-if="sheet?.id && showWorkflow"
       :sheet="sheet"
@@ -7,7 +7,7 @@
     />
     <div
       v-if="!hideToolbar"
-      class="flex flex-wrap items-center gap-2 border-b border-[var(--sapNeutralBorderColor)] p-3 print:hidden"
+      class="flex shrink-0 flex-wrap items-center gap-2 border-b border-[var(--sapNeutralBorderColor)] p-3 print:hidden"
     >
       <button
         type="button"
@@ -46,7 +46,7 @@
 
     <div
       v-else
-      class="flex-1 overflow-y-auto p-4 pisheet-print-area"
+      class="pisheet-preview-scroll min-h-0 flex-1 overflow-y-auto p-4 pisheet-print-area"
       :class="viewMode === 'print' ? 'print-view text-black' : ''"
     >
       <header class="mb-6 border-b pb-4">

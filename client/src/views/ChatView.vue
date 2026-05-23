@@ -67,7 +67,7 @@
       </section>
 
       <aside
-        class="flex w-full min-w-[280px] flex-col border-l border-[var(--sapNeutralBorderColor)] bg-[var(--sapGroupContentBackground)] transition-transform lg:w-[min(42%,480px)] lg:max-w-[480px] lg:shrink-0"
+        class="sap-joule-preview-panel flex w-full min-h-0 min-w-[280px] flex-col overflow-hidden border-l border-[var(--sapNeutralBorderColor)] bg-[var(--sapGroupContentBackground)] transition-transform lg:w-[min(42%,480px)] lg:max-w-[480px] lg:shrink-0"
         :class="
           shell.chatPreviewOpen
             ? 'fixed top-[var(--sapShell_Height)] bottom-[var(--sapFooter_Height)] right-0 z-30 max-w-md shadow-lg lg:relative lg:inset-auto lg:top-auto lg:bottom-auto lg:z-0 lg:flex lg:max-w-[480px]'
@@ -75,7 +75,7 @@
         "
       >
         <div
-          class="sap-object-header flex items-center justify-between !py-2 lg:!hidden"
+          class="sap-object-header flex shrink-0 items-center justify-between !py-2 lg:!hidden"
         >
           <div>
             <h2 class="text-sm font-semibold">{{ t('joule.previewTitle') }}</h2>
@@ -85,22 +85,22 @@
             ✕
           </button>
         </div>
-        <div class="hidden sap-object-header lg:block">
+        <div class="hidden shrink-0 sap-object-header lg:block">
           <h2 class="text-sm font-semibold">{{ t('joule.previewTitle') }}</h2>
           <p class="text-xs text-[var(--sapContentLabelColor)]">{{ t('joule.previewSubtitle') }}</p>
         </div>
-        <div class="relative min-h-0 flex-1">
+        <div class="relative flex min-h-0 flex-1 flex-col overflow-hidden">
           <div
             v-if="chat.isGenerating && chat.requestMode === 'pi_sheet' && !chat.currentPiSheet"
-            class="absolute inset-0 flex flex-col items-center justify-center gap-3 p-8"
+            class="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-[var(--sapGroupContentBackground)] p-8"
           >
             <AssistantRobot size="md" orb animated active class="opacity-80" />
             <p class="text-sm text-[var(--sapContentLabelColor)]">{{ t('joule.building') }}</p>
           </div>
           <PISheetPreview
-            v-if="!(chat.isGenerating && chat.requestMode === 'pi_sheet' && !chat.currentPiSheet)"
+            v-else
             :sheet="chat.currentPiSheet"
-            class="h-full"
+            class="min-h-0 flex-1"
             @sheet-updated="onSheetUpdated"
           />
         </div>
