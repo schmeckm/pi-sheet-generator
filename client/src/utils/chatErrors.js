@@ -15,6 +15,14 @@ export function resolveChatError(err) {
   return data?.error || err?.message || i18n.global.t('chat.errors.LLM_GENERIC');
 }
 
+/** Browser/proxy dropped an SSE body (common behind HTTP/2 reverse proxies). */
+export function isStreamTransportError(err) {
+  const msg = String(err?.message || err || '');
+  return /HTTP2_PROTOCOL_ERROR|ERR_HTTP2|INCOMPLETE_CHUNKED|Failed to fetch|network error|Stream ended without result|502|Bad Gateway/i.test(
+    msg
+  );
+}
+
 export function resolveStreamError(payload) {
   if (payload?.code) {
     const key = `chat.errors.${payload.code}`;

@@ -105,6 +105,18 @@ In **Nginx Proxy Manager** für `pisheet.iotshowroom.de`:
 
 - **Websockets Support: ON**
 - Forward zu `pi-sheet-generator-client-1:80` (nicht direkt API)
+- **Advanced** (Custom Nginx Configuration) für Chat-SSE — verhindert `ERR_HTTP2_PROTOCOL_ERROR` beim PI-Sheet-Stream:
+
+```nginx
+proxy_buffering off;
+proxy_cache off;
+proxy_request_buffering off;
+proxy_http_version 1.1;
+proxy_set_header Connection "";
+proxy_read_timeout 600s;
+```
+
+Falls der Chat-Stream weiter abbricht: in NPM testweise **HTTP/2 am Host deaktivieren** (manche Versionen brechen lange SSE über HTTP/2 ab). Die App fällt danach automatisch auf `POST /api/chat/generate` ohne Live-Streaming zurück.
 
 Demo-Geräte: einmal `node seeders/seed-equipment.js` im API-Container, falls die Equipment-Liste leer ist.
 

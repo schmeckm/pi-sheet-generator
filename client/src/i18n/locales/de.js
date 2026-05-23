@@ -199,6 +199,8 @@ export default {
       'Ich habe das PI Sheet „{title}" mit {count} Prozessschritten erstellt. Sie finden die Vorschau rechts — bitte prüfen Sie alle GMP-relevanten Schritte vor Freigabe.',
     sheetCreatedShort: 'PI Sheet „{title}" wurde erstellt ({count} Schritte).',
     showUserPrompt: 'Vollständigen Prompt anzeigen',
+    streamTransportFallback:
+      'Live-Stream unterbrochen — Antwort wird ohne Streaming erneut angefordert.',
     generateFailed:
       'Die Generierung ist fehlgeschlagen. Bitte prüfen Sie die API-Konfiguration oder formulieren Sie die Anfrage anders.',
     generateFailedToast:

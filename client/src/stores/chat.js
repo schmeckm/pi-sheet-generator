@@ -9,8 +9,13 @@ import { i18n } from '@/i18n';
 import { useShellStore } from '@/stores/shell';
 
 import { getChatRequestMode } from '@/utils/chatIntent';
-import { resolveChatError, contextTrimmedMessage } from '@/utils/chatErrors';
-import { streamChat, abortChatStream } from '@/composables/useStreaming';
+import { resolveChatError, contextTrimmedMessage, isStreamTransportError } from '@/utils/chatErrors';
+import {
+  streamChat,
+  abortChatStream,
+  disableChatStream,
+  waitForApiHealth,
+} from '@/composables/useStreaming';
 import { useToast } from '@/composables/useToast';
 
 
@@ -380,6 +385,11 @@ export const useChatStore = defineStore('chat', () => {
         };
         return;
       }
+      if (isStreamTransportError(err)) {
+        disableChatStream();
+        useToast().info(t('chat.streamTransportFallback'));
+        await waitForApiHealth();
+      }
       const ok = await tryNonStreamGenerate(prompt, assistantIdx);
       if (!ok) {
         const message = resolveChatError(err);
@@ -422,9 +432,19 @@ export const useChatStore = defineStore('chat', () => {
 
 
 
-  async function tryNonStreamGenerate(prompt, assistantIdx) {
+  function isRetryableGatewayError(err) {
+    const status = err?.response?.status;
+    if (status === 502 || status === 503 || status === 504) return true;
+    const msg = String(err?.message || '');
+    return /ECONNREFUSED|ERR_CONNECTION|ERR_EMPTY|Bad Gateway|network/i.test(msg);
+  }
 
-    try {
+  async function tryNonStreamGenerate(prompt, assistantIdx) {
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      try {
+        if (attempt > 0) {
+          await new Promise((r) => setTimeout(r, 3000));
+        }
 
       const result = await post('/chat/generate', {
 
@@ -494,18 +514,19 @@ export const useChatStore = defineStore('chat', () => {
       await loadHistory();
 
       return true;
-
-    } catch (err) {
-      messages.value[assistantIdx] = {
-        role: 'assistant',
-        content: resolveChatError(err),
-        streaming: false,
-        errorCode: err?.response?.data?.code,
-        timestamp: Date.now(),
-      };
-      return false;
+      } catch (err) {
+        if (attempt === 0 && isRetryableGatewayError(err)) continue;
+        messages.value[assistantIdx] = {
+          role: 'assistant',
+          content: resolveChatError(err),
+          streaming: false,
+          errorCode: err?.response?.data?.code,
+          timestamp: Date.now(),
+        };
+        return false;
+      }
     }
-
+    return false;
   }
 
 

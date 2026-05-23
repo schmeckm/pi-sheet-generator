@@ -8,6 +8,11 @@ const lifecycle = require('../services/lifecycle.service');
 const { authMiddleware } = require('../middleware/auth');
 const { toErrorPayload } = require('../utils/llmErrors');
 const { tag } = require('../middleware/requestId');
+const {
+  beginSseResponse,
+  createSseSession,
+  buildPiSheetCompletePayload,
+} = require('../utils/sseStream');
 
 // Track active streams per request id so the client can abort them.
 const ACTIVE_STREAMS = new Map();
@@ -103,39 +108,24 @@ router.get('/token-budget', async (req, res, next) => {
 });
 
 function attachStreamHandlers(res, stream, { prompt, userId, locale, streamId, requestId }) {
-  let closed = false;
   let finishing = false;
 
   const stopClientStream = () => {
-    closed = true;
     stream.removeAllListeners('text');
     stream.removeAllListeners('tools');
   };
 
-  const cleanup = () => {
+  const sse = createSseSession(res, () => {
     stopClientStream();
     if (streamId) ACTIVE_STREAMS.delete(streamId);
-  };
-
-  res.on('error', cleanup);
-  res.on('close', () => {
-    cleanup();
-    try { stream.abort?.(); } catch { /* ignore */ }
+    try {
+      stream.abort?.();
+    } catch {
+      /* ignore */
+    }
   });
 
-  const writeEvent = (payload) => {
-    if (closed || res.writableEnded || res.destroyed) return false;
-    try {
-      res.write(`data: ${JSON.stringify(payload)}\n\n`);
-      if (typeof res.flush === 'function') res.flush();
-      return true;
-    } catch (err) {
-      cleanup();
-      return false;
-    }
-  };
-
-  writeEvent({
+  sse.writeEvent({
     type: 'meta',
     requestMode: 'pi_sheet',
     streamId,
@@ -145,135 +135,94 @@ function attachStreamHandlers(res, stream, { prompt, userId, locale, streamId, r
     contextTrimmed: !!stream.contextMeta?.contextTrimmed,
     trimmedSections: stream.contextMeta?.trimmedSections || [],
   });
-  writeEvent({ type: 'status', phase: 'generating' });
-
-  const finish = (payload) => {
-    if (finishing) return;
-    finishing = true;
-    if (!closed && !res.writableEnded) {
-      if (payload) writeEvent(payload);
-      try {
-        res.write('data: [DONE]\n\n');
-        res.end();
-      } catch {
-        /* client gone */
-      }
-    }
-    cleanup();
-  };
+  sse.writeEvent({ type: 'status', phase: 'generating' });
 
   let tokenCount = 0;
   stream.on('text', (text) => {
     tokenCount += String(text).length;
-    writeEvent({ type: 'chunk', text, chars: tokenCount });
+    sse.writeEvent({ type: 'chunk', text, chars: tokenCount });
   });
 
   stream.on('tools', (tools) => {
-    writeEvent({ type: 'tools', tools });
-    writeEvent({ type: 'status', phase: 'tools' });
+    sse.writeEvent({ type: 'tools', tools });
+    sse.writeEvent({ type: 'status', phase: 'tools' });
   });
 
   stream.on('error', (err) => {
     console.error(tag({ requestId }, 'chat'), 'stream error:', err.message);
-    finish(streamErrorEvent(err, locale));
+    sse.finish(streamErrorEvent(err, locale));
   });
 
-  stream.on('end', async () => {
-    if (finishing) return;
-    finishing = true;
-    writeEvent({ type: 'status', phase: 'finalizing' });
-    try {
-      const { piSheet, usage } = await llmService.finalizeStream(stream, prompt, userId, { locale });
-      await llmService.trackTokenUsage(userId, usage);
-      const sheetJson =
-        piSheet && typeof piSheet.toJSON === 'function' ? piSheet.toJSON() : piSheet;
-      if (usage && sheetJson && !sheetJson.llm_usage) {
-        sheetJson.llm_usage = usage;
+  stream.on('end', () => {
+    void (async () => {
+      if (finishing) return;
+      finishing = true;
+      sse.writeEvent({ type: 'status', phase: 'finalizing' });
+      try {
+        const { piSheet, usage } = await llmService.finalizeStream(stream, prompt, userId, { locale });
+        await llmService.trackTokenUsage(userId, usage);
+        const sheetJson =
+          piSheet && typeof piSheet.toJSON === 'function' ? piSheet.toJSON() : piSheet;
+        if (usage && sheetJson && !sheetJson.llm_usage) {
+          sheetJson.llm_usage = usage;
+        }
+        sse.finish(buildPiSheetCompletePayload(sheetJson, usage));
+      } catch (err) {
+        console.error(tag({ requestId }, 'chat'), 'finalize error:', err.message);
+        sse.finish(streamErrorEvent(err, locale));
       }
-      finish({ type: 'complete', piSheet: sheetJson, usage });
-    } catch (err) {
-      console.error(tag({ requestId }, 'chat'), 'finalize error:', err.message);
-      finish(streamErrorEvent(err, locale));
-    }
+    })();
   });
 }
 
 function attachQaStreamHandlers(res, stream, locale = 'de', { streamId, requestId, userId } = {}) {
-  let closed = false;
   let finishing = false;
 
   const stop = () => {
-    closed = true;
     stream.removeAllListeners('text');
     stream.removeAllListeners('tools');
     stream.removeAllListeners('end');
     stream.removeAllListeners('error');
   };
 
-  const cleanup = () => {
+  const sse = createSseSession(res, () => {
     stop();
     if (streamId) ACTIVE_STREAMS.delete(streamId);
-  };
-
-  res.on('close', () => {
-    cleanup();
-    try { stream.abort?.(); } catch { /* ignore */ }
-  });
-  res.on('error', cleanup);
-
-  const writeEvent = (payload) => {
-    if (closed || res.writableEnded || res.destroyed) return false;
     try {
-      res.write(`data: ${JSON.stringify(payload)}\n\n`);
-      if (typeof res.flush === 'function') res.flush();
-      return true;
+      stream.abort?.();
     } catch {
-      cleanup();
-      return false;
+      /* ignore */
     }
-  };
+  });
 
-  const finish = (payload) => {
-    if (finishing) return;
-    finishing = true;
-    if (!closed && !res.writableEnded) {
-      if (payload) writeEvent(payload);
-      try {
-        res.write('data: [DONE]\n\n');
-        res.end();
-      } catch {
-        /* client gone */
-      }
-    }
-    cleanup();
-  };
+  sse.writeEvent({ type: 'meta', requestMode: 'qa', streamId, requestId });
+  sse.writeEvent({ type: 'status', phase: 'generating' });
 
-  writeEvent({ type: 'meta', requestMode: 'qa', streamId, requestId });
-  writeEvent({ type: 'status', phase: 'generating' });
-
-  stream.on('text', (text) => writeEvent({ type: 'chunk', text }));
+  stream.on('text', (text) => sse.writeEvent({ type: 'chunk', text }));
   stream.on('tools', (tools) => {
-    writeEvent({ type: 'tools', tools });
-    writeEvent({ type: 'status', phase: 'tools' });
+    sse.writeEvent({ type: 'tools', tools });
+    sse.writeEvent({ type: 'status', phase: 'tools' });
   });
 
   stream.on('error', (err) => {
     console.error(tag({ requestId }, 'chat'), 'qa stream error:', err.message);
-    finish(streamErrorEvent(err, locale));
+    sse.finish(streamErrorEvent(err, locale));
   });
 
-  stream.on('end', async (finalMsg) => {
-    if (finishing) return;
-    finishing = true;
-    writeEvent({ type: 'status', phase: 'finalizing' });
-    try {
-      const { message, usage } = await llmService.finalizeAnswerStream(stream, finalMsg);
-      await llmService.trackTokenUsage(userId, usage);
-      finish({ type: 'complete', requestMode: 'qa', message, usage });
-    } catch (err) {
-      console.error(tag({ requestId }, 'chat'), 'qa finalize error:', err.message);
-      finish(streamErrorEvent(err, locale));
-    }
+  stream.on('end', (finalMsg) => {
+    void (async () => {
+      if (finishing) return;
+      finishing = true;
+      sse.writeEvent({ type: 'status', phase: 'finalizing' });
+      try {
+        const { message, usage } = await llmService.finalizeAnswerStream(stream, finalMsg);
+        await llmService.trackTokenUsage(userId, usage);
+        sse.finish({ type: 'complete', requestMode: 'qa', message, usage });
+      } catch (err) {
+        console.error(tag({ requestId }, 'chat'), 'qa finalize error:', err.message);
+        sse.finish(streamErrorEvent(err, locale));
+      }
+    })();
   });
 }
 
@@ -282,11 +231,7 @@ router.post('/qa-stream', chatLimiter, async (req, res, next) => {
     const { error, value } = promptSchema.validate(req.body);
     if (error) return res.status(400).json({ error: error.details[0].message });
 
-    res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
-    res.setHeader('Cache-Control', 'no-cache, no-transform');
-    res.setHeader('Connection', 'keep-alive');
-    res.setHeader('X-Accel-Buffering', 'no');
-    res.flushHeaders?.();
+    beginSseResponse(res);
 
     const stream = await llmService.generateAnswerChatStream(value.prompt, req.user.id, {
       locale: value.locale,
@@ -310,11 +255,7 @@ router.post('/stream', chatLimiter, async (req, res, next) => {
     const { error, value } = promptSchema.validate(req.body);
     if (error) return res.status(400).json({ error: error.details[0].message });
 
-    res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
-    res.setHeader('Cache-Control', 'no-cache, no-transform');
-    res.setHeader('Connection', 'keep-alive');
-    res.setHeader('X-Accel-Buffering', 'no');
-    res.flushHeaders?.();
+    beginSseResponse(res);
 
     // C4: server is the single source of truth for the mode.
     const resolvedMode = llmService.resolveChatMode(value.prompt);
@@ -357,11 +298,7 @@ router.post('/generate-stream', chatLimiter, async (req, res, next) => {
     const { error, value } = promptSchema.validate(req.body);
     if (error) return res.status(400).json({ error: error.details[0].message });
 
-    res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
-    res.setHeader('Cache-Control', 'no-cache, no-transform');
-    res.setHeader('Connection', 'keep-alive');
-    res.setHeader('X-Accel-Buffering', 'no');
-    res.flushHeaders?.();
+    beginSseResponse(res);
 
     const stream = await llmService.generatePISheetStream(value.prompt, req.user.id, {
       locale: value.locale,
