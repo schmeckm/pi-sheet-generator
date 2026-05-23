@@ -14,7 +14,7 @@
     <div class="flex flex-1 items-center justify-center p-6">
       <form class="sap-tile w-full max-w-md p-8" @submit.prevent="submit">
         <div class="mb-6 text-center">
-          <AssistantRobot class="mx-auto mb-4" size="md" orb />
+          <AssistantRobot class="mx-auto mb-4" size="md" orb animated />
           <h1 class="text-xl font-bold text-[var(--sapTextColor)]">{{ t('login.signInTitle') }}</h1>
           <div
             class="mt-4 rounded border border-[var(--sapGroupContentBorderColor)] bg-[var(--sapGroupContentBackground)] px-4 py-3 text-left text-sm"

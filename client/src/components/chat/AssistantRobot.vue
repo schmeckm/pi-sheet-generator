@@ -172,11 +172,21 @@ const ariaLabel = computed(() => t('chat.assistantName'));
   letter-spacing: 0;
 }
 
-/* SVG transforms need an explicit box — otherwise animations often do nothing */
-.assistant-robot--animated .assistant-robot__figure,
-.assistant-robot--animated .assistant-robot__eye,
+/*
+ * Animate the HTML wrapper + whole SVG (reliable). Part transforms use viewBox
+ * coordinates (32×29 ≈ robot center) — % origins on nested <g> often do nothing.
+ */
+.assistant-robot--animated,
+.assistant-robot--active {
+  will-change: transform;
+}
+
+.assistant-robot--animated .assistant-robot__svg {
+  transform-origin: 50% 52%;
+  transform-box: view-box;
+}
+
 .assistant-robot--animated .assistant-robot__antenna,
-.assistant-robot--active .assistant-robot__figure,
 .assistant-robot--active .assistant-robot__arm--left,
 .assistant-robot--active .assistant-robot__arm--right,
 .assistant-robot--active .assistant-robot__antenna,
@@ -185,73 +195,60 @@ const ariaLabel = computed(() => t('chat.assistantName'));
   transform-box: fill-box;
 }
 
-/* —— Idle animation —— */
-.assistant-robot--animated {
-  animation: assistant-robot-shell-bob 2.2s ease-in-out infinite;
+/* —— Idle —— */
+.assistant-robot--animated:not(.assistant-robot--active) {
+  animation: assistant-robot-float 2.2s ease-in-out infinite;
 }
 
-.assistant-robot--animated .assistant-robot__figure {
-  animation: assistant-robot-bob 2.2s ease-in-out infinite;
-  transform-origin: center center;
+.assistant-robot--animated:not(.assistant-robot--active) .assistant-robot__svg {
+  animation: assistant-robot-sway 2.2s ease-in-out infinite;
 }
 
 .assistant-robot--animated .assistant-robot__eye {
-  animation: assistant-robot-blink 3.5s step-end infinite;
-  transform-origin: center center;
+  animation: assistant-robot-blink 3.2s ease-in-out infinite;
 }
 
-.assistant-robot--animated .assistant-robot__antenna {
+.assistant-robot--animated:not(.assistant-robot--active) .assistant-robot__antenna {
   animation: assistant-robot-antenna-idle 2.4s ease-in-out infinite;
-  transform-origin: center top;
+  transform-origin: 32px 6px;
 }
 
-/* —— Active / thinking animation —— */
+/* —— Active / thinking —— */
 .assistant-robot--active {
-  animation: assistant-robot-shell-bob-active 0.85s ease-in-out infinite;
+  animation: assistant-robot-float-active 0.85s ease-in-out infinite;
 }
 
-.assistant-robot--active .assistant-robot__figure {
-  animation: assistant-robot-bob-active 0.85s ease-in-out infinite;
-  transform-origin: center center;
+.assistant-robot--active .assistant-robot__svg {
+  animation: assistant-robot-sway-active 0.85s ease-in-out infinite;
 }
 
 .assistant-robot--active .assistant-robot__arm--left {
   animation: assistant-robot-arm-left 1s ease-in-out infinite;
-  transform-origin: right top;
+  transform-origin: 18px 28px;
 }
 
 .assistant-robot--active .assistant-robot__arm--right {
   animation: assistant-robot-arm-right 1s ease-in-out infinite;
   animation-delay: 0.5s;
-  transform-origin: left top;
+  transform-origin: 46px 28px;
 }
 
 .assistant-robot--active .assistant-robot__antenna {
   animation: assistant-robot-antenna-active 0.45s ease-in-out infinite alternate;
-  transform-origin: center top;
+  transform-origin: 32px 6px;
 }
 
 .assistant-robot--active .assistant-robot__legs {
   animation: assistant-robot-legs 0.85s ease-in-out infinite;
-  transform-origin: center top;
+  transform-origin: 32px 48px;
 }
 
 .assistant-robot--active .assistant-robot__head {
   animation: assistant-robot-head-nod 1.7s ease-in-out infinite;
-  transform-origin: center bottom;
+  transform-origin: 32px 20px;
 }
 
-@keyframes assistant-robot-shell-bob {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-4px);
-  }
-}
-
-@keyframes assistant-robot-shell-bob-active {
+@keyframes assistant-robot-float {
   0%,
   100% {
     transform: translateY(0);
@@ -261,37 +258,48 @@ const ariaLabel = computed(() => t('chat.assistantName'));
   }
 }
 
-@keyframes assistant-robot-bob {
+@keyframes assistant-robot-float-active {
   0%,
   100% {
-    transform: translateY(0) rotate(0deg);
+    transform: translateY(0);
   }
   50% {
-    transform: translateY(-1px) rotate(-2deg);
+    transform: translateY(-8px);
   }
 }
 
-@keyframes assistant-robot-bob-active {
+@keyframes assistant-robot-sway {
   0%,
   100% {
-    transform: translateY(0) rotate(0deg);
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(-3deg);
+  }
+}
+
+@keyframes assistant-robot-sway-active {
+  0%,
+  100% {
+    transform: rotate(0deg);
   }
   25% {
-    transform: translateY(-2px) rotate(-3deg);
+    transform: rotate(-4deg);
   }
   75% {
-    transform: translateY(-1px) rotate(3deg);
+    transform: rotate(4deg);
   }
 }
 
 @keyframes assistant-robot-blink {
   0%,
-  90%,
+  88%,
   100% {
-    transform: scaleY(1);
+    opacity: 1;
   }
-  93% {
-    transform: scaleY(0.12);
+  92%,
+  96% {
+    opacity: 0.15;
   }
 }
 
@@ -301,16 +309,16 @@ const ariaLabel = computed(() => t('chat.assistantName'));
     transform: rotate(0deg);
   }
   50% {
-    transform: rotate(8deg);
+    transform: rotate(10deg);
   }
 }
 
 @keyframes assistant-robot-antenna-active {
   from {
-    transform: rotate(-8deg);
+    transform: rotate(-10deg);
   }
   to {
-    transform: rotate(8deg);
+    transform: rotate(10deg);
   }
 }
 
@@ -320,7 +328,7 @@ const ariaLabel = computed(() => t('chat.assistantName'));
     transform: rotate(0deg);
   }
   50% {
-    transform: rotate(-22deg);
+    transform: rotate(-28deg);
   }
 }
 
@@ -330,7 +338,7 @@ const ariaLabel = computed(() => t('chat.assistantName'));
     transform: rotate(0deg);
   }
   50% {
-    transform: rotate(22deg);
+    transform: rotate(28deg);
   }
 }
 
@@ -340,7 +348,7 @@ const ariaLabel = computed(() => t('chat.assistantName'));
     transform: translateY(0);
   }
   50% {
-    transform: translateY(1px);
+    transform: translateY(2px);
   }
 }
 
@@ -350,20 +358,20 @@ const ariaLabel = computed(() => t('chat.assistantName'));
     transform: rotate(0deg);
   }
   40% {
-    transform: rotate(3deg);
+    transform: rotate(4deg);
   }
   60% {
-    transform: rotate(-2deg);
+    transform: rotate(-3deg);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .assistant-robot--animated,
   .assistant-robot--active,
-  .assistant-robot--animated .assistant-robot__figure,
+  .assistant-robot--animated .assistant-robot__svg,
   .assistant-robot--animated .assistant-robot__eye,
   .assistant-robot--animated .assistant-robot__antenna,
-  .assistant-robot--active .assistant-robot__figure,
+  .assistant-robot--active .assistant-robot__svg,
   .assistant-robot--active .assistant-robot__arm--left,
   .assistant-robot--active .assistant-robot__arm--right,
   .assistant-robot--active .assistant-robot__antenna,

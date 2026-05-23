@@ -8,7 +8,11 @@ const bcrypt = require('bcryptjs');
 const { Op } = require('sequelize');
 const { sequelize, initializeDatabase } = require('../config/database');
 const { User, XStep, PromptConfig } = require('../models');
-const { DEFAULT_SYSTEM_PROMPT, DEFAULT_QA_SYSTEM_PROMPT } = require('./default-system-prompt');
+const {
+  DEFAULT_SYSTEM_PROMPT,
+  DEFAULT_QA_SYSTEM_PROMPT,
+  PROMPT_REVISION_TAG,
+} = require('./default-system-prompt');
 
 const ADMIN_EMAIL = 'admin@pisheet.local';
 const ADMIN_PASSWORD = 'admin123';
@@ -568,7 +572,9 @@ async function seedPromptConfig(adminId) {
 
   const existing = await PromptConfig.findOne({ where: { name: 'default' } });
   const needsContent =
-    !existing?.system_prompt || String(existing.system_prompt).trim().length < 200;
+    !existing?.system_prompt ||
+    String(existing.system_prompt).trim().length < 200 ||
+    !String(existing.system_prompt).includes(PROMPT_REVISION_TAG);
   if (!created || needsContent) {
     await PromptConfig.update(
       { system_prompt: DEFAULT_SYSTEM_PROMPT, is_active: true, created_by: adminId },
@@ -591,7 +597,9 @@ async function seedPromptConfig(adminId) {
   });
   const qaRow = await PromptConfig.findOne({ where: { name: 'qa-default' } });
   const qaNeedsContent =
-    !qaRow?.system_prompt || String(qaRow.system_prompt).trim().length < 100;
+    !qaRow?.system_prompt ||
+    String(qaRow.system_prompt).trim().length < 100 ||
+    !String(qaRow.system_prompt).includes(PROMPT_REVISION_TAG);
   if (!qaCreated || qaNeedsContent) {
     await PromptConfig.update(
       { system_prompt: DEFAULT_QA_SYSTEM_PROMPT, created_by: adminId },

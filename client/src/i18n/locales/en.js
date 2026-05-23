@@ -137,17 +137,17 @@ export default {
     packagingEwm: {
       title: 'Packaging EWM/HU',
       text:
-        'Create a PI Sheet for packaging using only SAP EWM handling-unit steps (XSteps XS-VP-EWM-001 through XS-VP-EWM-004, /SCWM/* transactions). Do not use MIGO steps XS-VP-003 or XS-VP-008.',
+        'Create a PI Sheet for packaging on the EWM/handling-unit path. Use only repository XSteps with sap_system "ewm" (plus path-neutral steps with sap_system "none" or null).',
     },
     packagingMm: {
       title: 'Packaging MM (311/261)',
       text:
-        'Create a PI Sheet for packaging using only SAP MM goods movements via MIGO (movement types 311 and 261, XSteps XS-VP-003 and XS-VP-008). No EWM, no HU steps XS-VP-EWM-*.',
+        'Create a PI Sheet for packaging on the SAP MM/MIGO path. Use only repository XSteps with sap_system "mm" (movement types per tags/metadata, plus path-neutral steps).',
     },
     packagingConfirmations: {
       title: 'Packaging confirmations',
       text:
-        'Create a PI Sheet for packaging with SAP order confirmations (CO11N, XStep XS-VP-007) plus process, IPC, and documentation steps — no goods movements (neither EWM nor MIGO 311/261).',
+        'Create a PI Sheet for packaging with confirmations, process, IPC, and documentation steps — only XSteps with sap_system "none" or null, no goods movements (neither ewm nor mm).',
     },
     filling: {
       title: 'Filling',

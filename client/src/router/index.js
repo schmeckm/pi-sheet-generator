@@ -94,6 +94,32 @@ const router = createRouter({
   routes,
 });
 
+const CHUNK_RELOAD_KEY = 'vite:chunk-reload';
+
+function isChunkLoadError(err) {
+  const msg = String(err?.message || err || '');
+  return (
+    msg.includes('Failed to fetch dynamically imported module') ||
+    msg.includes('Importing a module script failed') ||
+    /Loading chunk [\w-]+ failed/.test(msg)
+  );
+}
+
+// After a deploy, cached entry bundles may reference removed lazy chunks — reload once.
+router.onError((err, to) => {
+  if (!isChunkLoadError(err)) throw err;
+  if (sessionStorage.getItem(CHUNK_RELOAD_KEY)) {
+    sessionStorage.removeItem(CHUNK_RELOAD_KEY);
+    throw err;
+  }
+  sessionStorage.setItem(CHUNK_RELOAD_KEY, '1');
+  window.location.assign(to.fullPath);
+});
+
+router.isReady().then(() => {
+  sessionStorage.removeItem(CHUNK_RELOAD_KEY);
+});
+
 router.beforeEach(async (to) => {
   const auth = useAuthStore();
   auth.loadFromStorage();

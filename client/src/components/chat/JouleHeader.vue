@@ -3,7 +3,7 @@
     class="flex h-14 shrink-0 items-center justify-between border-b border-joule-border bg-joule-surface px-4 shadow-sm"
   >
     <div class="flex items-center gap-3">
-      <AssistantRobot size="sm" orb />
+      <AssistantRobot size="sm" orb animated />
       <div>
         <h1 class="text-sm font-semibold text-joule-text">{{ t('joule.title') }}</h1>
         <p class="text-xs text-joule-text-secondary">{{ t('joule.subtitle') }}</p>
