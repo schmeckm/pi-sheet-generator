@@ -187,7 +187,6 @@ const ariaLabel = computed(() => t('chat.assistantName'));
 }
 
 .assistant-robot--animated .assistant-robot__antenna,
-.assistant-robot--animated .assistant-robot__arm--right,
 .assistant-robot--active .assistant-robot__arm--left,
 .assistant-robot--active .assistant-robot__arm--right,
 .assistant-robot--active .assistant-robot__antenna,
@@ -214,11 +213,6 @@ const ariaLabel = computed(() => t('chat.assistantName'));
   transform-origin: 32px 6px;
 }
 
-.assistant-robot--animated:not(.assistant-robot--active) .assistant-robot__arm--right {
-  animation: assistant-robot-arm-wave-idle 3s ease-in-out infinite;
-  transform-origin: 46px 28px;
-}
-
 /* —— Active / thinking —— */
 .assistant-robot--active {
   animation: assistant-robot-float-active 0.85s ease-in-out infinite;
@@ -235,7 +229,7 @@ const ariaLabel = computed(() => t('chat.assistantName'));
 
 .assistant-robot--active .assistant-robot__arm--right {
   animation: assistant-robot-arm-right 1s ease-in-out infinite;
-  animation-delay: 0.35s;
+  animation-delay: 0.5s;
   transform-origin: 46px 28px;
 }
 
@@ -328,24 +322,13 @@ const ariaLabel = computed(() => t('chat.assistantName'));
   }
 }
 
-@keyframes assistant-robot-arm-wave-idle {
-  0%,
-  55%,
-  100% {
-    transform: rotate(0deg);
-  }
-  28% {
-    transform: rotate(-38deg);
-  }
-}
-
 @keyframes assistant-robot-arm-left {
   0%,
   100% {
     transform: rotate(0deg);
   }
   50% {
-    transform: rotate(22deg);
+    transform: rotate(-28deg);
   }
 }
 
@@ -355,7 +338,7 @@ const ariaLabel = computed(() => t('chat.assistantName'));
     transform: rotate(0deg);
   }
   50% {
-    transform: rotate(-48deg);
+    transform: rotate(28deg);
   }
 }
 
@@ -388,7 +371,6 @@ const ariaLabel = computed(() => t('chat.assistantName'));
   .assistant-robot--animated .assistant-robot__svg,
   .assistant-robot--animated .assistant-robot__eye,
   .assistant-robot--animated .assistant-robot__antenna,
-  .assistant-robot--animated .assistant-robot__arm--right,
   .assistant-robot--active .assistant-robot__svg,
   .assistant-robot--active .assistant-robot__arm--left,
   .assistant-robot--active .assistant-robot__arm--right,
