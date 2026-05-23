@@ -8,14 +8,14 @@
         :key="item.key"
         type="button"
         class="joule-suggestion-card"
-        @click="$emit('select', item.text)"
+        @click="$emit('select', { key: item.key, title: item.title, text: item.text })"
       >
         <span class="joule-suggestion-card__icon" aria-hidden="true">
           <QuickPromptIcon :name="item.icon" />
         </span>
         <span class="joule-suggestion-card__body">
           <span class="joule-suggestion-card__title">{{ item.title }}</span>
-          <span class="joule-suggestion-card__text">{{ item.text }}</span>
+          <span class="joule-suggestion-card__text">{{ item.subtitle }}</span>
         </span>
       </button>
     </div>
@@ -29,14 +29,14 @@
         :key="item.key"
         type="button"
         class="joule-suggestion-card"
-        @click="$emit('select', item.text)"
+        @click="$emit('select', { key: item.key, title: item.title, text: item.text })"
       >
         <span class="joule-suggestion-card__icon" aria-hidden="true">
           <QuickPromptIcon :name="item.icon" />
         </span>
         <span class="joule-suggestion-card__body">
           <span class="joule-suggestion-card__title">{{ item.title }}</span>
-          <span class="joule-suggestion-card__text">{{ item.text }}</span>
+          <span class="joule-suggestion-card__text">{{ item.subtitle }}</span>
         </span>
       </button>
     </div>
@@ -50,14 +50,14 @@
         :key="item.key"
         type="button"
         class="joule-suggestion-card"
-        @click="$emit('select', item.text)"
+        @click="$emit('select', { key: item.key, title: item.title, text: item.text })"
       >
         <span class="joule-suggestion-card__icon" aria-hidden="true">
           <QuickPromptIcon :name="item.icon" />
         </span>
         <span class="joule-suggestion-card__body">
           <span class="joule-suggestion-card__title">{{ item.title }}</span>
-          <span class="joule-suggestion-card__text">{{ item.text }}</span>
+          <span class="joule-suggestion-card__text">{{ item.subtitle }}</span>
         </span>
       </button>
     </div>
@@ -97,6 +97,7 @@ function mapPrompts(meta) {
   return meta.map((m) => ({
     ...m,
     title: t(`prompts.${m.key}.title`),
+    subtitle: t(`prompts.${m.key}.subtitle`),
     text: t(`prompts.${m.key}.text`),
   }));
 }

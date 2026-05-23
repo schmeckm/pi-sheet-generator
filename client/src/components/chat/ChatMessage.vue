@@ -2,9 +2,22 @@
   <div class="mb-4 flex" :class="isUser ? 'justify-end' : 'justify-start'">
     <div class="min-w-0 flex flex-col" :class="isUser ? 'items-end' : 'items-start'">
       <div class="sap-joule-bubble" :class="isUser ? 'sap-joule-bubble--user' : 'sap-joule-bubble--assistant'">
-        <p class="whitespace-pre-wrap" :class="{ 'joule-stream-cursor': message.streaming }">
+        <p
+          v-if="showAssistantText"
+          class="whitespace-pre-wrap"
+          :class="{ 'joule-stream-cursor': message.streaming }"
+        >
           {{ message.content }}
         </p>
+
+        <details v-if="isUser && message.userPrompt" class="mt-2 text-xs">
+          <summary class="cursor-pointer text-[var(--sapLinkColor)]">
+            {{ t('chat.showUserPrompt') }}
+          </summary>
+          <p class="mt-2 whitespace-pre-wrap text-[var(--sapContentLabelColor)]">
+            {{ message.userPrompt }}
+          </p>
+        </details>
 
         <div
           v-if="message.piSheet && !message.streaming"
@@ -68,6 +81,12 @@ defineEmits(['open-preview']);
 
 const { t, locale } = useI18n();
 const isUser = computed(() => props.message.role === 'user');
+
+const showAssistantText = computed(() => {
+  if (isUser.value) return true;
+  if (props.message.piSheet && !props.message.streaming) return false;
+  return Boolean(props.message.content?.trim()) || props.message.streaming;
+});
 
 function formatTime(ts) {
   return new Date(ts).toLocaleTimeString(locale.value === 'en' ? 'en-GB' : 'de-DE', {

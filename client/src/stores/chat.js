@@ -278,16 +278,15 @@ export const useChatStore = defineStore('chat', () => {
     }
   }
 
-  async function sendMessage(prompt) {
+  async function sendMessage(prompt, options = {}) {
+    const display = options.display?.trim() || prompt;
+    const userPrompt = display !== prompt ? prompt : undefined;
 
     messages.value.push({
-
       role: 'user',
-
-      content: prompt,
-
+      content: display,
+      userPrompt,
       timestamp: Date.now(),
-
     });
 
     // Client guess only for the placeholder UX; server's meta event is
@@ -337,11 +336,17 @@ export const useChatStore = defineStore('chat', () => {
     try {
       const locale = portalLocale();
       const onChunk = (text) => {
+        if (requestMode.value === 'pi_sheet') return;
         const msg = messages.value[assistantIdx];
         if (msg) msg.content = (msg.content || '') + text;
       };
       const onMeta = (meta) => {
         if (meta.requestMode) requestMode.value = meta.requestMode;
+        const msg = messages.value[assistantIdx];
+        if (msg && meta.requestMode === 'pi_sheet') {
+          msg.requestMode = 'pi_sheet';
+          msg.content = '';
+        }
         if (meta.streamId) activeStreamId.value = meta.streamId;
         if (meta.contextTrimmed) {
           useToast().warning(contextTrimmedMessage(meta.trimmedSections));

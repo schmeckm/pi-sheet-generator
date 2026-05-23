@@ -115,59 +115,71 @@ export default {
   },
   prompts: {
     hint: 'PI Sheet — Klick startet die Generierung',
-    movementHint: 'Verpackung — EWM, SAP MM oder nur Rückmeldung (jeweils ein Pfad, nicht mischen)',
+    movementHint: 'Verpackung — jeweils ein SAP-Pfad: EWM, MM oder Standard (nicht mischen)',
     processHint: 'Weitere Prozesse & GMP',
     equipmentHint: 'Equipment & Waagen — Informationsfragen (ohne PI Sheet)',
     scalesActive: {
       title: 'Aktive Waagen',
+      subtitle: 'Online-Status aller Waagen',
       text: 'Welche Waagen sind aktiv?',
     },
     scalesLine: {
       title: 'Waagen pro Linie',
+      subtitle: 'Linie VP-03',
       text: 'Welche Waagen gibt es auf Linie VP-03?',
     },
     namespace: {
       title: 'Namespace',
+      subtitle: 'OPC-UA / UNS Suche',
       text: 'Suche im OPC-UA/UNS-Namespace nach Scale und aktiv',
     },
     equipmentList: {
       title: 'Geräteliste',
+      subtitle: 'Konfigurierte Waagen',
       text: 'Liste alle konfigurierten Waagen mit Online-Status',
     },
     packagingEwm: {
       title: 'Verpackung EWM/HU',
+      subtitle: 'SAP-Pfad EWM — nur HU-/EWM-Schritte aus dem Repository',
       text:
-        'Erstelle ein PI Sheet für Verpackung mit SAP-Pfad EWM/Handling Unit. Nutze nur XSteps aus dem Repository mit sap_system "ewm" (plus pfad-neutrale Schritte mit sap_system "none" oder null).',
+        'Erstelle ein PI Sheet für Verpackung auf dem SAP-Pfad EWM (Handling Unit). Verwende ausschließlich Repository-XSteps mit Pfad-Kennzeichnung EWM im Repository sowie neutrale Standard-Schritte (z. B. Clearance, Rückmeldung, Dokumentation). Keine MM-/MIGO-Warenbewegungen.',
     },
     packagingMm: {
       title: 'Verpackung MM (311/261)',
+      subtitle: 'SAP-Pfad MM — MIGO 311/261 aus dem Repository',
       text:
-        'Erstelle ein PI Sheet für Verpackung mit SAP-Pfad MM/MIGO. Nutze nur XSteps mit sap_system "mm" aus dem Repository (Bewegungsarten laut Tags/Metadaten, plus pfad-neutrale Schritte).',
+        'Erstelle ein PI Sheet für Verpackung auf dem SAP-Pfad MM/MIGO. Verwende ausschließlich Repository-XSteps mit Pfad-Kennzeichnung MM (Bewegungsarten 311/261 laut Repository-Tags) sowie neutrale Standard-Schritte. Keine EWM-/HU-Schritte.',
     },
     packagingConfirmations: {
       title: 'Verpackung Rückmeldung',
+      subtitle: 'SAP-Pfad Standard — ohne EWM- oder MM-Warenbewegung',
       text:
-        'Erstelle ein PI Sheet für Verpackung mit Rückmeldungen, Prozess-, IPC- und Dokumentationsschritten — nur XSteps mit sap_system "none" oder null, keine Warenbewegungen (weder ewm noch mm).',
+        'Erstelle ein PI Sheet für Verpackung mit Rückmeldungen, Prozess-, IPC- und Dokumentationsschritten. Verwende nur Repository-XSteps mit neutralem Standard-Pfad (keine Warenbewegungen EWM oder MM).',
     },
     filling: {
       title: 'Abfüllung',
+      subtitle: 'IPC Füllmenge und Chargenprotokoll',
       text: 'Erstelle ein PI Sheet für Abfüllung mit IPC Füllmenge und Chargenprotokoll',
     },
     granulation: {
       title: 'Granulation',
+      subtitle: 'Einwaage und Feuchtigkeits-IPC',
       text: 'Erstelle ein PI Sheet für Granulation mit Rohstoff-Einwaage und Feuchtigkeits-IPC',
     },
     gmpFull: {
       title: 'GMP komplett',
+      subtitle: 'Clearance, Gewicht-IPC, Etikettierung — ein SAP-Pfad (EWM oder MM)',
       text:
-        'Erstelle ein PI Sheet für Verpackung mit Linienclearance, IPC Gewicht und Etikettierung. Warenbewegungen nur aus einem Pfad (EWM/HU oder MM 311/261), nicht beide mischen.',
+        'Erstelle ein PI Sheet für Verpackung mit Linienclearance, IPC Gewicht und Etikettierung. Warenbewegungen nur aus einem SAP-Pfad im Repository (EWM oder MM), nicht beide mischen.',
     },
     packagingGmpClose: {
       title: 'Verpackung GMP-Abschluss',
+      subtitle: 'Reconciliation, Batch Record Review, Chargenprotokoll',
       text: 'PI Sheet Verpackung mit Material Reconciliation, Batch Record Review und Chargenprotokoll',
     },
     granulationTemp: {
       title: 'Granulation Temperatur',
+      subtitle: 'Temperatur-IPC und Feuchtigkeit',
       text: 'PI Sheet Granulation mit Temperaturüberwachung und Feuchtigkeits-IPC',
     },
   },
@@ -186,6 +198,7 @@ export default {
     sheetCreated:
       'Ich habe das PI Sheet „{title}" mit {count} Prozessschritten erstellt. Sie finden die Vorschau rechts — bitte prüfen Sie alle GMP-relevanten Schritte vor Freigabe.',
     sheetCreatedShort: 'PI Sheet „{title}" wurde erstellt ({count} Schritte).',
+    showUserPrompt: 'Vollständigen Prompt anzeigen',
     generateFailed:
       'Die Generierung ist fehlgeschlagen. Bitte prüfen Sie die API-Konfiguration oder formulieren Sie die Anfrage anders.',
     generateFailedToast:

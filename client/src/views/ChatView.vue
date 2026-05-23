@@ -193,20 +193,22 @@ async function scrollToBottom() {
   scrollEl.value?.scrollTo({ top: scrollEl.value.scrollHeight, behavior: 'smooth' });
 }
 
-async function onSend(prompt) {
+async function onSend(prompt, options = {}) {
   try {
-    await chat.sendMessage(prompt);
+    await chat.sendMessage(prompt, options);
     await scrollToBottom();
-    if (isMobile.value && chat.requestMode === 'pi_sheet') shell.chatPreviewOpen = true;
+    if (chat.requestMode === 'pi_sheet') shell.chatPreviewOpen = true;
   } catch (e) {
     toast.error(resolveChatError(e));
     await scrollToBottom();
   }
 }
 
-async function onQuickPrompt(prompt) {
-  if (chat.isGenerating || !prompt?.trim()) return;
-  await onSend(prompt.trim());
+async function onQuickPrompt(item) {
+  const text = typeof item === 'string' ? item : item?.text;
+  const display = typeof item === 'string' ? undefined : item?.title;
+  if (chat.isGenerating || !text?.trim()) return;
+  await onSend(text.trim(), { display });
 }
 
 function openPreview(piSheet) {

@@ -115,59 +115,71 @@ export default {
   },
   prompts: {
     hint: 'PI sheet — click to start generation',
-    movementHint: 'Packaging — EWM, SAP MM, or confirmations only (one path; do not mix)',
+    movementHint: 'Packaging — one SAP path at a time: EWM, MM, or Standard (do not mix)',
     processHint: 'Other processes & GMP',
     equipmentHint: 'Equipment & scales — informational questions (no PI sheet)',
     scalesActive: {
       title: 'Active scales',
+      subtitle: 'Online status of all scales',
       text: 'Which scales are active?',
     },
     scalesLine: {
       title: 'Scales per line',
+      subtitle: 'Line VP-03',
       text: 'Which scales are on line VP-03?',
     },
     namespace: {
       title: 'Namespace',
+      subtitle: 'OPC UA / UNS search',
       text: 'Search OPC UA/UNS namespace for Scale and active',
     },
     equipmentList: {
       title: 'Device list',
+      subtitle: 'Configured scales',
       text: 'List all configured scales with online status',
     },
     packagingEwm: {
       title: 'Packaging EWM/HU',
+      subtitle: 'SAP path EWM — EWM/HU steps from the repository only',
       text:
-        'Create a PI Sheet for packaging on the EWM/handling-unit path. Use only repository XSteps with sap_system "ewm" (plus path-neutral steps with sap_system "none" or null).',
+        'Create a PI Sheet for packaging on the EWM/handling-unit SAP path. Use only repository XSteps tagged with SAP path EWM, plus neutral Standard steps (e.g. clearance, confirmation, documentation). No MM/MIGO goods movements.',
     },
     packagingMm: {
       title: 'Packaging MM (311/261)',
+      subtitle: 'SAP path MM — MIGO 311/261 from the repository',
       text:
-        'Create a PI Sheet for packaging on the SAP MM/MIGO path. Use only repository XSteps with sap_system "mm" (movement types per tags/metadata, plus path-neutral steps).',
+        'Create a PI Sheet for packaging on the SAP MM/MIGO path. Use only repository XSteps tagged with SAP path MM (movement types 311/261 per repository tags), plus neutral Standard steps. No EWM/HU steps.',
     },
     packagingConfirmations: {
       title: 'Packaging confirmations',
+      subtitle: 'SAP path Standard — no EWM or MM goods movements',
       text:
-        'Create a PI Sheet for packaging with confirmations, process, IPC, and documentation steps — only XSteps with sap_system "none" or null, no goods movements (neither ewm nor mm).',
+        'Create a PI Sheet for packaging with confirmations, process, IPC, and documentation steps. Use only repository XSteps on the neutral Standard path (no EWM or MM goods movements).',
     },
     filling: {
       title: 'Filling',
+      subtitle: 'Fill-volume IPC and batch record',
       text: 'Create a PI Sheet for filling with fill-volume IPC and batch record',
     },
     granulation: {
       title: 'Granulation',
+      subtitle: 'Weighing and moisture IPC',
       text: 'Create a PI Sheet for granulation with raw material weighing and moisture IPC',
     },
     gmpFull: {
       title: 'Full GMP',
+      subtitle: 'Clearance, weight IPC, labeling — one SAP path (EWM or MM)',
       text:
-        'Create a PI Sheet for packaging with line clearance, weight IPC, and labeling. Use only one goods-movement path (EWM/HU or MM 311/261), do not mix both.',
+        'Create a PI Sheet for packaging with line clearance, weight IPC, and labeling. Use only one SAP path from the repository (EWM or MM), do not mix both.',
     },
     packagingGmpClose: {
       title: 'Packaging GMP close-out',
+      subtitle: 'Reconciliation, batch record review, sign-off',
       text: 'PI sheet for packaging with material reconciliation, batch record review, and batch record sign-off',
     },
     granulationTemp: {
       title: 'Granulation temperature',
+      subtitle: 'Temperature IPC and moisture',
       text: 'PI sheet for granulation with temperature monitoring and moisture IPC',
     },
   },
@@ -186,6 +198,7 @@ export default {
     sheetCreated:
       'I created the PI Sheet “{title}” with {count} process steps. See the preview on the right — please review all GMP-relevant steps before release.',
     sheetCreatedShort: 'PI Sheet “{title}” created ({count} steps).',
+    showUserPrompt: 'Show full prompt',
     generateFailed:
       'Generation failed. Check API configuration or rephrase your request.',
     generateFailedToast:
