@@ -1,18 +1,63 @@
 import { i18n } from '@/i18n';
 
+function extractErrorParts(err) {
+  if (err?.response?.data) {
+    return {
+      code: err.response.data.code,
+      serverMessage: err.response.data.error,
+      details: err.response.data.details,
+    };
+  }
+  return {
+    code: err?.code,
+    serverMessage: err?.message || err?.error,
+    details: err?.details,
+  };
+}
+
+/**
+ * Map API/SSE error to localized summary + optional technical detail.
+ */
+export function resolveChatErrorPayload(err) {
+  const { code, serverMessage, details: rawDetails } = extractErrorParts(err);
+
+  let summary = null;
+  if (code) {
+    const key = `chat.errors.${code}`;
+    const params = typeof rawDetails === 'object' && rawDetails !== null && !Array.isArray(rawDetails)
+      ? rawDetails
+      : {};
+    const translated = i18n.global.t(key, params);
+    if (translated !== key) summary = translated;
+  }
+
+  if (!summary) {
+    summary =
+      serverMessage ||
+      i18n.global.t('chat.errors.LLM_GENERIC');
+  }
+
+  let detail = null;
+  if (typeof rawDetails === 'string' && rawDetails.trim()) {
+    detail = rawDetails.trim();
+  } else if (
+    code === 'LLM_GENERIC' &&
+    serverMessage?.trim() &&
+    summary.trim() !== serverMessage.trim()
+  ) {
+    detail = serverMessage.trim();
+  }
+
+  return { summary, detail, code: code || null };
+}
+
 /**
  * Map API/SSE `code` to localized chat error text (DE/EN via portal locale).
  */
 export function resolveChatError(err) {
-  const data = err?.response?.data;
-  const code = data?.code || err?.code;
-  if (code) {
-    const key = `chat.errors.${code}`;
-    const params = data?.details || err?.details;
-    const translated = i18n.global.t(key, params || {});
-    if (translated !== key) return translated;
-  }
-  return data?.error || err?.message || i18n.global.t('chat.errors.LLM_GENERIC');
+  const { summary, detail } = resolveChatErrorPayload(err);
+  if (!detail) return summary;
+  return `${summary} — ${detail}`;
 }
 
 /** Browser/proxy dropped an SSE body (common behind HTTP/2 reverse proxies). */
@@ -24,12 +69,7 @@ export function isStreamTransportError(err) {
 }
 
 export function resolveStreamError(payload) {
-  if (payload?.code) {
-    const key = `chat.errors.${payload.code}`;
-    const translated = i18n.global.t(key, payload.details || {});
-    if (translated !== key) return translated;
-  }
-  return payload?.message || i18n.global.t('chat.errors.LLM_GENERIC');
+  return resolveChatErrorPayload(payload).summary;
 }
 
 export function contextTrimmedMessage(sections = []) {

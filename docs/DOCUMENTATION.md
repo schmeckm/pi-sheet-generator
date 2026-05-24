@@ -1,6 +1,6 @@
-# PI Sheet Generator — Dokumentation
+# X-Steps AI Composer — Dokumentation
 
-LLM-gestützter **Process Instruction (PI) Sheet** Generator für die pharmazeutische Fertigung mit SAP-Joule-ähnlicher Oberfläche, GMP-Workflow, Equipment-/Waagen-Q&A und Admin-Bereich.
+LLM-gestützter **X-Steps AI Composer** für Process Instruction (PI) Sheets in der pharmazeutischen Fertigung — SAP-Joule-ähnliche Oberfläche, GMP-Workflow, Equipment-/Waagen-Q&A und Admin-Bereich.
 
 ---
 
@@ -154,7 +154,7 @@ Nur für Rolle **ADMIN** (Tab „Admin“ in der Shell).
 ```mermaid
 flowchart TB
   subgraph ui [Vue 3 Client]
-    Chat[PI Assistent + Vorschau]
+    Chat[X-Steps AI Composer + Vorschau]
     Admin[Admin-Module]
     Dig[Digitalisieren]
   end
@@ -283,7 +283,7 @@ gh auth login
 # GitHub.com → HTTPS → Login im Browser
 
 gh repo create pi-sheet-generator --public --source=. --remote=origin --push `
-  --description "LLM-powered PI Sheet Generator for pharmaceutical manufacturing"
+  --description "X-Steps AI Composer — LLM-powered PI Sheet composer for pharmaceutical manufacturing"
 ```
 
 **Alternativ** (Repo auf github.com manuell anlegen, dann):

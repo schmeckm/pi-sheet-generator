@@ -43,6 +43,7 @@ function respondLlmError(res, err, locale, next) {
           type: 'error',
           message: payload.error,
           code: payload.code,
+          details: payload.details,
         })}\n\n`
       );
       res.end();
@@ -60,7 +61,7 @@ function respondLlmError(res, err, locale, next) {
 
 function streamErrorEvent(err, locale = 'de') {
   const payload = toErrorPayload(err, locale);
-  return { type: 'error', message: payload.error, code: payload.code };
+  return { type: 'error', message: payload.error, code: payload.code, details: payload.details };
 }
 
 router.post('/generate', chatLimiter, async (req, res, next) => {

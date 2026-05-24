@@ -1,4 +1,4 @@
-# PI Sheet Generator — Cursor Prompt Playbook
+# X-Steps AI Composer — Cursor Prompt Playbook
 
 > **Anleitung**: Arbeite diese Prompts der Reihe nach ab. Jeder Prompt geht in den Cursor Composer (Cmd+I / Ctrl+I). Teste nach jedem Schritt bevor du zum nächsten gehst. Die `.cursorrules` Datei muss im Projekt-Root liegen — Cursor liest sie automatisch als Kontext.
 
@@ -431,10 +431,10 @@ Build the Vue 3 frontend foundation: auth flow, layout, routing.
    - Tailwind styled, professional look
    - Error display for invalid credentials
    - On success: redirect to /chat (operator) or /admin (admin)
-   - Show app title "PI Sheet Generator" with a subtle icon
+   - Show app title "X-Steps AI Composer" with a subtle icon
 
 5. client/src/components/shared/AppHeader.vue:
-   - Top bar with "PI Sheet Generator" branding left
+   - Top bar with "X-Steps AI Composer" branding left
    - Navigation: Chat | Admin (admin only)
    - User name + role badge + logout button right
    - Tailwind: bg-gray-900, text-white, sticky top
@@ -494,7 +494,7 @@ Build the operator chat interface and PI Sheet preview — the core user experie
 4. client/src/components/chat/ChatMessage.vue:
    - User messages: right-aligned, dark background, rounded corners
    - Assistant messages: left-aligned, light background
-   - Assistant has small "PI Sheet Assistent" label
+   - Assistant has small "X-Steps AI Composer" label
    - Whitespace pre-wrap for formatting
 
 5. client/src/components/chat/ChatInput.vue:

@@ -1,6 +1,6 @@
 # Contributing
 
-Thank you for your interest in the PI Sheet Generator project.
+Thank you for your interest in the X-Steps AI Composer project.
 
 ## Before you start
 

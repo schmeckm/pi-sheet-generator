@@ -30,43 +30,61 @@
         <h2 class="text-lg font-semibold">{{ t('settings.llmTitle') }}</h2>
         <p class="mt-1 text-sm text-[var(--sapContentLabelColor)]">{{ t('settings.llmHint') }}</p>
 
-        <div class="mt-4 flex flex-wrap gap-4 text-sm">
+        <div class="mt-4 flex flex-wrap gap-3 text-sm">
           <span
             class="rounded px-2 py-1"
-            :class="llmOverview?.api?.configured ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'"
+            :class="anthropicStatus.configured ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'"
           >
             {{
-              llmOverview?.api?.configured
-                ? t('settings.llmKeyOk', { hint: llmOverview.api.key_hint || '' })
-                : t('settings.llmKeyMissing')
+              anthropicStatus.configured
+                ? t('settings.llmKeyAnthropicOk', { hint: anthropicStatus.key_hint || '' })
+                : t('settings.llmKeyAnthropicMissing')
             }}
           </span>
-          <span v-if="llmOverview?.api?.configured" class="text-[var(--sapContentLabelColor)]">
+          <span v-if="anthropicStatus.configured" class="text-[var(--sapContentLabelColor)]">
+            {{ anthropicStatus.reachable ? t('settings.llmReachableAnthropic') : t('settings.llmUnreachableAnthropic') }}
+          </span>
+          <span
+            class="rounded px-2 py-1"
+            :class="openaiStatus.configured ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-900'"
+          >
             {{
-              llmOverview.api.reachable ? t('settings.llmReachable') : t('settings.llmUnreachable')
+              openaiStatus.configured
+                ? t('settings.llmKeyOpenaiOk', { hint: openaiStatus.key_hint || '' })
+                : t('settings.llmKeyOpenaiMissing')
             }}
+          </span>
+          <span v-if="openaiStatus.configured" class="text-[var(--sapContentLabelColor)]">
+            {{ openaiStatus.reachable ? t('settings.llmReachableOpenai') : t('settings.llmUnreachableOpenai') }}
           </span>
         </div>
 
-        <div class="mt-6 grid gap-4 lg:grid-cols-3">
-          <label class="block">
-            <span class="sap-label">{{ t('settings.llmModelPiSheet') }}</span>
-            <select v-model="form.llm_model_pi_sheet" class="sap-input">
-              <option v-for="m in modelOptions" :key="m" :value="m">{{ m }}</option>
-            </select>
-          </label>
-          <label class="block">
-            <span class="sap-label">{{ t('settings.llmModelQa') }}</span>
-            <select v-model="form.llm_model_qa" class="sap-input">
-              <option v-for="m in modelOptions" :key="m" :value="m">{{ m }}</option>
-            </select>
-          </label>
-          <label class="block">
-            <span class="sap-label">{{ t('settings.llmModelVision') }}</span>
-            <select v-model="form.llm_model_vision" class="sap-input">
-              <option v-for="m in modelOptions" :key="m" :value="m">{{ m }}</option>
-            </select>
-          </label>
+        <div class="mt-6 space-y-4">
+          <div
+            v-for="block in llmModeBlocks"
+            :key="block.mode"
+            class="grid gap-4 rounded border border-[var(--sapGroup_ContentBorderColor)] p-4 lg:grid-cols-2"
+          >
+            <label class="block">
+              <span class="sap-label">{{ block.label }} — {{ t('settings.llmProviderLabel') }}</span>
+              <select v-model="form[block.providerKey]" class="sap-input" @change="onProviderChange(block.mode)">
+                <option value="anthropic">{{ t('settings.llmProviderAnthropic') }}</option>
+                <option value="openai">{{ t('settings.llmProviderOpenai') }}</option>
+              </select>
+              <span
+                v-if="block.mode === 'vision' && form.llm_provider_vision === 'openai'"
+                class="mt-1 block text-xs text-amber-700"
+              >
+                {{ t('settings.llmVisionOpenaiNote') }}
+              </span>
+            </label>
+            <label class="block">
+              <span class="sap-label">{{ block.label }}</span>
+              <select v-model="form[block.modelKey]" class="sap-input">
+                <option v-for="m in modelsForMode(block.mode)" :key="m" :value="m">{{ m }}</option>
+              </select>
+            </label>
+          </div>
         </div>
 
         <div class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -122,6 +140,21 @@
               tokens: formatNum(llmOverview.anthropic_account.usage_last_7d.total_tokens),
             }) }}
           </p>
+          <div v-if="openaiAccount?.available && openaiAccount.has_prepaid_credits" class="mt-4 border-t border-[var(--sapGroup_ContentBorderColor)] pt-3">
+            <h4 class="font-medium text-[var(--sapTextColor)]">{{ t('settings.llmOpenaiCreditsTitle') }}</h4>
+            <p class="mt-1 text-xs text-[var(--sapTextColor)]">
+              {{
+                t('settings.llmOpenaiCreditsRemaining', {
+                  remaining: formatUsd(openaiAccount.remaining_usd),
+                  granted: formatUsd(openaiAccount.grant_usd),
+                })
+              }}
+            </p>
+          </div>
+          <p v-else-if="openaiStatus.configured" class="mt-3 text-xs text-[var(--sapContentLabelColor)]">
+            {{ t('settings.llmOpenaiCreditsUnavailable') }}
+          </p>
+          <p class="mt-2 text-xs text-[var(--sapContentLabelColor)]">{{ t('settings.llmOpenaiQuotaHint') }}</p>
         </div>
       </section>
 
@@ -210,29 +243,92 @@ const form = ref({
   sap_connection_type: 'mock',
   sap_auto_sync: false,
   sap_sync_interval_minutes: 60,
-  llm_model_pi_sheet: 'claude-sonnet-4-20250514',
-  llm_model_qa: 'claude-haiku-4-20250514',
-  llm_model_vision: 'claude-sonnet-4-20250514',
-  llm_max_tokens_pi_sheet: 2500,
+  llm_provider_pi_sheet: 'anthropic',
+  llm_provider_qa: 'anthropic',
+  llm_provider_vision: 'anthropic',
+  llm_model_pi_sheet: 'claude-sonnet-4-6',
+  llm_model_qa: 'claude-haiku-4-5-20251001',
+  llm_model_vision: 'claude-sonnet-4-6',
+  llm_max_tokens_pi_sheet: 8000,
   llm_max_tokens_qa: 1500,
   llm_max_tokens_vision: 8000,
   llm_token_budget_daily_per_user: 250000,
 });
 
-const modelOptions = computed(() => {
-  const fromApi = llmOverview.value?.models?.selectable;
-  if (Array.isArray(fromApi) && fromApi.length) return fromApi;
-  return [
-    form.value.llm_model_pi_sheet,
-    form.value.llm_model_qa,
-    form.value.llm_model_vision,
-  ].filter(Boolean);
-});
+const llmModeBlocks = computed(() => [
+  {
+    mode: 'pi_sheet',
+    providerKey: 'llm_provider_pi_sheet',
+    modelKey: 'llm_model_pi_sheet',
+    label: t('settings.llmModelPiSheet'),
+  },
+  {
+    mode: 'qa',
+    providerKey: 'llm_provider_qa',
+    modelKey: 'llm_model_qa',
+    label: t('settings.llmModelQa'),
+  },
+  {
+    mode: 'vision',
+    providerKey: 'llm_provider_vision',
+    modelKey: 'llm_model_vision',
+    label: t('settings.llmModelVision'),
+  },
+]);
+
+const anthropicStatus = computed(
+  () =>
+    llmOverview.value?.providers?.anthropic ||
+    llmOverview.value?.api || { configured: false, reachable: false, key_hint: null }
+);
+
+const openaiStatus = computed(
+  () => llmOverview.value?.providers?.openai || { configured: false, reachable: false, key_hint: null }
+);
+
+const openaiAccount = computed(() => llmOverview.value?.openai_account || null);
+
+function modelsForProvider(provider) {
+  if (provider === 'openai') {
+    const list = llmOverview.value?.models?.openai;
+    return Array.isArray(list) && list.length ? list : ['gpt-4o', 'gpt-4o-mini'];
+  }
+  const list = llmOverview.value?.models?.anthropic;
+  return Array.isArray(list) && list.length ? list : ['claude-sonnet-4-6', 'claude-haiku-4-5-20251001'];
+}
+
+function modelsForMode(mode) {
+  const providerKey = `llm_provider_${mode}`;
+  return modelsForProvider(form.value[providerKey] || 'anthropic');
+}
+
+function defaultModelForProvider(provider, mode) {
+  const defaults = llmOverview.value?.models?.defaults;
+  const openaiDefaults = llmOverview.value?.models?.openai_defaults;
+  const src = provider === 'openai' ? openaiDefaults : defaults;
+  return src?.[mode]?.model || modelsForProvider(provider)[0];
+}
+
+function onProviderChange(mode) {
+  const providerKey = `llm_provider_${mode}`;
+  const modelKey = `llm_model_${mode}`;
+  const provider = form.value[providerKey];
+  const options = modelsForProvider(provider);
+  if (!options.includes(form.value[modelKey])) {
+    form.value[modelKey] = defaultModelForProvider(provider, mode);
+  }
+}
 
 function formatNum(n) {
   const v = Number(n);
   if (!Number.isFinite(v)) return '—';
   return v.toLocaleString();
+}
+
+function formatUsd(n) {
+  const v = Number(n);
+  if (!Number.isFinite(v)) return '—';
+  return v.toFixed(2);
 }
 
 function loadLocaleFromUser() {
@@ -256,6 +352,11 @@ async function load() {
     loadLocaleFromUser();
     const [all, llm] = await Promise.all([get('/settings'), get('/settings/llm')]);
     llmOverview.value = llm;
+    form.value.llm_provider_pi_sheet =
+      all.llm_provider_pi_sheet || llm?.models?.pi_sheet?.provider || 'anthropic';
+    form.value.llm_provider_qa = all.llm_provider_qa || llm?.models?.qa?.provider || 'anthropic';
+    form.value.llm_provider_vision =
+      all.llm_provider_vision || llm?.models?.vision?.provider || 'anthropic';
     form.value.llm_model_pi_sheet =
       all.llm_model_pi_sheet || llm?.models?.pi_sheet?.model || form.value.llm_model_pi_sheet;
     form.value.llm_model_qa = all.llm_model_qa || llm?.models?.qa?.model || form.value.llm_model_qa;
@@ -281,20 +382,23 @@ async function load() {
 
 async function saveAll() {
   try {
-    const entries = Object.entries({
-      sap_integration_enabled: form.value.sap_integration_enabled,
-      sap_mcp_url: form.value.sap_mcp_url,
-      sap_connection_type: form.value.sap_connection_type,
-      sap_auto_sync: form.value.sap_auto_sync,
-      sap_sync_interval_minutes: String(form.value.sap_sync_interval_minutes),
-      llm_model_pi_sheet: form.value.llm_model_pi_sheet,
-      llm_model_qa: form.value.llm_model_qa,
-      llm_model_vision: form.value.llm_model_vision,
-      llm_max_tokens_pi_sheet: String(form.value.llm_max_tokens_pi_sheet),
-      llm_max_tokens_qa: String(form.value.llm_max_tokens_qa),
-      llm_max_tokens_vision: String(form.value.llm_max_tokens_vision),
-      llm_token_budget_daily_per_user: String(form.value.llm_token_budget_daily_per_user),
-    });
+    const entries = [
+      ['sap_integration_enabled', form.value.sap_integration_enabled],
+      ['sap_mcp_url', form.value.sap_mcp_url],
+      ['sap_connection_type', form.value.sap_connection_type],
+      ['sap_auto_sync', form.value.sap_auto_sync],
+      ['sap_sync_interval_minutes', String(form.value.sap_sync_interval_minutes)],
+      ['llm_provider_pi_sheet', form.value.llm_provider_pi_sheet],
+      ['llm_provider_qa', form.value.llm_provider_qa],
+      ['llm_provider_vision', form.value.llm_provider_vision],
+      ['llm_model_pi_sheet', form.value.llm_model_pi_sheet],
+      ['llm_model_qa', form.value.llm_model_qa],
+      ['llm_model_vision', form.value.llm_model_vision],
+      ['llm_max_tokens_pi_sheet', String(form.value.llm_max_tokens_pi_sheet)],
+      ['llm_max_tokens_qa', String(form.value.llm_max_tokens_qa)],
+      ['llm_max_tokens_vision', String(form.value.llm_max_tokens_vision)],
+      ['llm_token_budget_daily_per_user', String(form.value.llm_token_budget_daily_per_user)],
+    ];
     for (const [key, value] of entries) {
       await put(`/settings/${key}`, { value });
     }

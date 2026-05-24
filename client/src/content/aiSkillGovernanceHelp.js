@@ -14,7 +14,7 @@ export const aiSkillGovernanceBilingualSections = [
     locales: {
       de: {
         paragraphs: [
-          'Der PI Assistent ist ein regulierter „KI-Skill“: Entwurfserstellung und Entscheidungsunterstützung — kein autonomer Einsatz in GMP-kritischen Systemen. Jede Nutzung und Validierung sollte die folgenden Governance-Säulen abdecken (Orientierung für IQ/OQ/PQ und GxP-Bewertungen).',
+          'Der X-Steps AI Composer ist ein regulierter „KI-Skill“: Entwurfserstellung und Entscheidungsunterstützung — kein autonomer Einsatz in GMP-kritischen Systemen. Jede Nutzung und Validierung sollte die folgenden Governance-Säulen abdecken (Orientierung für IQ/OQ/PQ und GxP-Bewertungen).',
           'Risikoeinstufung (Pilot): Mittel — Auswirkung auf Fertigungsanweisungen bei fehlender Freigabe; Wahrscheinlichkeit durch Workflow, Audit und Hinweise reduziert.',
         ],
         list: [
@@ -25,7 +25,7 @@ export const aiSkillGovernanceBilingualSections = [
         ],
         tableCaption: 'Governance-Säulen (1–10) — Umsetzung in dieser Anwendung',
         tableCol1: 'Säule',
-        tableCol2: 'In PI Sheet Generator',
+        tableCol2: 'In X-Steps AI Composer',
         tableCol3: 'Validierung / Hinweise',
         table: [
           ['1 Benutzer & Rollen', 'JWT: operator, admin; Freigabe nur admin', 'RBAC, Least Privilege; ggf. Read-only-Rolle in Produktion'],
@@ -44,7 +44,7 @@ export const aiSkillGovernanceBilingualSections = [
       },
       en: {
         paragraphs: [
-          'The PI Assistant is a governed “AI skill”: draft creation and decision support — not autonomous use in GMP-critical systems. Every use and validation should cover the governance pillars below (orientation for IQ/OQ/PQ and GxP assessments).',
+          'X-Steps AI Composer is a governed “AI skill”: draft creation and decision support — not autonomous use in GMP-critical systems. Every use and validation should cover the governance pillars below (orientation for IQ/OQ/PQ and GxP assessments).',
           'Risk classification (pilot): Medium — impact on manufacturing instructions if approval is skipped; likelihood reduced by workflow, audit trail, and UI disclaimers.',
         ],
         list: [
@@ -55,7 +55,7 @@ export const aiSkillGovernanceBilingualSections = [
         ],
         tableCaption: 'Governance pillars (1–10) — implementation in this application',
         tableCol1: 'Pillar',
-        tableCol2: 'In PI Sheet Generator',
+        tableCol2: 'In X-Steps AI Composer',
         tableCol3: 'Validation / notes',
         table: [
           ['1 Users & roles', 'JWT: operator, admin; release actions admin-only', 'RBAC, least privilege; optional read-only role in production'],

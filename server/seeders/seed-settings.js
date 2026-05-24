@@ -56,19 +56,34 @@ const DEFAULTS = [
     description: 'Default plant code for new PI Sheets',
   },
   {
+    key: 'llm_provider_pi_sheet',
+    value: 'anthropic',
+    description: 'LLM provider for PI Sheet generation: anthropic | openai',
+  },
+  {
+    key: 'llm_provider_qa',
+    value: 'anthropic',
+    description: 'LLM provider for QA / equipment chat: anthropic | openai',
+  },
+  {
+    key: 'llm_provider_vision',
+    value: 'anthropic',
+    description: 'LLM provider for vision / digitization: anthropic | openai (vision: Anthropic only today)',
+  },
+  {
     key: 'llm_model_pi_sheet',
     value: 'claude-sonnet-4-6',
-    description: 'Anthropic model used for PI Sheet generation',
+    description: 'Model id for PI Sheet generation (provider-specific)',
   },
   {
     key: 'llm_model_qa',
     value: 'claude-haiku-4-5-20251001',
-    description: 'Anthropic model used for QA / equipment chat (cheaper, faster)',
+    description: 'Model id for QA / equipment chat (provider-specific)',
   },
   {
     key: 'llm_model_vision',
     value: 'claude-sonnet-4-6',
-    description: 'Anthropic model used for vision / document digitization',
+    description: 'Model id for vision / document digitization (provider-specific)',
   },
   {
     key: 'llm_max_tokens_pi_sheet',

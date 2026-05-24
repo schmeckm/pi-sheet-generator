@@ -1,4 +1,4 @@
-# PI Sheet Generator — MVP 2.0 Cursor Playbook
+# X-Steps AI Composer — MVP 2.0 Cursor Playbook
 
 > **Voraussetzung**: MVP 1.0 ist komplett (alle 11 Steps). Dieses Playbook erweitert das bestehende Projekt.
 > Spec: `docs/specs/MVP2-SPEC.md` · Playbook: `docs/playbooks/mvp2-playbook.md`

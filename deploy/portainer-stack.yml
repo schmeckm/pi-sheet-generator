@@ -1,4 +1,4 @@
-# Portainer Stack — PI Sheet Generator (images from Docker Hub)
+# Portainer Stack — X-Steps AI Composer (images from Docker Hub)
 # Paste into Portainer → Stacks → Add stack → Web editor
 # Env: see deploy/.env.portainer.example (POSTGRES_PASSWORD, JWT_SECRET, ANTHROPIC_API_KEY required)
 

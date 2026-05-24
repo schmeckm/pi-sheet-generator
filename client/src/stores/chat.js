@@ -9,7 +9,7 @@ import { i18n } from '@/i18n';
 import { useShellStore } from '@/stores/shell';
 
 import { getChatRequestMode } from '@/utils/chatIntent';
-import { resolveChatError, contextTrimmedMessage, isStreamTransportError } from '@/utils/chatErrors';
+import { resolveChatError, resolveChatErrorPayload, contextTrimmedMessage, isStreamTransportError } from '@/utils/chatErrors';
 import {
   streamChat,
   abortChatStream,
@@ -429,15 +429,16 @@ export const useChatStore = defineStore('chat', () => {
       }
       const ok = await tryNonStreamGenerate(prompt, assistantIdx);
       if (!ok) {
-        const message = resolveChatError(err);
+        const { summary, detail, code } = resolveChatErrorPayload(err);
         messages.value[assistantIdx] = {
           role: 'assistant',
-          content: message,
+          content: summary,
           streaming: false,
-          errorCode: err?.response?.data?.code || err?.code,
+          errorCode: code,
+          errorDetail: detail,
           timestamp: Date.now(),
         };
-        throw Object.assign(new Error(message), { code: err?.response?.data?.code });
+        throw Object.assign(new Error(summary), { code });
       }
     } finally {
 
@@ -553,11 +554,13 @@ export const useChatStore = defineStore('chat', () => {
       return true;
       } catch (err) {
         if (attempt === 0 && isRetryableGatewayError(err)) continue;
+        const { summary, detail, code } = resolveChatErrorPayload(err);
         messages.value[assistantIdx] = {
           role: 'assistant',
-          content: resolveChatError(err),
+          content: summary,
           streaming: false,
-          errorCode: err?.response?.data?.code,
+          errorCode: code,
+          errorDetail: detail,
           timestamp: Date.now(),
         };
         return false;

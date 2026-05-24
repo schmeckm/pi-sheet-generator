@@ -1,4 +1,4 @@
-# PI Sheet Generator — Enhanced Import Module
+# X-Steps AI Composer — Enhanced Import Module
 
 > **Dieses Dokument ergänzt die .cursorrules und das Playbook.** Pfad: `docs/specs/IMPORT-SPEC.md`
 

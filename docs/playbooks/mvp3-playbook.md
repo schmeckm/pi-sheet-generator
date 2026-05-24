@@ -1,4 +1,4 @@
-# PI Sheet Generator — MVP 3.0 Cursor Playbook
+# X-Steps AI Composer — MVP 3.0 Cursor Playbook
 
 > **Voraussetzung**: MVP 1.0 (11 Steps) + MVP 2.0 (4 Runden) sind komplett.
 > Specs: `docs/specs/EQUIPMENT-SPEC.md` · Playbook: `docs/playbooks/mvp3-playbook.md`

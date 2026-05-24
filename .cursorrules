@@ -1,6 +1,6 @@
-# PI Sheet Generator — Cursor Rules
+# X-Steps AI Composer — Cursor Rules
 
-Full-stack LLM-powered PI Sheet Generator for pharmaceutical manufacturing (SAP XSteps → PI Sheets).
+Full-stack LLM-powered X-Steps AI Composer for pharmaceutical manufacturing (SAP XSteps → PI Sheets).
 
 ## Tech Stack
 - Frontend: Vue 3 (Composition API) + Vite + Pinia + Vue Router + Tailwind CSS + Axios

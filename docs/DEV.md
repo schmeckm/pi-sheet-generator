@@ -1,4 +1,4 @@
-# Entwickler-Handbuch — PI Sheet Generator
+# Entwickler-Handbuch — X-Steps AI Composer
 
 Kurzreferenz für lokale Entwicklung, Docker und typische Stolpersteine.
 

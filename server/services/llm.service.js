@@ -28,7 +28,8 @@ const {
 } = require('../utils/llmErrors');
 const { trimBuildContext } = require('../utils/llmContext');
 const { withTimeout } = require('../utils/withTimeout');
-const { getModelConfig } = require('../utils/llmModel');
+const { getModelConfig, getFullModelConfig } = require('../utils/llmModel');
+const llmProvider = require('./llmProvider.service');
 const {
   detectSapPath,
   filterXStepsBySapPath,
@@ -527,7 +528,9 @@ async function trackTokenUsage(userId, usage) {
 
 async function generatePISheet(userPrompt, userId, options = {}) {
   await guardTokenBudget(userId, options);
-  const client = requireAnthropicClient();
+  const providerCfg = await getFullModelConfig('pi_sheet');
+  llmProvider.assertProviderConfigured(providerCfg.provider);
+
   const promptConfig = await requireActivePromptConfig({
     ...options,
     mode: 'pi_sheet',
@@ -544,45 +547,69 @@ async function generatePISheet(userPrompt, userId, options = {}) {
     (r) => (r.dataValues || r).equipment_id
   );
 
-  let requestParams = await buildPiSheetRequestParams(systemPrompt, userContent, true);
-  const hadMcp = Boolean(requestParams.mcp_servers?.length);
-  let response;
+  const mcpParamsInitial =
+    providerCfg.provider === 'anthropic' ? await buildMcpConnectorParams() : {};
+  const hadMcp = Boolean(mcpParamsInitial.mcp_servers?.length);
   let usage = null;
   const maxRetryTokens = 8000;
 
-  const runGeneration = async (params) => {
+  const runGeneration = async (includeMcp, maxTokensOverride) => {
+    const mcpParams =
+      includeMcp && providerCfg.provider === 'anthropic'
+        ? await buildMcpConnectorParams()
+        : {};
     try {
-      return await runToolLoop(client, params);
+      return await llmProvider.runCompletion({
+        mode: 'pi_sheet',
+        systemPrompt,
+        userContent,
+        includeMcp: Boolean(mcpParams.mcp_servers?.length),
+        mcpParams,
+        includeEquipmentTools: false,
+        includeGraphTools: false,
+        maxTokensOverride,
+        jsonMode: providerCfg.provider === 'openai',
+        executeToolSafeFn: executeChatToolSafe,
+      });
     } catch (err) {
-      if (hadMcp && isMcpRetryable(err)) {
+      if (hadMcp && includeMcp && isMcpRetryable(err)) {
         console.warn('[llm] Request failed (MCP-retryable), retry without MCP:', err.message);
-        const fallbackParams = await buildPiSheetRequestParams(systemPrompt, userContent, false);
-        return runToolLoop(client, fallbackParams);
+        return llmProvider.runCompletion({
+          mode: 'pi_sheet',
+          systemPrompt,
+          userContent,
+          includeMcp: false,
+          mcpParams: {},
+          includeEquipmentTools: false,
+          includeGraphTools: false,
+          maxTokensOverride,
+          jsonMode: providerCfg.provider === 'openai',
+          executeToolSafeFn: executeChatToolSafe,
+        });
       }
       throw mapLlmError(err);
     }
   };
 
-  ({ response, usage } = await runGeneration(requestParams));
+  let { text, usage: firstUsage, stopReason } = await runGeneration(true, null);
+  usage = firstUsage;
 
-  let text = extractTextFromResponse(response);
   let parsed;
   try {
-    parsed = validatePiSheet(parseLlmJson(text, { stopReason: response.stop_reason }), text, {
+    parsed = validatePiSheet(parseLlmJson(text, { stopReason }), text, {
       allowedEquipmentIds,
     });
   } catch (parseErr) {
+    const cfg = await getModelConfig('pi_sheet');
     const shouldRetryForTokens =
-      parseErr.code === 'PI_JSON_PARSE' &&
-      requestParams.max_tokens < maxRetryTokens;
+      parseErr.code === 'PI_JSON_PARSE' && cfg.max_tokens < maxRetryTokens;
     if (shouldRetryForTokens) {
       console.warn(
-        `[llm] PI JSON parse failed at ${requestParams.max_tokens} tokens, retrying with ${maxRetryTokens}`
+        `[llm] PI JSON parse failed at ${cfg.max_tokens} tokens, retrying with ${maxRetryTokens}`
       );
-      requestParams = await buildPiSheetRequestParams(systemPrompt, userContent, false, maxRetryTokens);
-      ({ response, usage } = await runGeneration(requestParams));
-      text = extractTextFromResponse(response);
-      parsed = validatePiSheet(parseLlmJson(text, { stopReason: response.stop_reason }), text, {
+      ({ text, usage: firstUsage, stopReason } = await runGeneration(false, maxRetryTokens));
+      usage = firstUsage;
+      parsed = validatePiSheet(parseLlmJson(text, { stopReason }), text, {
         allowedEquipmentIds,
       });
     } else {
@@ -617,7 +644,8 @@ function resolveChatMode(userPrompt) {
 }
 
 async function buildAnswerChatRequest(userPrompt, options = {}) {
-  const client = requireAnthropicClient();
+  const providerCfg = await getFullModelConfig('qa');
+  llmProvider.assertProviderConfigured(providerCfg.provider);
   const promptConfig = await requireActivePromptConfig({ ...options, mode: 'qa' });
 
   const qaSystem = applyLocaleToSystemPrompt(
@@ -639,6 +667,12 @@ Effizienz:
     options.locale,
     'qa'
   );
+  return { qaSystem, ctx, providerCfg };
+}
+
+async function buildAnswerChatRequestLegacyStream(userPrompt, options = {}) {
+  const { qaSystem, ctx } = await buildAnswerChatRequest(userPrompt, options);
+  const client = requireAnthropicClient();
   const requestParams = await buildClaudeRequestParams(
     { systemPrompt: qaSystem, userContent: ctx.userContent },
     {
@@ -653,9 +687,16 @@ Effizienz:
 
 async function answerChat(userPrompt, userId, options = {}) {
   await guardTokenBudget(userId, options);
-  const { client, requestParams } = await buildAnswerChatRequest(userPrompt, options);
-  const { response, usage } = await runToolLoop(client, requestParams);
-  const text = extractTextFromResponse(response);
+  const { qaSystem, ctx } = await buildAnswerChatRequest(userPrompt, options);
+  const { text, usage } = await llmProvider.runCompletion({
+    mode: 'qa',
+    systemPrompt: qaSystem,
+    userContent: ctx.userContent,
+    includeMcp: false,
+    includeEquipmentTools: true,
+    includeGraphTools: true,
+    executeToolSafeFn: executeChatToolSafe,
+  });
   await trackTokenUsage(userId, usage);
   return { type: 'text', message: text.trim() || 'Keine Antwort.', usage };
 }
@@ -792,6 +833,14 @@ function createLlmStreamEmitter(client, requestParams, maxRounds = 6, retry = nu
 
 async function generatePISheetStream(userPrompt, userId, options = {}) {
   await guardTokenBudget(userId, options);
+  const providerCfg = await getFullModelConfig('pi_sheet');
+  if (providerCfg.provider === 'openai') {
+    throw new LlmError(
+      'LLM_STREAM_UNSUPPORTED',
+      'OpenAI provider uses non-streaming completion; client will retry automatically.',
+      501
+    );
+  }
   const client = requireAnthropicClient();
   const promptConfig = await requireActivePromptConfig({
     ...options,
@@ -845,7 +894,15 @@ async function generatePISheetStream(userPrompt, userId, options = {}) {
 
 async function generateAnswerChatStream(userPrompt, userId, options = {}) {
   await guardTokenBudget(userId, options);
-  const { client, requestParams } = await buildAnswerChatRequest(userPrompt, options);
+  const providerCfg = await getFullModelConfig('qa');
+  if (providerCfg.provider === 'openai') {
+    throw new LlmError(
+      'LLM_STREAM_UNSUPPORTED',
+      'OpenAI provider uses non-streaming completion; client will retry automatically.',
+      501
+    );
+  }
+  const { client, requestParams } = await buildAnswerChatRequestLegacyStream(userPrompt, options);
   return createLlmStreamEmitter(client, requestParams, 4);
 }
 
@@ -899,6 +956,8 @@ async function finalizeFromMessage(finalMessage, userPrompt, userId, options = {
   });
   return { piSheet, usage };
 }
+
+llmProvider.setToolExecutor(executeChatToolSafe);
 
 module.exports = {
   guardTokenBudget,

@@ -687,6 +687,20 @@ html {
   border-radius: 1rem 1rem 1rem 0.25rem;
 }
 
+.sap-joule-bubble--error {
+  border: 1px solid #e9730c;
+  background: #fff4f0;
+  color: #8b2f00;
+}
+
+.sap-joule-bubble--error .sap-joule-error-details summary {
+  color: #8b2f00;
+}
+
+.sap-joule-bubble--error .sap-joule-error-details p {
+  color: #6a2400;
+}
+
 .sap-joule-accent {
   color: var(--sapJoulePrimary);
 }

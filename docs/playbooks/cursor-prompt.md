@@ -1,8 +1,8 @@
-# PI Sheet Generator — Pilot Application
+# X-Steps AI Composer — Pilot Application
 
 ## Project Overview
 
-Build a full-stack Node.js pilot application: an **LLM-powered PI (Process Instruction) Sheet Generator** for pharmaceutical manufacturing. Users describe what they need in natural language (e.g., "I need a PI Sheet for Verpackung with Rückmeldungen and Warenbewegungen"), and the system generates a structured PI Sheet proposal based on XStep data from a configurable repository.
+Build a full-stack Node.js pilot application: **X-Steps AI Composer** — an **LLM-powered PI (Process Instruction) Sheet composer** for pharmaceutical manufacturing. Users describe what they need in natural language (e.g., "I need a PI Sheet for Verpackung with Rückmeldungen and Warenbewegungen"), and the system generates a structured PI Sheet proposal based on XStep data from a configurable repository.
 
 The application has **two areas**:
 1. **Operator Chat UI** — natural language input → LLM generates PI Sheet → digital + print preview

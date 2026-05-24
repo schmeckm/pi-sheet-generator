@@ -1,7 +1,7 @@
 import { useAuthStore } from '@/stores/auth';
 import { api } from '@/composables/useApi';
 
-import { resolveChatError, resolveStreamError } from '@/utils/chatErrors';
+import { resolveChatErrorPayload } from '@/utils/chatErrors';
 import { get } from '@/composables/useApi';
 
 const baseURL = import.meta.env.VITE_API_URL || '/api';
@@ -71,12 +71,14 @@ function parseSseStream(url, body, handlers = {}) {
     function finishErr(errPayload) {
       if (settled) return;
       settled = true;
-      const message =
-        typeof errPayload === 'string'
-          ? errPayload
-          : resolveStreamError(errPayload);
-      const err = new Error(message);
-      if (typeof errPayload === 'object' && errPayload?.code) err.code = errPayload.code;
+      if (typeof errPayload === 'string') {
+        reject(new Error(errPayload));
+        return;
+      }
+      const parsed = resolveChatErrorPayload(errPayload);
+      const err = new Error(parsed.summary);
+      if (parsed.code) err.code = parsed.code;
+      if (parsed.detail) err.details = parsed.detail;
       reject(err);
     }
 
@@ -97,7 +99,9 @@ function parseSseStream(url, body, handlers = {}) {
             .catch(() => finishErr('Stream ended without result'));
           return false;
         }
-        if (data.type === 'error') finishErr({ message: data.message, code: data.code });
+        if (data.type === 'error') {
+          finishErr({ message: data.message, code: data.code, details: data.details });
+        }
       } catch {
         /* ignore malformed lines */
       }
@@ -124,7 +128,7 @@ function parseSseStream(url, body, handlers = {}) {
 
         if (!res.ok) {
           const err = await res.json().catch(() => ({}));
-          finishErr({ message: resolveChatError({ response: { data: err } }), code: err.code });
+          finishErr({ response: { data: err } });
           return;
         }
 
@@ -276,7 +280,8 @@ async function postGenerate(prompt, locale, signal) {
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw Object.assign(new Error(resolveChatError({ response: { data: err } })), { code: err.code });
+    const parsed = resolveChatErrorPayload({ response: { data: err } });
+    throw Object.assign(new Error(parsed.summary), { code: parsed.code, details: parsed.detail });
   }
   return res.json();
 }

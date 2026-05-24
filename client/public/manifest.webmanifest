@@ -1,7 +1,7 @@
 {
-  "name": "PI Sheet Generator",
-  "short_name": "PI Sheet",
-  "description": "LLM-powered PI Sheet generator for pharmaceutical manufacturing",
+  "name": "X-Steps AI Composer",
+  "short_name": "X-Steps AI",
+  "description": "LLM-powered PI Sheet composer for pharmaceutical manufacturing from the XStep repository",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#f5f6f7",

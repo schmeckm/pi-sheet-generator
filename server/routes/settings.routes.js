@@ -2,7 +2,16 @@ const express = require('express');
 const Joi = require('joi');
 const settingsService = require('../services/settings.service');
 const llmSettings = require('../services/llmSettings.service');
-const { invalidate: invalidateLlmModelCache, isAllowedModel } = require('../utils/llmModel');
+const {
+  invalidate: invalidateLlmModelCache,
+  isAllowedModel,
+  isAllowedProvider,
+  modeFromModelSettingKey,
+  modeFromProviderSettingKey,
+  getFullModelConfig,
+  SETTING_KEYS,
+  DEFAULTS,
+} = require('../utils/llmModel');
 const sapService = require('../services/sap.service');
 const { authMiddleware } = require('../middleware/auth');
 const { roles } = require('../middleware/roles');
@@ -28,6 +37,19 @@ router.get('/llm', async (req, res, next) => {
   }
 });
 
+async function validateModelForMode(mode, modelId) {
+  const keys = SETTING_KEYS[mode] || SETTING_KEYS.pi_sheet;
+  const base = DEFAULTS[mode] || DEFAULTS.pi_sheet;
+  let provider = base.provider;
+  try {
+    const providerRaw = await settingsService.get(keys.provider);
+    if (isAllowedProvider(providerRaw)) provider = providerRaw;
+  } catch {
+    /* use default */
+  }
+  return isAllowedModel(modelId, provider);
+}
+
 router.put('/:key', async (req, res, next) => {
   try {
     const schema = Joi.object({ value: Joi.alternatives().try(Joi.string(), Joi.boolean(), Joi.number()).required() });
@@ -35,9 +57,17 @@ router.put('/:key', async (req, res, next) => {
     if (error) return res.status(400).json({ error: error.details[0].message });
 
     const key = String(req.params.key);
-    if (key.startsWith('llm_model_') && !isAllowedModel(value.value)) {
-      return res.status(400).json({ error: 'Invalid Claude model id' });
+
+    const providerMode = modeFromProviderSettingKey(key);
+    if (providerMode && !isAllowedProvider(value.value)) {
+      return res.status(400).json({ error: 'Invalid LLM provider (anthropic | openai)' });
     }
+
+    const modelMode = modeFromModelSettingKey(key);
+    if (modelMode && !(await validateModelForMode(modelMode, value.value))) {
+      return res.status(400).json({ error: 'Invalid model id for the selected provider' });
+    }
+
     if (key.startsWith('llm_max_tokens_')) {
       const n = Number(value.value);
       if (!Number.isFinite(n) || n < 256 || n > 8000) {

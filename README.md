@@ -1,4 +1,4 @@
-# PI Sheet Generator
+# X-Steps AI Composer
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
 [![Node.js](https://img.shields.io/badge/Node.js-20+-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
@@ -6,7 +6,7 @@
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-pgvector-4169E1?logo=postgresql&logoColor=white)](https://github.com/pgvector/pgvector)
 [![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)](./docker-compose.yml)
 
-**LLM-powered Process Instruction (PI) Sheet generator for pharmaceutical manufacturing** — SAP Joule-style operator chat, GMP lifecycle workflow, XStep repository with RAG, equipment/scales Q&A, and a full admin area.
+**LLM-powered Process Instruction (PI) Sheet composer for pharmaceutical manufacturing** — SAP Joule-style operator chat, GMP lifecycle workflow, XStep repository with RAG, equipment/scales Q&A, and a full admin area.
 
 > **Pilot / demo application** — AI-generated PI sheets are **GxP drafts** and require human review and approval by Production and QA before use in manufacturing.
 
@@ -28,7 +28,7 @@ Administrators maintain master data, prompts, imports, equipment, and the **GMP 
 
 | Area | Purpose |
 |------|---------|
-| **PI Assistant (Chat)** | Natural language → PI Sheet JSON or equipment Q&A; digital & print preview; PDF export; **New conversation** resets the session |
+| **X-Steps AI Composer (Chat)** | Natural language → PI Sheet JSON or equipment Q&A; digital & print preview; PDF export; **New conversation** resets the session |
 | **PI Sheet preview** | Step cards, parameters, GMP stepper, workflow actions (submit for review, approve, archive) |
 | **Digitize** | PDF/image upload → vision extraction → steps into a PI sheet |
 | **Admin** | Dashboard, XStep repository, multi-format import, knowledge base, prompt config (edit / diff / test), equipment & scales, PI sheet queue, settings, audit log |
@@ -49,7 +49,7 @@ Quick-prompt tiles on the start screen cover typical packaging, filling, granula
 ```mermaid
 flowchart TB
   subgraph ui [Vue 3 Client]
-    Chat[PI Assistant + Preview]
+    Chat[X-Steps AI Composer + Preview]
     Admin[Admin Modules]
     Dig[Digitize PDF/Scan]
   end

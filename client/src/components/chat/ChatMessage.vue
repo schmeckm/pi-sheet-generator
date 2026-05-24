@@ -1,7 +1,7 @@
 <template>
   <div class="mb-4 flex" :class="isUser ? 'justify-end' : 'justify-start'">
     <div class="min-w-0 flex flex-col" :class="isUser ? 'items-end' : 'items-start'">
-      <div class="sap-joule-bubble" :class="isUser ? 'sap-joule-bubble--user' : 'sap-joule-bubble--assistant'">
+      <div class="sap-joule-bubble" :class="bubbleClass">
         <p
           v-if="showAssistantText"
           class="whitespace-pre-wrap"
@@ -9,6 +9,21 @@
         >
           {{ message.content }}
         </p>
+
+        <details
+          v-if="message.errorDetail || message.errorCode"
+          class="sap-joule-error-details mt-2 text-xs"
+        >
+          <summary class="cursor-pointer font-medium">
+            {{ t('chat.errorDetail') }}
+          </summary>
+          <p v-if="message.errorDetail" class="mt-2 whitespace-pre-wrap font-mono text-[11px] leading-relaxed">
+            {{ message.errorDetail }}
+          </p>
+          <p v-if="message.errorCode" class="mt-1 text-[10px] opacity-80">
+            {{ t('chat.errorCode', { code: message.errorCode }) }}
+          </p>
+        </details>
 
         <details v-if="isUser && message.userPrompt" class="sap-joule-user-prompt-details mt-2 text-xs">
           <summary class="cursor-pointer">
@@ -81,6 +96,12 @@ defineEmits(['open-preview']);
 
 const { t, locale } = useI18n();
 const isUser = computed(() => props.message.role === 'user');
+
+const bubbleClass = computed(() => {
+  if (isUser.value) return 'sap-joule-bubble--user';
+  if (props.message.errorCode) return 'sap-joule-bubble--assistant sap-joule-bubble--error';
+  return 'sap-joule-bubble--assistant';
+});
 
 const showAssistantText = computed(() => {
   if (isUser.value) return true;

@@ -10,10 +10,17 @@ const embeddingService = require('./embedding.service');
 const llmService = require('./llm.service');
 const { logAudit } = require('./audit.service');
 const { applyLocaleToSystemPrompt, getLlmLocaleConfig } = require('../utils/locale');
-const { getModelConfig } = require('../utils/llmModel');
+const { getModelConfig, getFullModelConfig } = require('../utils/llmModel');
 
 async function visionLlmParams() {
-  const cfg = await getModelConfig('vision');
+  const cfg = await getFullModelConfig('vision');
+  if (cfg.provider === 'openai') {
+    const err = new Error(
+      'Vision with OpenAI is not supported yet. Set vision provider to Anthropic in Admin → Settings.'
+    );
+    err.statusCode = 503;
+    throw err;
+  }
   return { model: cfg.model, max_tokens: cfg.max_tokens };
 }
 const MAX_IMAGE_DIM = 2048;

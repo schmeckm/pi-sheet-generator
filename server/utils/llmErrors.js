@@ -103,6 +103,90 @@ function mapAnthropicError(err) {
   return null;
 }
 
+function mapOpenAiError(err) {
+  const status = err?.status ?? err?.statusCode ?? err?.response?.status;
+  const type = err?.error?.type || err?.type;
+  const code = err?.error?.code || err?.code;
+  const msg = String(err?.message || err?.error?.message || '').toLowerCase();
+
+  if (
+    status === 429 ||
+    code === 'insufficient_quota' ||
+    code === 'rate_limit_exceeded' ||
+    msg.includes('rate limit')
+  ) {
+    if (msg.includes('quota') || code === 'insufficient_quota') {
+      return new LlmError(
+        'LLM_BILLING',
+        'OpenAI API quota or billing limit reached.',
+        503
+      );
+    }
+    return new LlmError(
+      'LLM_RATE_LIMIT',
+      'OpenAI rate limit reached. Please wait and try again.',
+      429
+    );
+  }
+  if (status >= 500) {
+    return new LlmError(
+      'LLM_SERVER_ERROR',
+      'The OpenAI service returned a temporary error. Please try again shortly.',
+      503
+    );
+  }
+  if (status === 401 || msg.includes('invalid api key') || msg.includes('incorrect api key')) {
+    return new LlmError(
+      'LLM_AUTH_FAILED',
+      'OpenAI API authentication failed. Check OPENAI_API_KEY.',
+      503
+    );
+  }
+  if (
+    status === 400 &&
+    (msg.includes('context') ||
+      msg.includes('too long') ||
+      msg.includes('token') ||
+      msg.includes('maximum'))
+  ) {
+    return new LlmError(
+      'LLM_CONTEXT_TOO_LONG',
+      'The request context is too large for the model. Shorten your prompt or reduce repository context.',
+      413
+    );
+  }
+  if (
+    err?.code === 'ETIMEDOUT' ||
+    err?.code === 'ECONNRESET' ||
+    err?.name === 'AbortError' ||
+    msg.includes('timed out') ||
+    msg.includes('timeout')
+  ) {
+    return new LlmError(
+      'LLM_TIMEOUT',
+      'The AI request timed out. Please try again.',
+      504
+    );
+  }
+  return null;
+}
+
+function buildGenericDetails(err) {
+  const status = err?.status ?? err?.statusCode ?? err?.response?.status;
+  const type = err?.error?.type || err?.type;
+  const apiMessage = err?.error?.message || err?.message;
+  const parts = [];
+  if (status) parts.push(`HTTP ${status}`);
+  if (type && type !== 'error') parts.push(String(type));
+  const core = apiMessage && !/^an unexpected ai error occurred/i.test(apiMessage)
+    ? String(apiMessage).trim()
+    : '';
+  if (parts.length && core) return `${parts.join(' · ')} — ${core}`;
+  if (core) return core;
+  if (parts.length) return parts.join(' · ');
+  return null;
+}
+
 function mapLlmError(err) {
   if (err instanceof LlmError) return err;
 
@@ -110,6 +194,13 @@ function mapLlmError(err) {
     return new LlmError(
       'LLM_NOT_CONFIGURED',
       'ANTHROPIC_API_KEY is not configured',
+      503
+    );
+  }
+  if (err?.message === 'OPENAI_API_KEY is not configured') {
+    return new LlmError(
+      'LLM_OPENAI_NOT_CONFIGURED',
+      'OPENAI_API_KEY is not configured',
       503
     );
   }
@@ -144,10 +235,14 @@ function mapLlmError(err) {
   const anthropic = mapAnthropicError(err);
   if (anthropic) return anthropic;
 
+  const openai = mapOpenAiError(err);
+  if (openai) return openai;
+
   return new LlmError(
     'LLM_GENERIC',
     err?.message || 'An unexpected AI error occurred',
-    err?.statusCode || 500
+    err?.statusCode || err?.status || 500,
+    buildGenericDetails(err)
   );
 }
 

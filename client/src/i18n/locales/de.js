@@ -1,6 +1,6 @@
 export default {
   common: {
-    appName: 'PI Sheet Generator',
+    appName: 'X-Steps AI Composer',
     language: 'Sprache',
     logout: 'Abmelden',
     logoutTitle: 'Abmelden',
@@ -25,7 +25,7 @@ export default {
     adminSubtitle: 'SAP BTP · XStep Repository',
     promptArea: 'Prompt-Verwaltung',
     promptSubtitle: 'System-Prompt bearbeiten und testen',
-    backToCopilot: 'Zum PI Assistenten',
+    backToCopilot: 'Zum X-Steps AI Composer',
     primaryNavTitle: 'Navigation',
     primaryNavAria: 'Hauptnavigation',
     adminNavAria: 'Administrationsnavigation',
@@ -95,7 +95,7 @@ export default {
     imageMissing: 'Grafik nicht gefunden ({path}). Bitte PNG nach client/public/help/ legen.',
   },
   joule: {
-    title: 'PI Sheet Assistent',
+    title: 'X-Steps AI Composer',
     subtitle: '',
     newChat: 'Neues Gespräch',
     clearChatTitle: 'Gespräch beenden?',
@@ -201,7 +201,7 @@ export default {
     },
   },
   chat: {
-    assistantName: 'PI Sheet Assistent',
+    assistantName: 'X-Steps AI Composer',
     assistantNameQa: 'Equipment-Assistent',
     toolsRunning: 'Tools: {tools}',
     placeholder:
@@ -225,11 +225,15 @@ export default {
     loadSheetFailed: 'PI Sheet konnte nicht geladen werden.',
     stop: 'Stoppen',
     stopped: 'Generierung abgebrochen.',
+    errorDetail: 'Technische Details',
+    errorCode: 'Fehlercode: {code}',
     contextTrimmed:
       'Ein Teil des Kontexts wurde wegen des Modell-Limits gekürzt ({sections}). Ergebnisse können weniger präzise sein.',
     errors: {
       LLM_NOT_CONFIGURED:
-        'Die KI ist nicht konfiguriert. Bitte ANTHROPIC_API_KEY setzen.',
+        'Anthropic ist nicht konfiguriert. Bitte ANTHROPIC_API_KEY setzen.',
+      LLM_OPENAI_NOT_CONFIGURED:
+        'OpenAI ist nicht konfiguriert. Bitte OPENAI_API_KEY in der Server-.env setzen.',
       LLM_AUTH_FAILED:
         'Anthropic-Authentifizierung fehlgeschlagen. API-Schlüssel prüfen.',
       LLM_RATE_LIMIT:
@@ -650,12 +654,24 @@ export default {
     plantExplorerEnable: 'Werk-Explorer aktivieren',
     plantExplorerOnHint: 'Navigation und API für Werke, PI Sheets und Equipment sind sichtbar.',
     plantExplorerOffHint: 'Werk-Explorer ist ausgeblendet; direkte URLs leiten um.',
-    llmTitle: 'Claude / KI',
-    llmHint: 'Modelle für PI-Sheet-Generierung, Equipment-Chat und Vision. Änderungen gelten nach Speichern für neue Anfragen.',
+    llmTitle: 'KI-Provider & Modelle',
+    llmHint: 'Provider und Modelle für PI Sheet, Chat/Equipment und Vision. API-Schlüssel bleiben in der Server-.env (ANTHROPIC_API_KEY, OPENAI_API_KEY). Änderungen gelten nach Speichern für neue Anfragen.',
+    llmProviderAnthropic: 'Anthropic (Claude)',
+    llmProviderOpenai: 'OpenAI (ChatGPT)',
+    llmProviderLabel: 'Provider',
+    llmKeyAnthropicOk: 'Anthropic: Schlüssel gesetzt ({hint})',
+    llmKeyAnthropicMissing: 'Anthropic: ANTHROPIC_API_KEY fehlt in .env',
+    llmKeyOpenaiOk: 'OpenAI: Schlüssel gesetzt ({hint})',
+    llmKeyOpenaiMissing: 'OpenAI: OPENAI_API_KEY fehlt in .env',
+    llmReachableAnthropic: 'Anthropic API erreichbar',
+    llmUnreachableAnthropic: 'Anthropic API nicht erreichbar',
+    llmReachableOpenai: 'OpenAI API erreichbar',
+    llmUnreachableOpenai: 'OpenAI API nicht erreichbar',
     llmKeyOk: 'API-Schlüssel gesetzt ({hint})',
     llmKeyMissing: 'ANTHROPIC_API_KEY fehlt in der Server-.env',
     llmReachable: 'Anthropic API erreichbar',
     llmUnreachable: 'Anthropic API nicht erreichbar (Schlüssel oder Netzwerk prüfen)',
+    llmVisionOpenaiNote: 'Vision/Digitalisierung unterstützt derzeit nur Anthropic.',
     llmModelPiSheet: 'Modell PI Sheet',
     llmModelQa: 'Modell Chat / Equipment',
     llmModelVision: 'Modell Vision / Digitalisierung',
@@ -674,6 +690,10 @@ export default {
     llmAnthropicBalanceNote:
       'Rest-Guthaben des Anthropic-Kontos ist über die Standard-API nicht abrufbar. Bitte Anthropic Console → Billing. Optional: ANTHROPIC_ADMIN_API_KEY für Organisations-Nutzung der letzten 7 Tage.',
     llmAnthropicUsage7d: 'Anthropic-Organisation (7 Tage): {tokens} Tokens (Admin-API)',
+    llmOpenaiCreditsTitle: 'OpenAI-Konto (Prepaid-Guthaben)',
+    llmOpenaiCreditsRemaining: 'Verbleibend: ${remaining} von ${granted} Prepaid-Guthaben',
+    llmOpenaiCreditsUnavailable: 'Prepaid-Guthaben nicht über diesen API-Schlüssel abrufbar (Pay-as-you-go: platform.openai.com/usage).',
+    llmOpenaiQuotaHint: 'Bei leerem Guthaben oder Quota meldet die API „insufficient_quota“ — dann Chat-Fehler LLM_BILLING.',
   },
   equipmentPage: {
     title: 'Equipment & Waagen',

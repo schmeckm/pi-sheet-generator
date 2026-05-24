@@ -12,7 +12,7 @@ body:
     attributes:
       label: Area
       options:
-        - Chat / PI Assistant
+        - Chat / X-Steps AI Composer
         - PI Sheet preview / GMP workflow
         - Admin (repository, import, knowledge)
         - Equipment / scales

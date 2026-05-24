@@ -1,4 +1,4 @@
-# Dokumentation — PI Sheet Generator
+# Dokumentation — X-Steps AI Composer
 
 | Dokument | Inhalt |
 |----------|--------|

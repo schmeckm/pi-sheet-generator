@@ -6,7 +6,7 @@ Apply these in **GitHub → schmeckm/pi-sheet-generator → Settings** so the re
 
 | Field | Suggested value |
 |-------|-----------------|
-| **Description** | LLM PI Sheet generator for pharma manufacturing — SAP Joule-style chat, GMP workflow, XStep RAG, equipment Q&A |
+| **Description** | X-Steps AI Composer — LLM PI Sheet composer for pharma manufacturing — SAP Joule-style chat, GMP workflow, XStep RAG, equipment Q&A |
 | **Website** | *(optional)* link to internal demo |
 | **Topics** | `pharmaceutical` `manufacturing` `gmp` `process-instruction` `vue3` `nodejs` `express` `postgresql` `pgvector` `anthropic` `claude` `llm` `rag` `docker` `sap` `equipment` `opc-ua` |
 
@@ -51,12 +51,12 @@ Workflow [.github/workflows/docker-publish.yml](./workflows/docker-publish.yml) 
 
 ## Social preview
 
-Settings → General → **Social preview** — upload a screenshot of the PI Assistant chat (1280×640 recommended).
+Settings → General → **Social preview** — upload a screenshot of the X-Steps AI Composer chat (1280×640 recommended).
 
 ## One-line CLI (after `gh auth login`)
 
 ```powershell
 gh repo edit schmeckm/pi-sheet-generator `
-  --description "LLM PI Sheet generator for pharma manufacturing — SAP Joule-style chat, GMP workflow, XStep RAG, equipment Q&A" `
+  --description "X-Steps AI Composer — LLM PI Sheet composer for pharma manufacturing — SAP Joule-style chat, GMP workflow, XStep RAG, equipment Q&A" `
   --add-topic pharmaceutical --add-topic manufacturing --add-topic gmp --add-topic vue3 --add-topic nodejs --add-topic llm --add-topic docker
 ```

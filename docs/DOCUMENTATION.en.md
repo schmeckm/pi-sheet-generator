@@ -1,6 +1,6 @@
-# PI Sheet Generator — Documentation (English)
+# X-Steps AI Composer — Documentation (English)
 
-LLM-powered **Process Instruction (PI) sheet** generator for pharmaceutical manufacturing with a SAP Joule–style UI, GMP workflow, equipment/scale Q&A, and full admin area.
+LLM-powered **X-Steps AI Composer** for Process Instruction (PI) sheets in pharmaceutical manufacturing — SAP Joule–style UI, GMP workflow, equipment/scale Q&A, and full admin area.
 
 **Deutsch:** [DOCUMENTATION.md](./DOCUMENTATION.md)
 
@@ -154,7 +154,7 @@ For role **ADMIN** only (Admin tab in the shell).
 ```mermaid
 flowchart TB
   subgraph ui [Vue 3 Client]
-    Chat[PI Assistant + Preview]
+    Chat[X-Steps AI Composer + Preview]
     Admin[Admin modules]
     Dig[Digitize]
   end

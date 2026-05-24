@@ -1,4 +1,4 @@
-# PI Sheet Generator — Equipment Integration Spec
+# X-Steps AI Composer — Equipment Integration Spec
 
 > **Waagen-Anbindung über OPC UA / UNS mit Simulation für den Pilot**
 > Spezifikation: `docs/specs/EQUIPMENT-SPEC.md`
@@ -11,7 +11,7 @@ XSteps können Equipment-Parameter enthalten (Waage, Temperatur-Sensor, Barcode-
 
 ```
 ┌──────────────────────────────────────────────────────────────────────┐
-│  PI Sheet Generator                                                   │
+│  X-Steps AI Composer                                                  │
 │                                                                        │
 │  ┌────────────┐     ┌──────────────────┐     ┌────────────────────┐  │
 │  │ Frontend    │◄───▶│ Equipment Gateway │◄───▶│ Protokoll-Layer    │  │

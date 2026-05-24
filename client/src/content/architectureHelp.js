@@ -4,7 +4,7 @@ const systemDiagram = {
   de: `┌──────────────────────────────────────────────────────────────────────┐
 │  Vue 3 Client (Vite · Pinia · Vue Router · Tailwind · i18n DE/EN)     │
 │  ┌─────────────┐ ┌──────────────┐ ┌─────────────────────────────────┐ │
-│  │ PI Assistent│ │ Digitalisieren│ │ Admin (Rolle admin)             │ │
+│  │ X-Steps AI  │ │ Digitalisieren│ │ Admin (Rolle admin)             │ │
 │  │ Chat·Vorschau│ │ PDF/Scan     │ │ Dashboard·PI Sheets·Audit·Graph │ │
 │  │ GMP-Workflow │ │              │ │ Repo·Upload·KB·Equipment·Settings│ │
 │  └──────┬──────┘ └──────┬───────┘ └───────────────┬─────────────────┘ │
@@ -30,7 +30,7 @@ const systemDiagram = {
   en: `┌──────────────────────────────────────────────────────────────────────┐
 │  Vue 3 Client (Vite · Pinia · Vue Router · Tailwind · i18n DE/EN)     │
 │  ┌─────────────┐ ┌──────────────┐ ┌─────────────────────────────────┐ │
-│  │ PI Assistant│ │ Digitize     │ │ Admin (admin role)              │ │
+│  │ X-Steps AI  │ │ Digitize     │ │ Admin (admin role)              │ │
 │  │ Chat·Preview │ │ PDF/scan     │ │ Dashboard·PI sheets·Audit·Graph │ │
 │  │ GMP workflow │ │              │ │ Repo·Upload·KB·Equipment·Settings│ │
 │  └──────┬──────┘ └──────┬───────┘ └───────────────┬─────────────────┘ │
@@ -59,22 +59,22 @@ export const architectureHelp = {
   de: {
     title: 'Hilfe & Architektur',
     subtitle:
-      'Bedienung des PI Assistenten und technischer Systemüberblick — Sprache folgt der UI-Auswahl (DE/EN) in der Shell',
+      'Bedienung des X-Steps AI Composer und technischer Systemüberblick — Sprache folgt der UI-Auswahl (DE/EN) in der Shell',
     toc: 'Inhalt',
     sections: [
       {
         id: 'overview',
         title: 'Überblick',
         paragraphs: [
-          'Der PI Sheet Generator ist eine Full-Stack-Pilotanwendung für die pharmazeutische Fertigung. Operatoren beschreiben in natürlicher Sprache, welches Process Instruction (PI) Sheet benötigt wird; das System erzeugt einen strukturierten Entwurf aus dem XStep-Repository, optionaler Dokument-Wissensbasis (RAG) und optional Live-Equipment-Daten (Waagen, OPC-UA/UNS via SAP MCP).',
-          'Zwei Hauptbereiche: PI Assistent (Chat, Vorschau, PDF) und Administration (Masterdaten, Freigabe, Prompts, Equipment). KI-generierte PI Sheets sind GxP-Entwürfe und erfordern menschliche Prüfung und Freigabe durch Produktion und QA.',
+          'Der X-Steps AI Composer ist eine Full-Stack-Pilotanwendung für die pharmazeutische Fertigung. Operatoren beschreiben in natürlicher Sprache, welches Process Instruction (PI) Sheet benötigt wird; das System erzeugt einen strukturierten Entwurf aus dem XStep-Repository, optionaler Dokument-Wissensbasis (RAG) und optional Live-Equipment-Daten (Waagen, OPC-UA/UNS via SAP MCP).',
+          'Zwei Hauptbereiche: X-Steps AI Composer (Chat, Vorschau, PDF) und Administration (Masterdaten, Freigabe, Prompts, Equipment). KI-generierte PI Sheets sind GxP-Entwürfe und erfordern menschliche Prüfung und Freigabe durch Produktion und QA.',
         ],
       },
       {
         id: 'chat-help',
-        title: 'Hilfe: PI Assistent',
+        title: 'Hilfe: X-Steps AI Composer',
         paragraphs: [
-          'Der PI Assistent nutzt ein Joule-ähnliches Copilot-Layout: lila Kopfzeile, Willkommens-Karte mit Roboter (Branding „MAKE / make it happen“) und zweizeiliger Begrüßung, darunter strukturierte Quick-Prompt-Karten mit Titel und Beschreibung.',
+          'Der X-Steps AI Composer nutzt ein Joule-ähnliches Copilot-Layout: lila Kopfzeile, Willkommens-Karte mit Roboter (Branding „MAKE / make it happen“) und zweizeiliger Begrüßung, darunter strukturierte Quick-Prompt-Karten mit Titel und Beschreibung.',
           'Nach der ersten Nachricht wechselt die Ansicht in den Dialog: Ihre Nachrichten erscheinen als lila Sprechblasen rechts, Antworten des Assistenten hellgrau links. Die PI-Sheet-Vorschau bleibt rechts sichtbar (Desktop).',
         ],
         list: [
@@ -126,7 +126,7 @@ export const architectureHelp = {
         title: 'Anwendungsbereiche',
         list: [
           {
-            label: 'PI Assistent (Chat)',
+            label: 'X-Steps AI Composer (Chat)',
             text: 'Natürliche Sprache → RAG (XSteps + Dokument-Chunks) → Claude erzeugt PI-Sheet-JSON → digitale/Druck-Vorschau, Speichern, PDF-Export, GMP-Status.',
           },
           {
@@ -289,22 +289,22 @@ export const architectureHelp = {
   en: {
     title: 'Help & Architecture',
     subtitle:
-      'PI Assistant usage and technical system overview — language follows the UI selection (DE/EN) in the shell',
+      'X-Steps AI Composer usage and technical system overview — language follows the UI selection (DE/EN) in the shell',
     toc: 'Contents',
     sections: [
       {
         id: 'overview',
         title: 'Overview',
         paragraphs: [
-          'The PI Sheet Generator is a full-stack pilot application for pharmaceutical manufacturing. Operators describe in natural language which Process Instruction (PI) sheet they need; the system produces a structured draft from the XStep repository, optional document knowledge base (RAG), and optional live equipment data (scales, OPC-UA/UNS via SAP MCP).',
-          'Two main areas: PI Assistant (chat, preview, PDF) and Administration (master data, release workflow, prompts, equipment). AI-generated PI sheets are GxP drafts and require human review and approval by Production and QA.',
+          'X-Steps AI Composer is a full-stack pilot application for pharmaceutical manufacturing. Operators describe in natural language which Process Instruction (PI) sheet they need; the system produces a structured draft from the XStep repository, optional document knowledge base (RAG), and optional live equipment data (scales, OPC-UA/UNS via SAP MCP).',
+          'Two main areas: X-Steps AI Composer (chat, preview, PDF) and Administration (master data, release workflow, prompts, equipment). AI-generated PI sheets are GxP drafts and require human review and approval by Production and QA.',
         ],
       },
       {
         id: 'chat-help',
-        title: 'Help: PI Assistant',
+        title: 'Help: X-Steps AI Composer',
         paragraphs: [
-          'The PI Assistant uses a Joule-style copilot layout: purple header, welcome card with robot mascot (“MAKE / make it happen” branding) and a two-line greeting, followed by structured quick-prompt cards with title and description.',
+          'X-Steps AI Composer uses a Joule-style copilot layout: purple header, welcome card with robot mascot (“MAKE / make it happen” branding) and a two-line greeting, followed by structured quick-prompt cards with title and description.',
           'After the first message, the view switches to the conversation: your messages appear as purple bubbles on the right, assistant replies in light grey on the left. The PI sheet preview stays visible on the right (desktop).',
         ],
         list: [
@@ -356,7 +356,7 @@ export const architectureHelp = {
         title: 'Application areas',
         list: [
           {
-            label: 'PI Assistant (Chat)',
+            label: 'X-Steps AI Composer (Chat)',
             text: 'Natural language → RAG (XSteps + document chunks) → Claude builds PI sheet JSON → digital/print preview, save, PDF export, GMP status.',
           },
           {

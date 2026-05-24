@@ -1,6 +1,6 @@
 export default {
   common: {
-    appName: 'PI Sheet Generator',
+    appName: 'X-Steps AI Composer',
     language: 'Language',
     logout: 'Log out',
     logoutTitle: 'Log out',
@@ -25,7 +25,7 @@ export default {
     adminSubtitle: 'SAP BTP · XStep Repository',
     promptArea: 'Prompt management',
     promptSubtitle: 'Edit and test the system prompt',
-    backToCopilot: 'Back to PI Assistant',
+    backToCopilot: 'Back to X-Steps AI Composer',
     primaryNavTitle: 'Navigation',
     primaryNavAria: 'Main navigation',
     adminNavAria: 'Admin navigation',
@@ -95,7 +95,7 @@ export default {
     imageMissing: 'Image not found ({path}). Please add the PNG under client/public/help/.',
   },
   joule: {
-    title: 'PI Sheet Assistant',
+    title: 'X-Steps AI Composer',
     subtitle: '',
     newChat: 'New conversation',
     clearChatTitle: 'End conversation?',
@@ -201,7 +201,7 @@ export default {
     },
   },
   chat: {
-    assistantName: 'PI Sheet Assistant',
+    assistantName: 'X-Steps AI Composer',
     assistantNameQa: 'Equipment Assistant',
     toolsRunning: 'Tools: {tools}',
     placeholder:
@@ -225,11 +225,15 @@ export default {
     loadSheetFailed: 'Could not load PI Sheet.',
     stop: 'Stop',
     stopped: 'Generation cancelled.',
+    errorDetail: 'Technical details',
+    errorCode: 'Error code: {code}',
     contextTrimmed:
       'Some context was shortened due to model limits ({sections}). Results may be less precise.',
     errors: {
       LLM_NOT_CONFIGURED:
-        'AI is not configured. Set ANTHROPIC_API_KEY.',
+        'Anthropic is not configured. Set ANTHROPIC_API_KEY.',
+      LLM_OPENAI_NOT_CONFIGURED:
+        'OpenAI is not configured. Set OPENAI_API_KEY in the server .env.',
       LLM_AUTH_FAILED:
         'Anthropic authentication failed. Check the API key.',
       LLM_RATE_LIMIT:
@@ -650,8 +654,20 @@ export default {
     plantExplorerEnable: 'Enable plant explorer',
     plantExplorerOnHint: 'Navigation and API for plants, PI sheets, and equipment are visible.',
     plantExplorerOffHint: 'Plant explorer is hidden; direct URLs redirect away.',
-    llmTitle: 'Claude / AI',
-    llmHint: 'Models for PI sheet generation, equipment chat, and vision. Changes apply to new requests after save.',
+    llmTitle: 'AI providers & models',
+    llmHint: 'Provider and models for PI sheet, chat/equipment, and vision. API keys stay in server .env (ANTHROPIC_API_KEY, OPENAI_API_KEY). Changes apply to new requests after save.',
+    llmProviderAnthropic: 'Anthropic (Claude)',
+    llmProviderOpenai: 'OpenAI (ChatGPT)',
+    llmProviderLabel: 'Provider',
+    llmKeyAnthropicOk: 'Anthropic: key configured ({hint})',
+    llmKeyAnthropicMissing: 'Anthropic: ANTHROPIC_API_KEY missing in .env',
+    llmKeyOpenaiOk: 'OpenAI: key configured ({hint})',
+    llmKeyOpenaiMissing: 'OpenAI: OPENAI_API_KEY missing in .env',
+    llmReachableAnthropic: 'Anthropic API reachable',
+    llmUnreachableAnthropic: 'Anthropic API unreachable',
+    llmReachableOpenai: 'OpenAI API reachable',
+    llmUnreachableOpenai: 'OpenAI API unreachable',
+    llmVisionOpenaiNote: 'Vision/digitization currently supports Anthropic only.',
     llmKeyOk: 'API key configured ({hint})',
     llmKeyMissing: 'ANTHROPIC_API_KEY missing in server .env',
     llmReachable: 'Anthropic API reachable',
@@ -674,6 +690,10 @@ export default {
     llmAnthropicBalanceNote:
       'Remaining Anthropic prepaid balance is not available via the standard API key. Check console.anthropic.com → Billing. Optional: ANTHROPIC_ADMIN_API_KEY for organization usage (last 7 days).',
     llmAnthropicUsage7d: 'Anthropic organization (7 days): {tokens} tokens (Admin API)',
+    llmOpenaiCreditsTitle: 'OpenAI account (prepaid credits)',
+    llmOpenaiCreditsRemaining: 'Remaining: ${remaining} of ${granted} prepaid credits',
+    llmOpenaiCreditsUnavailable: 'Prepaid balance not available for this API key type (pay-as-you-go: platform.openai.com/usage).',
+    llmOpenaiQuotaHint: 'When quota is exhausted the API returns insufficient_quota — chat error LLM_BILLING.',
   },
   equipmentPage: {
     title: 'Equipment & Scales',

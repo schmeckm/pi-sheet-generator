@@ -1,4 +1,4 @@
-# PI Sheet Generator — MVP 2.0 Erweiterungen
+# X-Steps AI Composer — MVP 2.0 Erweiterungen
 
 > **MCP-Integration mit SAP + RAG mit Bild/Dokument-Upload**
 > Dieses Dokument ergänzt die .cursorrules für die nächste Ausbaustufe.
@@ -33,7 +33,7 @@ Ein **MCP Server** stellt SAP-Daten als Tools für Claude bereit. Claude kann da
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│  PI Sheet Generator (Node.js)                                │
+│  X-Steps AI Composer (Node.js)                                │
 │                                                               │
 │  ┌──────────┐    ┌──────────────┐    ┌────────────────────┐  │
 │  │ Chat API  │───▶│ Claude API   │───▶│ MCP Client         │  │
@@ -178,7 +178,7 @@ sap-mcp-server/
 }
 ```
 
-## Integration in PI Sheet Generator
+## Integration in X-Steps AI Composer
 
 ### Option A: Claude API mit MCP Tools (empfohlen für Pilot)
 
@@ -775,7 +775,7 @@ Read the MCP specification in IMPORT-SPEC.md Teil 1.
 ## Vision/Document Upload (in bestehendes Projekt)
 
 ```
-Read .cursorrules and IMPORT-SPEC.md Teil 2. Add document upload and vision analysis to the PI Sheet Generator.
+Read .cursorrules and IMPORT-SPEC.md Teil 2. Add document upload and vision analysis to the X-Steps AI Composer.
 
 1. Install: sharp, pdf-parse, tesseract.js, mammoth
 2. server/services/vision.service.js — 4-phase pipeline:
