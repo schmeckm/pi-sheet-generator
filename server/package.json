@@ -17,7 +17,7 @@
     "db:reset": "node scripts/db-reset.js",
     "db:migrate": "sequelize-cli db:migrate",
     "db:embed": "node scripts/embed-all.js",
-    "test": "node --test test/**/*.test.js"
+    "test": "node --test test/**/*.test.js modules/xstep-agent/tests/**/*.test.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.98.0",

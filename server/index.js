@@ -105,6 +105,12 @@ app.use('/api/settings', settingsRoutes);
 app.use('/api/graph', graphRoutes);
 app.use('/api/plants', plantRoutes);
 
+if (process.env.XSTEP_AGENT_ENABLED === 'true' || process.env.XSTEP_AGENT_ENABLED === '1') {
+  const xstepAgentRoutes = require('./modules/xstep-agent/routes/xstepAgentRoutes');
+  app.use('/api/v1/xstep-agent', xstepAgentRoutes);
+  console.log('[xstep-agent] Module enabled at /api/v1/xstep-agent');
+}
+
 app.use(errorHandler);
 
 const net = require('net');

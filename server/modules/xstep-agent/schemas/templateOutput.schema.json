@@ -1,0 +1,57 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "TemplateOutput",
+  "type": "object",
+  "required": ["templateType", "processArea", "steps", "validationStatus"],
+  "properties": {
+    "templateType": { "type": "string", "enum": ["PI_SHEET"] },
+    "processArea": { "type": "string" },
+    "packagingType": { "type": "string" },
+    "prompt": { "type": "string" },
+    "steps": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["sequence", "stepType", "recommendedXStep"],
+        "properties": {
+          "sequence": { "type": "number" },
+          "stepType": { "type": "string" },
+          "name": { "type": "string" },
+          "recommendedXStep": { "type": "string" },
+          "gmpRelevant": { "type": "boolean" },
+          "requiresSignature": { "type": "boolean" },
+          "source": { "type": "string" },
+          "ruleIds": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        }
+      }
+    },
+    "validationStatus": {
+      "type": "string",
+      "enum": ["DRAFT_REQUIRES_REVIEW", "VALID", "INVALID"]
+    },
+    "validationIssues": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "ruleId": { "type": "string" },
+          "severity": { "type": "string" },
+          "message": { "type": "string" }
+        }
+      }
+    },
+    "retrievalSummary": { "type": "object" },
+    "audit": {
+      "type": "object",
+      "properties": {
+        "generatedAt": { "type": "string" },
+        "provider": { "type": "string" },
+        "mode": { "type": "string" }
+      }
+    }
+  },
+  "additionalProperties": true
+}

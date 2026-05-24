@@ -1,0 +1,68 @@
+[
+  {
+    "id": "XSTEP_PACK_LINE_CLEARANCE",
+    "name": "Line Clearance Packaging",
+    "stepType": "LINE_CLEARANCE",
+    "processArea": "Packaging",
+    "packagingType": "Blister",
+    "category": "Qualität",
+    "gmpRelevant": true,
+    "requiresSignature": true,
+    "keywords": ["line clearance", "linienfreigabe", "clearance", "freigabe"]
+  },
+  {
+    "id": "XSTEP_PACK_MATERIAL_ID",
+    "name": "Material Identification",
+    "stepType": "MATERIAL_IDENTIFICATION",
+    "processArea": "Packaging",
+    "packagingType": "Blister",
+    "category": "Qualität",
+    "gmpRelevant": true,
+    "requiresSignature": true,
+    "keywords": ["material identification", "materialprüfung", "identification", "material"]
+  },
+  {
+    "id": "XSTEP_PACK_BLISTER_FORM",
+    "name": "Blister Forming",
+    "stepType": "PROCESS",
+    "processArea": "Packaging",
+    "packagingType": "Blister",
+    "category": "Prozess",
+    "gmpRelevant": false,
+    "requiresSignature": false,
+    "keywords": ["blister", "forming", "thermoform", "formen"]
+  },
+  {
+    "id": "XSTEP_PACK_IPC_CHECK",
+    "name": "In-Process Control Check",
+    "stepType": "IPC_CHECK",
+    "processArea": "Packaging",
+    "packagingType": "Blister",
+    "category": "Qualität",
+    "gmpRelevant": true,
+    "requiresSignature": true,
+    "keywords": ["ipc", "in-process", "check", "kontrolle", "prüfung"]
+  },
+  {
+    "id": "XSTEP_PACK_GOODS_MOVEMENT",
+    "name": "Goods Movement Post Packaging",
+    "stepType": "GOODS_MOVEMENT",
+    "processArea": "Packaging",
+    "packagingType": "Blister",
+    "category": "Warenbewegung",
+    "gmpRelevant": true,
+    "requiresSignature": false,
+    "keywords": ["goods movement", "warenbewegung", "movement", "umlagerung"]
+  },
+  {
+    "id": "XSTEP_PACK_DOCUMENTATION",
+    "name": "Batch Documentation",
+    "stepType": "DOCUMENTATION",
+    "processArea": "Packaging",
+    "packagingType": "Blister",
+    "category": "Dokumentation",
+    "gmpRelevant": true,
+    "requiresSignature": true,
+    "keywords": ["documentation", "dokumentation", "batch record", "release"]
+  }
+]

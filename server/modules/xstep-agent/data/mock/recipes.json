@@ -1,0 +1,82 @@
+[
+  {
+    "id": "RECIPE-BLISTER-001",
+    "name": "Blister Packaging Standard",
+    "processArea": "Packaging",
+    "packagingType": "Blister",
+    "version": "1.0",
+    "operations": [
+      {
+        "id": "OP-010",
+        "name": "Line Clearance",
+        "sequence": 10,
+        "phases": [
+          {
+            "id": "PH-010-A",
+            "name": "Pre-run clearance",
+            "sequence": 10,
+            "requiredXSteps": ["XSTEP_PACK_LINE_CLEARANCE"]
+          }
+        ]
+      },
+      {
+        "id": "OP-020",
+        "name": "Material Identification",
+        "sequence": 20,
+        "phases": [
+          {
+            "id": "PH-020-A",
+            "name": "Identify primary and secondary materials",
+            "sequence": 10,
+            "requiredXSteps": ["XSTEP_PACK_MATERIAL_ID"]
+          }
+        ]
+      },
+      {
+        "id": "OP-030",
+        "name": "Blister Forming and Sealing",
+        "sequence": 30,
+        "phases": [
+          {
+            "id": "PH-030-A",
+            "name": "Form blisters",
+            "sequence": 10,
+            "requiredXSteps": ["XSTEP_PACK_BLISTER_FORM"]
+          },
+          {
+            "id": "PH-030-B",
+            "name": "IPC check",
+            "sequence": 20,
+            "requiredXSteps": ["XSTEP_PACK_IPC_CHECK"]
+          }
+        ]
+      },
+      {
+        "id": "OP-040",
+        "name": "Goods Movement",
+        "sequence": 40,
+        "phases": [
+          {
+            "id": "PH-040-A",
+            "name": "Post packaging goods movement",
+            "sequence": 10,
+            "requiredXSteps": ["XSTEP_PACK_GOODS_MOVEMENT"]
+          }
+        ]
+      },
+      {
+        "id": "OP-050",
+        "name": "Documentation and Release",
+        "sequence": 50,
+        "phases": [
+          {
+            "id": "PH-050-A",
+            "name": "Batch documentation",
+            "sequence": 10,
+            "requiredXSteps": ["XSTEP_PACK_DOCUMENTATION"]
+          }
+        ]
+      }
+    ]
+  }
+]

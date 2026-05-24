@@ -1,0 +1,42 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "CanonicalRecipe",
+  "type": "object",
+  "required": ["id", "name", "operations"],
+  "properties": {
+    "id": { "type": "string" },
+    "name": { "type": "string" },
+    "processArea": { "type": "string" },
+    "packagingType": { "type": "string" },
+    "version": { "type": "string" },
+    "operations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "sequence", "phases"],
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "sequence": { "type": "number" },
+          "phases": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["id", "name", "sequence"],
+              "properties": {
+                "id": { "type": "string" },
+                "name": { "type": "string" },
+                "sequence": { "type": "number" },
+                "requiredXSteps": {
+                  "type": "array",
+                  "items": { "type": "string" }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "additionalProperties": true
+}

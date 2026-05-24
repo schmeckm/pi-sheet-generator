@@ -1,0 +1,47 @@
+[
+  {
+    "id": "SOP-PACK-001",
+    "title": "Blister Packaging Line Clearance",
+    "processArea": "Packaging",
+    "packagingType": "Blister",
+    "chunkIndex": 0,
+    "text": "Before starting blister packaging, perform line clearance. Verify absence of previous batch materials, labels, and components. Document clearance with electronic signature.",
+    "keywords": ["line clearance", "blister", "packaging", "signature", "gmp"]
+  },
+  {
+    "id": "SOP-PACK-002",
+    "title": "Material Identification at Packaging",
+    "processArea": "Packaging",
+    "packagingType": "Blister",
+    "chunkIndex": 0,
+    "text": "Identify all primary and secondary packaging materials against the batch record. Scan or enter material numbers and verify batch numbers and expiry dates.",
+    "keywords": ["material identification", "batch record", "primary", "secondary"]
+  },
+  {
+    "id": "SOP-PACK-003",
+    "title": "IPC Checks during Blister Packaging",
+    "processArea": "Packaging",
+    "packagingType": "Blister",
+    "chunkIndex": 0,
+    "text": "Perform in-process control checks at defined intervals: seal integrity, print quality, and cavity count. Record results and escalate deviations.",
+    "keywords": ["ipc", "in-process", "seal", "blister", "control"]
+  },
+  {
+    "id": "SOP-PACK-004",
+    "title": "Goods Movement after Packaging",
+    "processArea": "Packaging",
+    "packagingType": "Blister",
+    "chunkIndex": 0,
+    "text": "Post packaging goods movement must reference the production order. Confirm quantity and target storage location before posting.",
+    "keywords": ["goods movement", "warenbewegung", "storage", "quantity"]
+  },
+  {
+    "id": "SOP-PACK-005",
+    "title": "Electronic Signature for GMP Steps",
+    "processArea": "Packaging",
+    "packagingType": "Blister",
+    "chunkIndex": 0,
+    "text": "GMP-relevant packaging steps require electronic signature with meaning of signature documented. No autonomous approval is permitted.",
+    "keywords": ["electronic signature", "gmp", "approval", "esignature"]
+  }
+]

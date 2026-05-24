@@ -1,0 +1,29 @@
+[
+  {
+    "id": "MAT-FOIL-001",
+    "name": "Blister Foil PA/Al/PVC",
+    "materialType": "PRIMARY_PACK",
+    "processArea": "Packaging",
+    "packagingType": "Blister",
+    "gmpRelevant": true,
+    "keywords": ["foil", "blister", "primary", "folie"]
+  },
+  {
+    "id": "MAT-CARTON-001",
+    "name": "Folding Carton 100x60mm",
+    "materialType": "SECONDARY_PACK",
+    "processArea": "Packaging",
+    "packagingType": "Blister",
+    "gmpRelevant": true,
+    "keywords": ["carton", "secondary", "karton"]
+  },
+  {
+    "id": "MAT-TABLET-001",
+    "name": "Coated Tablets 10mg",
+    "materialType": "BULK",
+    "processArea": "Packaging",
+    "packagingType": "Blister",
+    "gmpRelevant": true,
+    "keywords": ["tablet", "bulk", "ware"]
+  }
+]
