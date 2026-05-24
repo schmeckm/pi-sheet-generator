@@ -2,7 +2,7 @@
 
 const { describe, it } = require('node:test');
 const assert = require('node:assert/strict');
-const { retrieve, scoreDocument } = require('../services/retrievalService');
+const { retrieveMockOnly: retrieve, scoreDocument } = require('../services/retrievalService');
 
 describe('retrievalService', () => {
   it('returns ranked mock results for packaging blister query', () => {

@@ -71,14 +71,17 @@ async function composeTemplate(input = {}) {
     packagingType: input.packagingType || llm.packagingType,
   });
 
-  const retrieval = retrieve({
+  const retrieval = await retrieve({
     query: prompt,
     processArea: context.processArea,
     packagingType: context.packagingType,
-    topK: 8,
+    topK: 15,
   });
 
   const xstepResults = retrieval.results.filter((r) => r.type === 'xstep').map((r) => r.data);
+  const knowledgeResults = retrieval.results
+    .filter((r) => r.type === 'knowledge' || r.type === 'sop')
+    .map((r) => r.data);
   const xstepsByType = new Map(xstepResults.map((x) => [x.stepType, x]));
 
   const mandatoryTypes = getMandatoryStepTypes(context);
@@ -96,7 +99,19 @@ async function composeTemplate(input = {}) {
     sequence += 10;
   }
 
-  steps.sort((a, b) => a.sequence - b.sequence);
+  // Re-order steps using process graph chain if available
+  const graphChain = retrieval.graphContext?.chain || [];
+  if (graphChain.length > 0) {
+    const chainIndex = new Map(graphChain.map((id, i) => [id, i]));
+    steps.sort((a, b) => {
+      const ia = chainIndex.has(a.recommendedXStep) ? chainIndex.get(a.recommendedXStep) : 9999;
+      const ib = chainIndex.has(b.recommendedXStep) ? chainIndex.get(b.recommendedXStep) : 9999;
+      return ia - ib || a.sequence - b.sequence;
+    });
+    steps.forEach((s, i) => { s.sequence = (i + 1) * 10; });
+  } else {
+    steps.sort((a, b) => a.sequence - b.sequence);
+  }
 
   let template = {
     templateType: 'PI_SHEET',
@@ -110,6 +125,12 @@ async function composeTemplate(input = {}) {
       topK: retrieval.topK,
       resultCount: retrieval.results.length,
       mode: retrieval.mode,
+      counts: retrieval.counts,
+      knowledgeHits: knowledgeResults.length,
+      knowledgeTitles: knowledgeResults.slice(0, 5).map((k) => k.title || k.id),
+      graphChainUsed: graphChain.length > 0,
+      graphChainLength: graphChain.length,
+      piSheetExamples: retrieval.counts?.piSheetExamples || 0,
     },
     audit: {
       generatedAt: new Date().toISOString(),
