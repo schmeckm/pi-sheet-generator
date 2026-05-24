@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
+import { xstepAgentRoutes } from '@/modules/xstep-agent-ui/routes/xstepAgentRoutes';
 
 const routes = [
   { path: '/', redirect: '/chat' },
@@ -87,6 +88,7 @@ const routes = [
     component: () => import('@/views/AdminHelpView.vue'),
     meta: { requiresAuth: true, requiresAdmin: true, layout: 'admin' },
   },
+  ...xstepAgentRoutes,
 ];
 
 const router = createRouter({

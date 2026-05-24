@@ -191,4 +191,9 @@ router.get('/proposals/:id/audit', (req, res) => {
   return res.json({ audit: auditLogForProposal(proposal) });
 });
 
+// --- XStep XML Import (isolated sub-module) ---
+
+const { importRoutes } = require('../import');
+router.use('/import', importRoutes);
+
 module.exports = router;

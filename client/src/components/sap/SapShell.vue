@@ -3,9 +3,9 @@
     <SapShellBar
       :title="shellTitle"
       :subtitle="shellSubtitle"
-      :show-nav="!isAdminLayout"
+      :show-nav="!hasSidebar"
     >
-      <template v-if="!isAdminLayout" #leading>
+      <template v-if="!hasSidebar" #leading>
         <button
           type="button"
           class="sap-btn sap-btn--transparent sap-touch-target !text-xs md:!hidden"
@@ -15,7 +15,7 @@
           {{ t('common.menu') }}
         </button>
       </template>
-      <template v-if="isAdminLayout" #actions>
+      <template v-if="hasSidebar" #actions>
         <button
           type="button"
           class="sap-btn sap-btn--transparent sap-touch-target !text-xs lg:!hidden"
@@ -80,12 +80,12 @@
 
     <div class="sap-shell-body">
       <div
-        v-if="!isAdminLayout && shell.primaryNavOpen"
+        v-if="!hasSidebar && shell.primaryNavOpen"
         class="fixed inset-0 z-20 bg-black/30 md:hidden"
         @click="shell.closePrimaryNav()"
       />
       <PrimaryNavDrawer
-        v-if="!isAdminLayout"
+        v-if="!hasSidebar"
         :class="[
           'md:hidden',
           shell.primaryNavOpen
@@ -95,12 +95,21 @@
       />
 
       <div
-        v-if="isAdminLayout && shell.adminNavOpen"
+        v-if="hasSidebar && shell.adminNavOpen"
         class="fixed inset-0 z-20 bg-black/30 lg:hidden"
         @click="shell.adminNavOpen = false"
       />
       <SapSideNavigation
         v-if="isAdminLayout"
+        :class="[
+          'lg:relative lg:translate-x-0',
+          shell.adminNavOpen
+            ? 'fixed top-[var(--sapShell_Height)] bottom-[var(--sapFooter_Height)] left-0 z-30 shadow-lg'
+            : 'hidden lg:flex',
+        ]"
+      />
+      <XStepSideNav
+        v-if="isXStepLayout"
         :class="[
           'lg:relative lg:translate-x-0',
           shell.adminNavOpen
@@ -131,6 +140,7 @@ import SapSideNavigation from './SapSideNavigation.vue';
 import SapStatusBar from './SapStatusBar.vue';
 import ProtocolStatusBar from './ProtocolStatusBar.vue';
 import PrimaryNavDrawer from './PrimaryNavDrawer.vue';
+import XStepSideNav from '@/modules/xstep-agent-ui/components/layout/XStepSideNav.vue';
 import { useShellStore } from '@/stores/shell';
 import { useAuthStore } from '@/stores/auth';
 import { useNewChat } from '@/composables/useNewChat';
@@ -142,10 +152,13 @@ const { startNewChat } = useNewChat();
 const route = useRoute();
 
 const isAdminLayout = computed(() => route.meta.layout === 'admin');
+const isXStepLayout = computed(() => route.meta.layout === 'xstep-agent');
+const hasSidebar = computed(() => isAdminLayout.value || isXStepLayout.value);
 const isChat = computed(() => route.name === 'chat');
 
 const shellTitle = computed(() => {
   if (isChat.value) return t('joule.title');
+  if (isXStepLayout.value) return t('xstepAgent.boardTitle');
   if (isAdminLayout.value) {
     return auth.isAdmin ? t('shell.adminArea') : t('shell.promptArea');
   }
@@ -154,6 +167,7 @@ const shellTitle = computed(() => {
 
 const shellSubtitle = computed(() => {
   if (isChat.value) return '';
+  if (isXStepLayout.value) return t('xstepAgent.boardSubtitle');
   if (isAdminLayout.value) {
     return auth.isAdmin ? t('shell.adminSubtitle') : t('shell.promptSubtitle');
   }
