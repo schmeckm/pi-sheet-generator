@@ -68,7 +68,7 @@ const DEFAULTS = [
   {
     key: 'llm_provider_vision',
     value: 'anthropic',
-    description: 'LLM provider for vision / digitization: anthropic | openai (vision: Anthropic only today)',
+    description: 'LLM provider for vision / digitization: anthropic | openai',
   },
   {
     key: 'llm_model_pi_sheet',

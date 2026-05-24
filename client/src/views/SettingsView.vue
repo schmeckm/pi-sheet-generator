@@ -71,12 +71,6 @@
                 <option value="anthropic">{{ t('settings.llmProviderAnthropic') }}</option>
                 <option value="openai">{{ t('settings.llmProviderOpenai') }}</option>
               </select>
-              <span
-                v-if="block.mode === 'vision' && form.llm_provider_vision === 'openai'"
-                class="mt-1 block text-xs text-amber-700"
-              >
-                {{ t('settings.llmVisionOpenaiNote') }}
-              </span>
             </label>
             <label class="block">
               <span class="sap-label">{{ block.label }}</span>

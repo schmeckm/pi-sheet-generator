@@ -57,9 +57,11 @@ const confirmSchema = Joi.object({
 router.use(authMiddleware, visionLimiter);
 
 function handleVisionError(err, res, next) {
-  if (err.statusCode === 503) {
+  if (err.statusCode === 503 || err.code === 'LLM_NOT_CONFIGURED' || err.code === 'LLM_OPENAI_NOT_CONFIGURED') {
     return res.status(503).json({
-      error: 'Vision-Analyse nicht verfügbar. Bitte ANTHROPIC_API_KEY konfigurieren.',
+      error:
+        err.message ||
+        'Vision-Analyse nicht verfügbar. Bitte ANTHROPIC_API_KEY oder OPENAI_API_KEY in Admin → Settings konfigurieren.',
     });
   }
   if (err.statusCode === 400) {

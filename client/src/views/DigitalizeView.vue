@@ -76,11 +76,24 @@
       <div v-if="selectedFile" class="rounded-lg border bg-white p-4">
         <div class="flex flex-wrap items-start gap-4">
           <img
-            v-if="localPreviewUrl"
+            v-if="previewKind === 'image' && localPreviewUrl"
             :src="localPreviewUrl"
             alt="Vorschau"
             class="max-h-40 rounded border object-contain"
           />
+          <iframe
+            v-else-if="previewKind === 'pdf' && localPreviewUrl"
+            :src="localPreviewUrl"
+            :title="selectedFile.name"
+            class="h-40 w-28 rounded border bg-white"
+          />
+          <div
+            v-else-if="previewKind === 'office'"
+            class="flex h-24 w-24 flex-col items-center justify-center rounded border bg-gray-100 px-1 text-center"
+          >
+            <span class="text-3xl" aria-hidden="true">{{ officePreviewIcon }}</span>
+            <span class="mt-1 text-[10px] font-medium uppercase text-gray-500">{{ officePreviewLabel }}</span>
+          </div>
           <div v-else class="flex h-24 w-24 items-center justify-center rounded border bg-gray-100 text-3xl">
             📄
           </div>
@@ -121,11 +134,26 @@
           </h2>
           <div class="flex max-h-[480px] items-center justify-center overflow-auto rounded bg-gray-100 p-2">
             <img
-              v-if="docPreviewUrl"
+              v-if="previewKind === 'image' && docPreviewUrl"
               :src="docPreviewUrl"
               alt="Original"
               class="max-h-[440px] max-w-full object-contain"
             />
+            <iframe
+              v-else-if="previewKind === 'pdf' && docPreviewUrl"
+              :src="docPreviewUrl"
+              :title="selectedFile?.name || t('digitalize.originalDoc')"
+              class="h-[440px] w-full rounded border bg-white"
+            />
+            <div
+              v-else-if="previewKind === 'office' && selectedFile"
+              class="flex flex-col items-center gap-3 p-8 text-center"
+            >
+              <span class="text-5xl" aria-hidden="true">{{ officePreviewIcon }}</span>
+              <p class="font-medium text-gray-800">{{ selectedFile.name }}</p>
+              <p class="text-sm text-gray-500">{{ officePreviewLabel }}</p>
+              <p class="max-w-xs text-xs text-gray-400">{{ t('digitalize.previewOfficeHint') }}</p>
+            </div>
             <p v-else class="p-8 text-center text-sm text-gray-500">
               {{ t('digitalize.noPreview') }}
             </p>
@@ -426,6 +454,50 @@ const MAX_BYTES = 20 * 1024 * 1024;
 
 const docPreviewUrl = computed(() => localPreviewUrl.value);
 
+const previewKind = computed(() => detectPreviewKind(selectedFile.value));
+
+const officePreviewIcon = computed(() => {
+  const name = selectedFile.value?.name || '';
+  if (/\.xlsx$/i.test(name)) return '📊';
+  if (/\.docx$/i.test(name)) return '📝';
+  return '📄';
+});
+
+const officePreviewLabel = computed(() => {
+  const name = selectedFile.value?.name || '';
+  if (/\.xlsx$/i.test(name)) return t('digitalize.previewXlsx');
+  if (/\.docx$/i.test(name)) return t('digitalize.previewDocx');
+  return t('digitalize.previewOffice');
+});
+
+function detectPreviewKind(file) {
+  if (!file) return null;
+  if (isImageFile(file)) return 'image';
+  if (isPdfFile(file)) return 'pdf';
+  if (isOfficeFile(file)) return 'office';
+  return null;
+}
+
+function isImageFile(file) {
+  if (file.type.startsWith('image/')) return true;
+  return /\.(jpe?g|png)$/i.test(file.name);
+}
+
+function isPdfFile(file) {
+  if (file.type === 'application/pdf') return true;
+  return /\.pdf$/i.test(file.name);
+}
+
+function isOfficeFile(file) {
+  if (
+    file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+    file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+  ) {
+    return true;
+  }
+  return /\.(docx|xlsx)$/i.test(file.name);
+}
+
 const qualityLabel = computed(() => {
   const q = analyzeResult.value?.quality?.image_quality || 'medium';
   if (q === 'good') return `🟢 ${t('digitalize.qualityGood')}`;
@@ -496,7 +568,8 @@ function setFile(file) {
   if (!validateFile(file)) return;
   clearFile();
   selectedFile.value = file;
-  if (file.type.startsWith('image/')) {
+  const kind = detectPreviewKind(file);
+  if (kind === 'image' || kind === 'pdf') {
     localPreviewUrl.value = URL.createObjectURL(file);
   }
 }

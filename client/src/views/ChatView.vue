@@ -18,12 +18,6 @@
       />
 
       <section class="sap-joule-copilot">
-        <JouleCopilotHeader
-          :history-open="shell.chatHistoryOpen"
-          @new-chat="onNewChat"
-          @toggle-history="shell.toggleChatHistory()"
-        />
-
         <div ref="scrollEl" class="sap-joule-copilot__body">
           <ChatWelcome
             v-if="showWelcome"
@@ -126,7 +120,6 @@ import ChatWelcome from '@/components/chat/ChatWelcome.vue';
 import ChatMessage from '@/components/chat/ChatMessage.vue';
 import ChatInput from '@/components/chat/ChatInput.vue';
 import ChatThinking from '@/components/chat/ChatThinking.vue';
-import JouleCopilotHeader from '@/components/chat/JouleCopilotHeader.vue';
 import ChatHistorySidebar from '@/components/chat/ChatHistorySidebar.vue';
 import PISheetPreview from '@/components/pisheet/PISheetPreview.vue';
 import AssistantRobot from '@/components/chat/AssistantRobot.vue';

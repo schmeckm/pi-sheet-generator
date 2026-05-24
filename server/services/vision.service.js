@@ -8,20 +8,54 @@ const { getAnthropicClient } = require('../config/anthropic');
 const { PromptConfig, PISheet, PISheetStep } = require('../models');
 const embeddingService = require('./embedding.service');
 const llmService = require('./llm.service');
+const llmProvider = require('./llmProvider.service');
 const { logAudit } = require('./audit.service');
 const { applyLocaleToSystemPrompt, getLlmLocaleConfig } = require('../utils/locale');
-const { getModelConfig, getFullModelConfig } = require('../utils/llmModel');
+const { getFullModelConfig } = require('../utils/llmModel');
+const { mapLlmError } = require('../utils/llmErrors');
 
-async function visionLlmParams() {
+async function getVisionConfig() {
   const cfg = await getFullModelConfig('vision');
+  llmProvider.assertProviderConfigured(cfg.provider);
+  return cfg;
+}
+
+function extractAnthropicText(response) {
+  return response.content
+    .filter((b) => b.type === 'text')
+    .map((b) => b.text)
+    .join('\n');
+}
+
+async function completeVisionLlm({ system, userContent, jsonMode = true }) {
+  const cfg = await getVisionConfig();
+
   if (cfg.provider === 'openai') {
-    const err = new Error(
-      'Vision with OpenAI is not supported yet. Set vision provider to Anthropic in Admin → Settings.'
-    );
-    err.statusCode = 503;
-    throw err;
+    const messages = [];
+    if (system) messages.push({ role: 'system', content: system });
+    messages.push({ role: 'user', content: userContent });
+    const response = await llmProvider.callOpenAi({
+      model: cfg.model,
+      max_tokens: cfg.max_tokens,
+      messages,
+      ...(jsonMode ? { response_format: { type: 'json_object' } } : {}),
+    });
+    const text = String(response.choices?.[0]?.message?.content || '').trim();
+    if (!text) {
+      throw mapLlmError(new Error('Empty vision response from OpenAI'));
+    }
+    return text;
   }
-  return { model: cfg.model, max_tokens: cfg.max_tokens };
+
+  const client = getAnthropicClient();
+  const params = {
+    model: cfg.model,
+    max_tokens: cfg.max_tokens,
+    messages: [{ role: 'user', content: userContent }],
+  };
+  if (system) params.system = system;
+  const response = await client.messages.create(params);
+  return extractAnthropicText(response);
 }
 const MAX_IMAGE_DIM = 2048;
 const PDF_TEXT_MIN_CHARS = 100;
@@ -298,6 +332,21 @@ async function preprocessFile(file) {
   }
 }
 
+function buildOpenAiVisionUserContent(images, textPrompt) {
+  const parts = [];
+  for (const img of images) {
+    parts.push({
+      type: 'image_url',
+      image_url: {
+        url: `data:${img.mediaType};base64,${img.base64}`,
+        detail: 'high',
+      },
+    });
+  }
+  parts.push({ type: 'text', text: textPrompt });
+  return parts;
+}
+
 function buildVisionMessageContent(images) {
   const blocks = [];
   for (const img of images) {
@@ -314,32 +363,20 @@ function buildVisionMessageContent(images) {
   return blocks;
 }
 
-async function runClaudeAnalysis(preprocessed, options = {}) {
-  const client = getAnthropicClient();
-  if (!client) {
-    const err = new Error('ANTHROPIC_API_KEY is not configured');
-    err.statusCode = 503;
-    throw err;
-  }
+async function runVisionAnalysis(preprocessed, options = {}) {
+  const cfg = await getVisionConfig();
 
   let userContent;
   if (preprocessed.mode === 'vision') {
-    userContent = buildVisionMessageContent(preprocessed.images);
+    userContent =
+      cfg.provider === 'openai'
+        ? buildOpenAiVisionUserContent(preprocessed.images, VISION_ANALYSIS_PROMPT)
+        : buildVisionMessageContent(preprocessed.images);
   } else {
     userContent = `${preprocessed.text}\n\n${TEXT_ANALYSIS_PROMPT}`;
   }
 
-  const llmParams = await visionLlmParams();
-  const response = await client.messages.create({
-    ...llmParams,
-    messages: [{ role: 'user', content: userContent }],
-  });
-
-  const text = response.content
-    .filter((b) => b.type === 'text')
-    .map((b) => b.text)
-    .join('\n');
-
+  const text = await completeVisionLlm({ userContent });
   let recognized = llmService.parseLlmJson(text);
 
   const quality = recognized.quality || {};
@@ -352,19 +389,9 @@ async function runClaudeAnalysis(preprocessed, options = {}) {
   if (needsOcr && preprocessed.images[0]?.buffer) {
     const ocrText = await ocrImageBuffer(preprocessed.images[0].buffer);
     if (ocrText.trim().length > 50) {
-      const ocrResponse = await client.messages.create({
-        ...llmParams,
-        messages: [
-          {
-            role: 'user',
-            content: `OCR-Extrakt (Fallback):\n${ocrText}\n\n${TEXT_ANALYSIS_PROMPT}`,
-          },
-        ],
+      const ocrOut = await completeVisionLlm({
+        userContent: `OCR-Extrakt (Fallback):\n${ocrText}\n\n${TEXT_ANALYSIS_PROMPT}`,
       });
-      const ocrOut = ocrResponse.content
-        .filter((b) => b.type === 'text')
-        .map((b) => b.text)
-        .join('\n');
       recognized = llmService.parseLlmJson(ocrOut);
       recognized.quality = {
         ...recognized.quality,
@@ -446,13 +473,6 @@ async function matchStepsToRepository(steps, processType) {
 }
 
 async function generatePiSheetFromRecognition(recognized, matchResult, locale = 'de') {
-  const client = getAnthropicClient();
-  if (!client) {
-    const err = new Error('ANTHROPIC_API_KEY is not configured');
-    err.statusCode = 503;
-    throw err;
-  }
-
   const promptConfig = await PromptConfig.findOne({ where: { is_active: true } });
   const baseSystem = promptConfig?.system_prompt || '';
   const { labels } = getLlmLocaleConfig(locale);
@@ -470,29 +490,17 @@ async function generatePiSheetFromRecognition(recognized, matchResult, locale = 
     },
   };
 
-  const llmParams = await visionLlmParams();
-  const response = await client.messages.create({
-    ...llmParams,
+  const text = await completeVisionLlm({
     system,
-    messages: [
-      {
-        role: 'user',
-        content: `${labels.visionRecognition}:\n${JSON.stringify(contextPayload, null, 2)}\n\n${labels.visionGenerate}`,
-      },
-    ],
+    userContent: `${labels.visionRecognition}:\n${JSON.stringify(contextPayload, null, 2)}\n\n${labels.visionGenerate}`,
   });
-
-  const text = response.content
-    .filter((b) => b.type === 'text')
-    .map((b) => b.text)
-    .join('\n');
 
   return llmService.validatePiSheet(llmService.parseLlmJson(text));
 }
 
 async function analyzeDocument(file) {
   const preprocessed = await preprocessFile(file);
-  const recognized = await runClaudeAnalysis(preprocessed);
+  const recognized = await runVisionAnalysis(preprocessed);
   const matchResult = await matchStepsToRepository(
     recognized.steps || [],
     recognized.process_type
@@ -515,7 +523,7 @@ async function analyzeDocument(file) {
 
 async function generateFromDocument(file, userId, options = {}) {
   const preprocessed = await preprocessFile(file);
-  const recognized = await runClaudeAnalysis(preprocessed);
+  const recognized = await runVisionAnalysis(preprocessed);
   const matchResult = await matchStepsToRepository(
     recognized.steps || [],
     recognized.process_type
