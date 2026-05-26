@@ -110,9 +110,11 @@ const helpDe = {
       title: 'Daten-Import',
       paragraphs: ['Es gibt drei Import-Wege für Daten:'],
       list: [
-        'XSteps (SAP XML / CSV / Excel): Admin → Repository → Hochladen. Pflichtfelder: xstep_id, name, category, process_type. Deutsche Spaltennamen werden automatisch erkannt.',
-        'SOP-Dokumente (PDF / DOCX / TXT): Admin → Wissensbasis → Hochladen. Dokumente werden automatisch gechunkt und mit Embeddings versehen.',
-        'Prozessgraph: Wird automatisch aus SOP-Uploads extrahiert (GraphRAG). QA bestätigt oder lehnt Vorschläge ab.',
+        'SAP SXS XML (sxs:SXS_DOCUMENT): XStep Agent → XML Import. Ordner/ITEM/VERSION werden in den Knowledge Graph geschrieben, XSteps in PostgreSQL + Embeddings.',
+        'Flaches XStep-XML (<XSteps><XStep>): gleicher Import-Weg, ohne hierarchischen Graph.',
+        'XSteps (CSV / Excel): Admin → Repository → Hochladen. Pflichtfelder: xstep_id, name, category, process_type.',
+        'SOP-Dokumente (PDF / DOCX / TXT): Admin → Wissensbasis. Automatisches Chunking + Embeddings.',
+        'Prozessgraph: Aus SXS-Import, SOP-Uploads (GraphRAG) oder manuell im Knowledge Graph.',
       ],
     },
     {
@@ -246,9 +248,11 @@ const helpEn = {
       title: 'Data Import',
       paragraphs: ['There are three import paths:'],
       list: [
-        'XSteps (SAP XML / CSV / Excel): Admin → Repository → Upload. Required fields: xstep_id, name, category, process_type. German column names are auto-detected.',
-        'SOP Documents (PDF / DOCX / TXT): Admin → Knowledge Base → Upload. Documents are automatically chunked and embedded.',
-        'Process Graph: Automatically extracted from SOP uploads (GraphRAG). QA approves or rejects suggestions.',
+        'SAP SXS XML (sxs:SXS_DOCUMENT): XStep Agent → XML Import. Folders/ITEM/VERSION go to the knowledge graph; XSteps to PostgreSQL + embeddings.',
+        'Flat XStep XML (<XSteps><XStep>): same import path without hierarchical graph.',
+        'XSteps (CSV / Excel): Admin → Repository → Upload. Required: xstep_id, name, category, process_type.',
+        'SOP Documents (PDF / DOCX / TXT): Admin → Knowledge Base. Auto-chunking + embeddings.',
+        'Process Graph: From SXS import, SOP uploads (GraphRAG), or manually in Knowledge Graph.',
       ],
     },
     {

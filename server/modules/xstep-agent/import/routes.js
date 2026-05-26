@@ -3,10 +3,11 @@
 const express = require('express');
 const multer = require('multer');
 const Joi = require('joi');
-const { parseXml } = require('./xmlParser');
+const { parseImportXml } = require('./parseImportXml');
 const { normalizeAll } = require('./normalizer');
 const { validateBatch } = require('./validator');
 const { saveImport, listImports, getImport, deleteImport } = require('./store');
+const { persistToDatabase } = require('./persistService');
 const { authMiddleware } = require('../../../middleware/auth');
 
 const router = express.Router();
@@ -30,35 +31,77 @@ router.use(authMiddleware);
  * Multipart upload of an XStep XML file.
  * Parses → normalises → validates → stores as JSON.
  */
-router.post('/upload', upload.single('file'), (req, res, next) => {
+router.post('/upload', upload.single('file'), async (req, res, next) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'XML file is required (field name: "file")' });
     }
 
     const xmlString = req.file.buffer.toString('utf-8');
+    const processType =
+      req.body?.processType || req.query?.processType || 'Import';
+    const shouldPersist = req.query?.persist !== 'false';
 
-    const { raw, rootTag } = parseXml(xmlString);
-    const normalised = normalizeAll(raw);
+    const parsed = parseImportXml(xmlString, { processType });
+    const normalised = normalizeAll(parsed.raw);
     const validation = validateBatch(normalised);
+
+    let persistResult = null;
+    if (shouldPersist) {
+      persistResult = await persistToDatabase({
+        steps: normalised,
+        graph: parsed.graph,
+        processType,
+        userId: req.user?.id,
+      });
+    }
 
     const record = saveImport({
       steps: normalised,
       validation,
       filename: req.file.originalname,
       userId: req.user?.id,
+      format: parsed.format,
+      rootTag: parsed.rootTag,
+      graphSummary: parsed.graph
+        ? {
+            nodes: parsed.graph.nodes.length,
+            edges: parsed.graph.edges.length,
+            docId: parsed.graph.metadata?.docId,
+          }
+        : null,
+      persistResult,
     });
 
     return res.status(201).json({
       importId: record.id,
       filename: record.filename,
-      rootTag,
+      format: parsed.format,
+      rootTag: parsed.rootTag,
+      processType,
       stepCount: normalised.length,
       validation,
       steps: normalised,
+      graph: parsed.graph
+        ? {
+            metadata: parsed.graph.metadata,
+            summary: {
+              nodes: parsed.graph.nodes.length,
+              edges: parsed.graph.edges.length,
+            },
+          }
+        : null,
+      persist: persistResult,
     });
   } catch (err) {
-    if (err.message.includes('No XStep elements') || err.message.includes('XML input')) {
+    const msg = err.message || '';
+    if (
+      msg.includes('No XStep elements') ||
+      msg.includes('XML input') ||
+      msg.includes('SAP SXS') ||
+      msg.includes('Ordnerstrukturen') ||
+      msg.includes('Template-Knoten')
+    ) {
       return res.status(400).json({ error: err.message });
     }
     return next(err);
@@ -79,15 +122,26 @@ router.post('/parse', (req, res, next) => {
     const { value, error } = xmlBodySchema.validate(req.body || {});
     if (error) return res.status(400).json({ error: error.message });
 
-    const { raw, rootTag } = parseXml(value.xml);
-    const normalised = normalizeAll(raw);
+    const processType = req.body?.processType || 'Import';
+    const parsed = parseImportXml(value.xml, { processType });
+    const normalised = normalizeAll(parsed.raw);
     const validation = validateBatch(normalised);
 
     return res.json({
-      rootTag,
+      format: parsed.format,
+      rootTag: parsed.rootTag,
       stepCount: normalised.length,
       validation,
       steps: normalised,
+      graph: parsed.graph
+        ? {
+            metadata: parsed.graph.metadata,
+            summary: {
+              nodes: parsed.graph.nodes.length,
+              edges: parsed.graph.edges.length,
+            },
+          }
+        : null,
     });
   } catch (err) {
     if (err.message.includes('No XStep elements') || err.message.includes('XML input')) {

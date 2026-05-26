@@ -34,7 +34,16 @@ function writeManifest(manifest) {
  * @param {string}   [opts.userId]    importing user id
  * @returns {object} stored record metadata
  */
-function saveImport({ steps, validation, filename, userId }) {
+function saveImport({
+  steps,
+  validation,
+  filename,
+  userId,
+  format,
+  rootTag,
+  graphSummary,
+  persistResult,
+}) {
   ensureDir();
 
   const id = uuidv4();
@@ -48,6 +57,19 @@ function saveImport({ steps, validation, filename, userId }) {
     stepCount: steps.length,
     warningCount: validation.warningCount,
     warnings: validation.warnings,
+    format: format || null,
+    rootTag: rootTag || null,
+    graphSummary: graphSummary || null,
+    persistResult: persistResult
+      ? {
+          db: {
+            created: persistResult.db?.created,
+            updated: persistResult.db?.updated,
+            skipped: persistResult.db?.skipped,
+          },
+          graph: persistResult.graph || null,
+        }
+      : null,
   };
 
   const dataPath = path.join(STORE_DIR, `${id}.json`);

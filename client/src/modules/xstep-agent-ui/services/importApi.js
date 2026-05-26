@@ -3,9 +3,10 @@ import { api } from '@/composables/useApi';
 
 const PREFIX = '/v1/xstep-agent/import';
 
-export function uploadXml(file) {
+export function uploadXml(file, processType = 'Import') {
   const form = new FormData();
   form.append('file', file);
+  if (processType) form.append('processType', processType);
   return api.post(`${PREFIX}/upload`, form, {
     headers: { 'Content-Type': 'multipart/form-data' },
   }).then((r) => r.data);

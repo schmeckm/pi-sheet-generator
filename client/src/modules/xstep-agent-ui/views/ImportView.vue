@@ -11,6 +11,21 @@
       </span>
     </header>
 
+    <!-- Process type -->
+    <div class="rounded-lg border bg-white p-4 shadow-sm">
+      <label class="block text-sm font-medium text-gray-700">{{ t('xstepAgent.importProcessType') }}</label>
+      <p class="mb-2 text-xs text-gray-500">{{ t('xstepAgent.importProcessTypeHint') }}</p>
+      <select
+        v-model="processType"
+        class="w-full max-w-xs rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+      >
+        <option value="Verpackung">Verpackung</option>
+        <option value="Granulation">Granulation</option>
+        <option value="Abfüllung">Abfüllung</option>
+        <option value="Import">Import</option>
+      </select>
+    </div>
+
     <!-- Upload Zone -->
     <div
       class="relative flex flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed p-8 transition-colors"
@@ -50,6 +65,12 @@
         <div class="flex items-center justify-between">
           <h2 class="text-lg font-semibold text-gray-900">{{ t('xstepAgent.importResult') }}</h2>
           <div class="flex items-center gap-3">
+            <span
+              v-if="preview.format"
+              class="rounded bg-indigo-50 px-2.5 py-1 text-xs font-medium text-indigo-700"
+            >
+              {{ preview.format === 'sap-sxs' ? t('xstepAgent.importFormatSxs') : t('xstepAgent.importFormatFlat') }}
+            </span>
             <span class="rounded bg-green-50 px-2.5 py-1 text-xs font-medium text-green-700">
               {{ preview.stepCount }} Steps
             </span>
@@ -116,6 +137,21 @@
           </table>
         </div>
 
+        <!-- Persist summary -->
+        <div
+          v-if="preview.persist"
+          class="rounded-lg border border-blue-200 bg-blue-50 p-4"
+        >
+          <h4 class="mb-2 text-sm font-semibold text-blue-900">{{ t('xstepAgent.importPersistTitle') }}</h4>
+          <div class="flex flex-wrap gap-4 text-sm text-blue-800">
+            <span>{{ t('xstepAgent.importDbCreated') }}: {{ preview.persist.db?.created ?? 0 }}</span>
+            <span>{{ t('xstepAgent.importDbUpdated') }}: {{ preview.persist.db?.updated ?? 0 }}</span>
+            <span v-if="preview.persist.graph">
+              {{ t('xstepAgent.importGraphEdges') }}: {{ preview.persist.graph.created ?? 0 }} neu
+            </span>
+          </div>
+        </div>
+
         <!-- Import ID -->
         <div v-if="preview.importId" class="flex items-center gap-2 text-sm text-gray-500">
           <span>Import ID:</span>
@@ -149,6 +185,7 @@
           <thead class="border-b bg-gray-50">
             <tr>
               <th class="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{{ t('xstepAgent.importColFile') }}</th>
+              <th class="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Format</th>
               <th class="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{{ t('xstepAgent.importColDate') }}</th>
               <th class="px-4 py-3 text-center text-xs font-medium uppercase text-gray-500">Steps</th>
               <th class="px-4 py-3 text-center text-xs font-medium uppercase text-gray-500">{{ t('xstepAgent.importWarnings') }}</th>
@@ -158,6 +195,9 @@
           <tbody>
             <tr v-for="imp in imports" :key="imp.id" class="border-b transition hover:bg-blue-50">
               <td class="px-4 py-2.5 font-medium text-gray-900">{{ imp.filename }}</td>
+              <td class="px-4 py-2.5 text-xs text-gray-600">
+                {{ imp.format === 'sap-sxs' ? t('xstepAgent.importFormatSxs') : (imp.format || '—') }}
+              </td>
               <td class="px-4 py-2.5 text-gray-600">{{ formatDate(imp.importedAt) }}</td>
               <td class="px-4 py-2.5 text-center">{{ imp.stepCount }}</td>
               <td class="px-4 py-2.5 text-center">
@@ -241,6 +281,7 @@ import { uploadXml, listImports, getImport, deleteImport } from '../services/imp
 
 const { t } = useI18n();
 
+const processType = ref('Verpackung');
 const dragOver = ref(false);
 const uploading = ref(false);
 const error = ref(null);
@@ -262,7 +303,7 @@ async function handleFile(file) {
   uploading.value = true;
 
   try {
-    const result = await uploadXml(file);
+    const result = await uploadXml(file, processType.value);
     preview.value = result;
     await loadHistory();
   } catch (err) {
